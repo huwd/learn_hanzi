@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_07_175633) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_07_181342) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.string "pinyin"
@@ -24,6 +24,10 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_175633) do
     t.string "category"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "parent_id"
     t.index ["name"], name: "index_tags_on_name"
+    t.index ["parent_id"], name: "index_tags_on_parent_id"
   end
+
+  add_foreign_key "tags", "tags", column: "parent_id"
 end
