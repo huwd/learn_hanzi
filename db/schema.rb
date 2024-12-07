@@ -10,11 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_07_181848) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_07_200355) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.string "pinyin"
-    t.text "meanings"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -26,6 +25,16 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_181848) do
     t.datetime "updated_at", null: false
     t.index ["dictionary_entry_id"], name: "index_dictionary_entry_tags_on_dictionary_entry_id"
     t.index ["tag_id"], name: "index_dictionary_entry_tags_on_tag_id"
+  end
+
+  create_table "meanings", force: :cascade do |t|
+    t.integer "dictionary_entry_id", null: false
+    t.string "language", null: false
+    t.text "text", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dictionary_entry_id", "language", "text"], name: "index_meanings_on_dictionary_entry_id_and_language_and_meaning", unique: true
+    t.index ["dictionary_entry_id"], name: "index_meanings_on_dictionary_entry_id"
   end
 
   create_table "tags", force: :cascade do |t|
@@ -40,5 +49,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_181848) do
 
   add_foreign_key "dictionary_entry_tags", "dictionary_entries"
   add_foreign_key "dictionary_entry_tags", "tags"
+  add_foreign_key "meanings", "dictionary_entries"
   add_foreign_key "tags", "tags", column: "parent_id"
 end
