@@ -7,6 +7,8 @@ class DictionaryEntry < ApplicationRecord
   validates :pinyin, presence: true
   validate :must_have_at_least_one_meaning
 
+  accepts_nested_attributes_for :meanings, allow_destroy: true
+
   private
 
   def must_have_at_least_one_meaning
