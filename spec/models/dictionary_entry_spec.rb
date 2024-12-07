@@ -18,9 +18,10 @@ RSpec.describe DictionaryEntry, type: :model do
       expect(dictionary_entry).to_not be_valid
     end
 
-    it "is not valid without meanings" do
-      dictionary_entry.meanings = nil
+    it "is invalid without at least one meaning" do
+      dictionary_entry.meanings = []
       expect(dictionary_entry).to_not be_valid
+      expect(dictionary_entry.errors[:meanings]).to include("must have at least one associated meaning")
     end
   end
 end

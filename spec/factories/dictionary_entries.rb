@@ -2,6 +2,9 @@ FactoryBot.define do
   factory :dictionary_entry do
     text { "感动" }
     pinyin { "gǎn dòng" }
-    meanings { "to move (sb); to touch (sb emotionally); moving." }
+
+    after(:build) do |entry|
+      entry.meanings << build(:meaning, dictionary_entry: entry)
+    end
   end
 end
