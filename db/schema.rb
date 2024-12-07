@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_07_200355) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_07_224043) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.string "pinyin"
@@ -33,8 +33,17 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_200355) do
     t.text "text", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["dictionary_entry_id", "language", "text"], name: "index_meanings_on_dictionary_entry_id_and_language_and_meaning", unique: true
+    t.integer "source_id"
     t.index ["dictionary_entry_id"], name: "index_meanings_on_dictionary_entry_id"
+    t.index ["source_id"], name: "index_meanings_on_source_id"
+  end
+
+  create_table "sources", force: :cascade do |t|
+    t.string "name"
+    t.string "url"
+    t.date "date_accessed"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "tags", force: :cascade do |t|
@@ -50,5 +59,6 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_200355) do
   add_foreign_key "dictionary_entry_tags", "dictionary_entries"
   add_foreign_key "dictionary_entry_tags", "tags"
   add_foreign_key "meanings", "dictionary_entries"
+  add_foreign_key "meanings", "sources"
   add_foreign_key "tags", "tags", column: "parent_id"
 end
