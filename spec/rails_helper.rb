@@ -40,6 +40,15 @@ RSpec.configure do |config|
   # instead of true.
   config.use_transactional_fixtures = true
 
+  Shoulda::Matchers.configure do |config|
+    config.integrate do |with|
+      with.test_framework :rspec
+      with.library :active_record
+      with.library :active_model
+      with.library :action_controller # Add this if you want to test controllers
+    end
+  end
+
   # You can uncomment this line to turn off ActiveRecord support entirely.
   # config.use_active_record = false
 
