@@ -1,25 +1,21 @@
 require 'rails_helper'
 
 RSpec.describe DictionaryEntry, type: :model do
-  let(:dictionary_entry) { build(:dictionary_entry) }
+  describe "associations" do
+    it { should have_many(:dictionary_entry_tags).dependent(:destroy) }
+    it { should have_many(:tags).through(:dictionary_entry_tags) }
+    it { should have_many(:meanings).dependent(:destroy) }
+  end
 
   describe "validations" do
-    it "is valid with valid attributes" do
-      expect(dictionary_entry).to be_valid
-    end
+    it { should validate_presence_of(:text) }
+    it { should validate_presence_of(:pinyin) }
+  end
 
-    it "is not valid without text" do
-      dictionary_entry.text = nil
-      expect(dictionary_entry).to_not be_valid
-    end
-
-    it "is not valid without pinyin" do
-      dictionary_entry.pinyin = nil
-      expect(dictionary_entry).to_not be_valid
-    end
-
-    it "is invalid without at least one meaning" do
-      dictionary_entry.meanings = []
+  describe "custom validations" do
+    it "requires at least one associated meaning" do
+      dictionary_entry = build(:dictionary_entry)
+      dictionary_entry.meanings.clear # Ensure no meanings
       expect(dictionary_entry).to_not be_valid
       expect(dictionary_entry.errors[:meanings]).to include("must have at least one associated meaning")
     end
