@@ -10,13 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_07_181342) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_07_181848) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.string "pinyin"
     t.text "meanings"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "dictionary_entry_tags", force: :cascade do |t|
+    t.integer "dictionary_entry_id", null: false
+    t.integer "tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dictionary_entry_id"], name: "index_dictionary_entry_tags_on_dictionary_entry_id"
+    t.index ["tag_id"], name: "index_dictionary_entry_tags_on_tag_id"
   end
 
   create_table "tags", force: :cascade do |t|
@@ -29,5 +38,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_07_181342) do
     t.index ["parent_id"], name: "index_tags_on_parent_id"
   end
 
+  add_foreign_key "dictionary_entry_tags", "dictionary_entries"
+  add_foreign_key "dictionary_entry_tags", "tags"
   add_foreign_key "tags", "tags", column: "parent_id"
 end
