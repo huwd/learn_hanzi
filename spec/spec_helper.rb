@@ -92,3 +92,14 @@ RSpec.configure do |config|
   Kernel.srand config.seed
 =end
 end
+
+def silence_output
+  original_stdout = $stdout
+  original_stderr = $stderr
+  $stdout = File.open(File::NULL, "w")
+  $stderr = File.open(File::NULL, "w")
+  yield
+ensure
+  $stdout = original_stdout
+  $stderr = original_stderr
+end
