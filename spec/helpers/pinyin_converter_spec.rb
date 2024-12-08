@@ -25,6 +25,11 @@ RSpec.describe PinyinConverter, type: :helper do
     end
   end
 
+  describe ".convert_sentence" do
+    it "converts numeric tone pinyin to tone-marked pinyin" do
+      expect(PinyinConverter.convert_sentence("Ni3 zui4jin4 zen3me5yang4")).to eq("Nǐ zuìjìn zěnmeyàng")
+    end
+  end
 
   describe ".normalize_vowels" do
     it "replaces 'u:' with 'ü'" do
