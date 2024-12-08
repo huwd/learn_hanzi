@@ -40,6 +40,17 @@ class PinyinConverter
     text
   end
 
+  def self.convert_sentence(pinyin_sentence)
+    # Normalize vowels and split words
+    normalized_text = normalize_vowels(pinyin_sentence)
+
+    # Process each word
+    normalized_text.split.map do |word|
+      # Split each word into syllables and convert each syllable
+      word.scan(/[A-Za-zü]+[1-5]?/).map { |syllable| convert(syllable) }.join
+    end.join(" ")
+  end
+
   def self.normalize_vowels(text)
     text.gsub("u:", "ü").gsub("v", "ü")
   end
