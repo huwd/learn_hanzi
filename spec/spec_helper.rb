@@ -103,3 +103,12 @@ ensure
   $stdout = original_stdout
   $stderr = original_stderr
 end
+
+def capture_output
+  output = StringIO.new
+  $stdout = output
+  yield
+  output.string
+ensure
+  $stdout = STDOUT
+end
