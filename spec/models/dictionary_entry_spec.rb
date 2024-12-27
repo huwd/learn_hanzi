@@ -21,7 +21,7 @@ RSpec.describe DictionaryEntry, type: :model do
       dictionary_entry = build(:dictionary_entry)
       dictionary_entry.meanings.clear # Ensure no meanings
       expect(dictionary_entry).to_not be_valid
-      expect(dictionary_entry.errors[:meanings]).to include("must have at least one associated meaning")
+      expect(dictionary_entry.errors[:dictionary_entry]).to include("must have at least one associated meaning")
     end
   end
 end

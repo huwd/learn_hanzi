@@ -12,6 +12,6 @@ class DictionaryEntry < ApplicationRecord
   private
 
   def must_have_at_least_one_meaning
-    errors.add(:meanings, "must have at least one associated meaning") if meanings.empty?
+    errors.add(:dictionary_entry, "must have at least one associated meaning") if meanings.empty?
   end
 end
