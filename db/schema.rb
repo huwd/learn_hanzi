@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_27_233126) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_27_234236) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.datetime "created_at", null: false
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_27_233126) do
     t.datetime "updated_at", null: false
     t.integer "parent_id"
     t.index ["name"], name: "index_tags_on_name"
+    t.index ["parent_id", "id"], name: "index_tags_on_parent_and_child", unique: true
     t.index ["parent_id"], name: "index_tags_on_parent_id"
   end
 
