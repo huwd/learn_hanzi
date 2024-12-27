@@ -8,6 +8,10 @@ class DictionaryEntry < ApplicationRecord
 
   accepts_nested_attributes_for :meanings, allow_destroy: true
 
+  def add_tag(tag)
+    DictionaryEntryTag.find_or_create_by(dictionary_entry: self, tag: tag)
+  end
+
   private
 
   def must_have_at_least_one_meaning
