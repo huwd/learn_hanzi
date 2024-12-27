@@ -7,7 +7,7 @@ namespace :dictionary_import do
   task :cc_cedict, [ :file_path ] => :environment do |_task, args|
     file_path = if args[:file_path].nil?
       puts "No file path provided, defaulting to tmp/cedict_ts.u8"
-      Rails.root.join("tmp", "cedict_ts.u8").to_s
+      Rails.root.join("tmp", "cedict", "cedict_ts.u8").to_s
     else
       args[:file_path]
     end
