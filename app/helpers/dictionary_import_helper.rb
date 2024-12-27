@@ -21,12 +21,12 @@ module DictionaryImportHelper
       parsed_entry[:meaning_attributes].each do |meaning|
         unless dictionary_entry.meanings.exists?(
           text: meaning[:text],
-          language: 'en',
+          language: "en",
           source: source
         )
           dictionary_entry.meanings.build(
             text: meaning[:text],
-            language: 'en',
+            language: "en",
             source: source
           )
         end

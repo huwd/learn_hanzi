@@ -53,7 +53,7 @@ describe "DictionaryImportHelper" do
       source = Source.find_by(name: "CC-CEDICT")
 
       expect(meanings.map(&:text)).to eq([ "one breath", "in one breath", "at a stretch" ])
-      expect(meanings.map(&:language)).to eq(['en', 'en', 'en'])
+      expect(meanings.map(&:language)).to eq([ 'en', 'en', 'en' ])
       expect(meanings.map(&:source)).to eq(Array.new(3, source))
     end
 
@@ -78,7 +78,7 @@ describe "DictionaryImportHelper" do
 
         meanings = DictionaryEntry.find_by_id(@existing_entry.id).meanings
         expect(meanings.map(&:text)).to eq([ "one breath", "in one breath", "at a stretch" ])
-        expect(meanings.map(&:language)).to eq(['en', 'en', 'en'])
+        expect(meanings.map(&:language)).to eq([ 'en', 'en', 'en' ])
         expect(meanings.map(&:source)).to eq(Array.new(3, @source))
       end
     end
