@@ -6,4 +6,5 @@ class Meaning < ApplicationRecord
 
   validates :language, presence: true
   validates :text, presence: true
+  validates :pinyin, presence: true
 end
