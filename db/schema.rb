@@ -34,9 +34,9 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_27_184441) do
     t.datetime "updated_at", null: false
     t.integer "source_id"
     t.string "pinyin"
+    t.index ["dictionary_entry_id", "language", "text", "pinyin", "source_id"], name: "index_meanings_on_dictionary_entry_source_and_content", unique: true
     t.index ["dictionary_entry_id"], name: "index_meanings_on_dictionary_entry_id"
     t.index ["source_id"], name: "index_meanings_on_source_id"
-    t.index ["text", "language", "source_id", "pinyin"], name: "index_meanings_on_text_language_source_pinyin", unique: true
   end
 
   create_table "sources", force: :cascade do |t|
