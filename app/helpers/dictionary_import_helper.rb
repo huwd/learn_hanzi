@@ -11,7 +11,7 @@ module DictionaryImportHelper
 
   def find_or_create_dictionary_entry(line, source)
     parsed_entry = parse_cc_cedict_line(line, source)
-    return unless parsed_entry
+    raise "Error parsing line: #{line}" if parsed_entry.nil?
 
     DictionaryEntry.transaction do
       source = find_or_create_cc_cedict_source(source[:name], source[:url])
