@@ -6,6 +6,37 @@ module DictionaryImportHelper
     source.save!
     source
   end
+
+  def find_or_create_dictionary_entry(line, source)
+    parsed_entry = parse_cc_cedict_line(line, source)
+    return unless parsed_entry
+
+    DictionaryEntry.transaction do
+      source = find_or_create_cc_cedict_source(source[:name], source[:url])
+      dictionary_entry = DictionaryEntry.find_or_initialize_by(
+        text: parsed_entry[:simplified],
+        pinyin: parsed_entry[:pinyin]
+      )
+
+      parsed_entry[:meaning_attributes].each do |meaning|
+        unless dictionary_entry.meanings.exists?(
+          text: meaning[:text],
+          language: 'en',
+          source: source
+        )
+          dictionary_entry.meanings.build(
+            text: meaning[:text],
+            language: 'en',
+            source: source
+          )
+        end
+      end
+
+      dictionary_entry.save!
+      dictionary_entry
+    end
+  end
+
   def parse_cc_cedict_line(line, source_hash)
     match = line.match(/^(?<traditional>\S+)\s+(?<simplified>\S+)\s+\[(?<pinyin>[^\]]+)\]\s+(?<meanings>\/.+\/)$/)
 
