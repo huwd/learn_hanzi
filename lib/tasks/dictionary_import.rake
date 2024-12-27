@@ -22,7 +22,7 @@ namespace :dictionary_import do
       # Skip comments and blank lines
       next if line.start_with?("#") || line.strip.empty?
 
-      DictionaryImportHelper.find_or_create_dictionary_entry(line, { :name => "CC-CEDICT", :url => "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip" } )
+      DictionaryImportHelper.find_or_create_dictionary_entry(line, { name: "CC-CEDICT", url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip" })
     end
   end
 end
