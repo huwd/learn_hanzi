@@ -4,7 +4,6 @@ class DictionaryEntry < ApplicationRecord
   has_many :meanings, dependent: :destroy
 
   validates :text, presence: true
-  validates :pinyin, presence: true
   validate :must_have_at_least_one_meaning
 
   accepts_nested_attributes_for :meanings, allow_destroy: true

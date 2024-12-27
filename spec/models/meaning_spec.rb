@@ -9,6 +9,7 @@ RSpec.describe Meaning, type: :model do
   describe "validations" do
     it { should validate_presence_of(:language) }
     it { should validate_presence_of(:text) }
+    it { should validate_presence_of(:pinyin) }
   end
 
   describe "database indexes" do
