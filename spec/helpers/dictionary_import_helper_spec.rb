@@ -112,5 +112,26 @@ describe "DictionaryImportHelper" do
         ]
       )
     end
+
+    context "with known buggy CC-CEDICT lines" do
+      buggy_lines = [
+        "% % [pa1] /percent (Tw)/\r\n",
+        "〇 〇 [ling2] /zero/\r\n",
+        "11區 11区 [Shi2 yi1 Qu1] /(ACG) Japan (from the anime \"Code Geass\", in which Japan was renamed Area 11)/\r\n"
+      ]
+
+      buggy_lines.each do |line|
+        it "parses the line #{line}" do
+          expect(parse_cc_cedict_line(line, sample_source)).not_to be_nil
+
+          expect(parse_cc_cedict_line(line, sample_source).keys).to include(
+            :simplified,
+            :traditional,
+            :pinyin,
+            :meaning_attributes
+          )
+        end
+      end
+    end
   end
 end
