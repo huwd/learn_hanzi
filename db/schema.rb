@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_27_213410) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_27_233126) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.datetime "created_at", null: false
@@ -22,6 +22,7 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_27_213410) do
     t.integer "tag_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["dictionary_entry_id", "tag_id"], name: "index_unique_tag_on_entry", unique: true
     t.index ["dictionary_entry_id"], name: "index_dictionary_entry_tags_on_dictionary_entry_id"
     t.index ["tag_id"], name: "index_dictionary_entry_tags_on_tag_id"
   end
