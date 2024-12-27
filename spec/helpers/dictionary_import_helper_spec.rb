@@ -38,4 +38,27 @@ describe "DictionaryImportHelper" do
     end
   end
 
+  describe "parse_cc_cedict_line" do
+    it "pulls out the simplified chinese" do
+      expect(parse_cc_cedict_line(sample_string, sample_source)[:simplified]).to eq("一口气")
+    end
+
+    it "pulls out the traditional chinese" do
+      expect(parse_cc_cedict_line(sample_string, sample_source)[:traditional]).to eq("一口氣")
+    end
+
+    it "pulls out the pinyin and accents the characters" do
+      expect(parse_cc_cedict_line(sample_string, sample_source)[:pinyin]).to eq("yī kǒu qì")
+    end
+
+    it "pulls out the meanings as an array" do
+      expect(parse_cc_cedict_line(sample_string, sample_source)[:meaning_attributes]).to eq(
+        [
+          { text: "one breath", language: "en", source_attributes: sample_source },
+          { text: "in one breath", language: "en", source_attributes: sample_source  },
+          { text: "at a stretch", language: "en", source_attributes: sample_source  }
+        ]
+      )
+    end
+  end
 end
