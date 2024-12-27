@@ -39,6 +39,8 @@ namespace :dictionary_import do
         DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
       rescue => e
         failed_lines << { line: line, error: e }
+        put "Skipping failed line: #{line}"
+        next
       end
 
       DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
