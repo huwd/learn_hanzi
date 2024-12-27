@@ -1,3 +1,5 @@
+require_relative "../../app/helpers/dictionary_import_helper"
+
 include DictionaryImportHelper
 
 namespace :dictionary_import do
