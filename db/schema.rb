@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2024_12_27_183722) do
+ActiveRecord::Schema[8.0].define(version: 2024_12_27_184441) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.string "text"
     t.datetime "created_at", null: false
@@ -33,9 +33,10 @@ ActiveRecord::Schema[8.0].define(version: 2024_12_27_183722) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "source_id"
-    t.index ["dictionary_entry_id", "language", "text", "source_id"], name: "index_meanings_on_dictionary_entry_id_and_source", unique: true
+    t.string "pinyin"
     t.index ["dictionary_entry_id"], name: "index_meanings_on_dictionary_entry_id"
     t.index ["source_id"], name: "index_meanings_on_source_id"
+    t.index ["text", "language", "source_id", "pinyin"], name: "index_meanings_on_text_language_source_pinyin", unique: true
   end
 
   create_table "sources", force: :cascade do |t|
