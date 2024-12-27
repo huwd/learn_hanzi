@@ -1,4 +1,6 @@
 module DictionaryImportHelper
+  CC_CEDICT_REGEX = /^(?<traditional>\S+)\s+(?<simplified>\S+)\s+\[(?<pinyin>[^\]]+)\]\s+(?<meanings>\/.*\/)\s*$/
+
   def find_or_create_cc_cedict_source(source_name, source_url)
     source = Source.find_or_create_by(name: source_name, url: source_url).tap do |source|
       source.update(date_accessed: Date.today) if source.date_accessed != Date.today
@@ -38,8 +40,7 @@ module DictionaryImportHelper
   end
 
   def parse_cc_cedict_line(line, source_hash)
-    match = line.match(/^(?<traditional>\S+)\s+(?<simplified>\S+)\s+\[(?<pinyin>[^\]]+)\]\s+(?<meanings>\/.+\/)$/)
-
+    match = line.match(CC_CEDICT_REGEX)
     if match
       {
         simplified: match[:simplified],
