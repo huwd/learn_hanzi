@@ -14,7 +14,7 @@ RSpec.describe Meaning, type: :model do
 
   describe "database indexes" do
     it {
-      should have_db_index([ :text, :language, :source_id, :pinyin ])
+      should have_db_index([ :dictionary_entry_id, :language, :text, :pinyin, :source_id ])
         .unique(true)
     }
   end

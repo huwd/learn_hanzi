@@ -8,6 +8,6 @@ class CreateMeanings < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :meanings, [ :dictionary_entry_id, :language, :meaning ], unique: true
+    add_index :meanings, [ :dictionary_entry_id, :language, :text ], unique: true
   end
 end
