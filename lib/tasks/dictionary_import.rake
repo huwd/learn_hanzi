@@ -27,23 +27,27 @@ namespace :dictionary_import do
     }
 
     failed_lines = []
+    error_count = 0
+    logfile_path = Rails.root.join("log", "dictionary_import_errors.log")
 
-    File.foreach(file_path).with_index do |line, index|
-      # Skip comments and blank lines
-      next if line.start_with?("#") || line.strip.empty?
-      progress = ((index + 1).to_f / file_lines.to_f * 100).round(2)
-      print "\rProcessing: #{progress}%"
-      $stdout.flush
+    File.open(logfile_path, "a") do |logfile|
+      File.foreach(file_path).with_index do |line, index|
+        # Skip comments and blank lines
+        next if line.start_with?("#") || line.strip.empty?
+        progress = ((index + 1).to_f / file_lines.to_f * 100).round(2)
+        print "\rProcessing: #{progress}% | Errors: #{error_count}"
+        $stdout.flush
 
-      begin
-        DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
-      rescue => e
-        failed_lines << { line: line, error: e }
-        put "Skipping failed line: #{line}"
-        next
+        begin
+          DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
+        rescue => e
+          error_count += 1
+          logfile.puts "Error processing line #{index + 1}: #{line.strip}"
+          logfile.puts "Error: #{e.message}"
+          logfile.puts e.backtrace.join("\n")
+          next
+        end
       end
-
-      DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
     end
     puts "\nDone!"
     puts "#{DictionaryEntry.count} entries found in database after import"
