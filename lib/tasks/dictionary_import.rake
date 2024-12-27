@@ -44,7 +44,6 @@ namespace :dictionary_import do
           error_count += 1
           logfile.puts "Error processing line #{index + 1}: #{line.strip}"
           logfile.puts "Error: #{e.message}"
-          logfile.puts e.backtrace.join("\n")
           next
         end
       end
