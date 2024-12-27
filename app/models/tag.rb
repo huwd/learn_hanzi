@@ -6,4 +6,8 @@ class Tag < ApplicationRecord
   has_many :children, class_name: "Tag", foreign_key: "parent_id", dependent: :destroy
 
   validates :name, presence: true
+
+  def add_child(child_tag)
+    children << child_tag unless children.exists?(child_tag.id)
+  end
 end
