@@ -16,21 +16,18 @@ module DictionaryImportHelper
     DictionaryEntry.transaction do
       source = find_or_create_cc_cedict_source(source[:name], source[:url])
       dictionary_entry = DictionaryEntry.find_or_initialize_by(
-        text: parsed_entry[:simplified],
-        pinyin: parsed_entry[:pinyin]
+        text: parsed_entry[:simplified]
       )
 
       parsed_entry[:meaning_attributes].each do |meaning|
-        unless dictionary_entry.meanings.exists?(
+        payload = {
           text: meaning[:text],
           language: "en",
-          source: source
-        )
-          dictionary_entry.meanings.build(
-            text: meaning[:text],
-            language: "en",
-            source: source
-          )
+          source: source,
+          pinyin: meaning[:pinyin]
+        }
+        unless dictionary_entry.meanings.exists?(**payload)
+          dictionary_entry.meanings.build(**payload)
         end
       end
 
@@ -45,20 +42,20 @@ module DictionaryImportHelper
       {
         simplified: match[:simplified],
         traditional: match[:traditional],
-        pinyin: PinyinConverter.convert_sentence(match[:pinyin]),
-        meaning_attributes: parse_meanings(match[:meanings], source_hash)
+        meaning_attributes: parse_meanings(match[:meanings], source_hash, match[:pinyin])
       }
     else
       nil # Return nil if the line doesn't match the expected format
     end
   end
 
-  def parse_meanings(meanings, source_hash)
+  def parse_meanings(meanings, source_hash, pinyin)
     meanings[1..-2].split("/").map do |meaning|
       {
         text: meaning.strip,
         language: "en",
-        source_attributes: source_hash
+        source_attributes: source_hash,
+        pinyin: PinyinConverter.convert_sentence(pinyin)
       }
     end
   end

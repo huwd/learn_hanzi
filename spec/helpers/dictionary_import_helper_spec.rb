@@ -47,7 +47,6 @@ describe "DictionaryImportHelper" do
 
       dictionary_entry = DictionaryEntry.last
       expect(dictionary_entry.text).to eq('一口气')
-      expect(dictionary_entry.pinyin).to eq('yī kǒu qì')
 
       meanings = dictionary_entry.meanings
       source = Source.find_by(name: "CC-CEDICT")
@@ -55,13 +54,14 @@ describe "DictionaryImportHelper" do
       expect(meanings.map(&:text)).to eq([ "one breath", "in one breath", "at a stretch" ])
       expect(meanings.map(&:language)).to eq([ 'en', 'en', 'en' ])
       expect(meanings.map(&:source)).to eq(Array.new(3, source))
+      expect(meanings.map(&:pinyin)).to eq(Array.new(3, 'yī kǒu qì'))
     end
 
     context 'when the DictionaryEntry already exists' do
       before do
         @source = Source.find_or_create_by(name: sample_source[:name], url: sample_source[:url], date_accessed: Date.today)
-        @existing_entry = DictionaryEntry.build(text: '一口气', pinyin: 'yī kǒu qì')
-        @existing_entry.meanings << Meaning.build(text: "one breath", language: "en", source: @source)
+        @existing_entry = DictionaryEntry.build(text: '一口气')
+        @existing_entry.meanings << Meaning.build(text: "one breath", language: "en", pinyin: 'yī kǒu qì', source: @source)
         @existing_entry.save!
       end
 
@@ -101,15 +101,16 @@ describe "DictionaryImportHelper" do
     end
 
     it "pulls out the pinyin and accents the characters" do
-      expect(parse_cc_cedict_line(sample_string, sample_source)[:pinyin]).to eq("yī kǒu qì")
+      expect(parse_cc_cedict_line(sample_string, sample_source)[:meaning_attributes].map { |meaning| meaning[:pinyin] })
+        .to eq(Array.new(3, "yī kǒu qì"))
     end
 
     it "pulls out the meanings as an array" do
       expect(parse_cc_cedict_line(sample_string, sample_source)[:meaning_attributes]).to eq(
         [
-          { text: "one breath", language: "en", source_attributes: sample_source },
-          { text: "in one breath", language: "en", source_attributes: sample_source  },
-          { text: "at a stretch", language: "en", source_attributes: sample_source  }
+          { text: "one breath", pinyin: "yī kǒu qì", language: "en", source_attributes: sample_source },
+          { text: "in one breath", language: "en", pinyin: "yī kǒu qì", source_attributes: sample_source  },
+          { text: "at a stretch", language: "en", pinyin: "yī kǒu qì", source_attributes: sample_source  }
         ]
       )
     end
@@ -128,7 +129,6 @@ describe "DictionaryImportHelper" do
           expect(parse_cc_cedict_line(line, sample_source).keys).to include(
             :simplified,
             :traditional,
-            :pinyin,
             :meaning_attributes
           )
         end
