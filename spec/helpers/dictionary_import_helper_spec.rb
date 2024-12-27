@@ -83,10 +83,11 @@ describe "DictionaryImportHelper" do
       end
     end
 
-    it 'returns nil if the line cannot be parsed' do
+    it 'raises an error if the line cannot be parsed' do
       invalid_line = 'Invalid line format'
-      result = find_or_create_dictionary_entry(invalid_line, sample_source)
-      expect(result).to be_nil
+      expect {
+        find_or_create_dictionary_entry(invalid_line, sample_source)
+      }.to raise_error(RuntimeError, "Error parsing line: #{invalid_line}")
     end
   end
 
