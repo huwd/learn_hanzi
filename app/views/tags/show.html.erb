@@ -1,0 +1,35 @@
+<div class="flex-grow">
+  <% if @entry_tag.parent %>
+    <span> <- <%= link_to @entry_tag.parent.name, tag_path(@entry_tag.parent), data: { turbo_frame: "tag_#{@entry_tag.parent.id}" }, class: "text-blue-500 hover:underline" %> <span>
+  <% end %>
+  <h1 class="text-4xl font-extrabold text-gray-800 mb-6">
+    <%= @entry_tag.name %>
+  </h1>
+
+  <% if @entry_tag.children %>
+    <div class="mb-4">
+      <ul>
+        <% @entry_tag.children.each do |child_tag| %>
+          <li class="mb-2">
+            ↪ <%= link_to child_tag.name, tag_path(child_tag), data: { turbo_frame: "tag_#{child_tag.id}" }, class: "text-blue-500 hover:underline" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+<% unless @entry_tag.dictionary_entries.empty? %>
+  <h2 class="text-4xl font-extrabold text-gray-800 mb-6">
+    Dictionary Entries
+  </h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-7
+  ">
+    <% @entry_tag.dictionary_entries.each.with_index(1) do |entry, index| %>
+      <div class="relative bg-white shadow-md rounded-lg p-4 text-center">
+        <span class="absolute top-0 left-0 text-xs text-gray-500 p-1"><%= index %></span>
+        <p class="text-2xl font-bold text-gray-800"><%= entry.text %></p>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+</div>
