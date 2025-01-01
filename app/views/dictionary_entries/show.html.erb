@@ -1,0 +1,22 @@
+<div>
+  <%= link_to '< Back', :back, class: 'text-blue-500 hover:underline mb-4 inline-block' %>
+
+  <h1 class="font-bold text-4xl">
+    <%= @dictionary_entry.text %>
+  </h1>
+
+  <% @meanings.group_by(&:source).each do |source, meanings| %>
+    <% meanings.map(&:pinyin).uniq.map do |pinyin| %>
+      <p><%= pinyin %></p>
+    <% end %>
+    <br>
+    <h2 class="text-4l font-extrabold text-gray-800 mb-6">
+      <%= source.name %>
+    </h2>
+    <% meanings.each do |meaning| %>
+      <p class="text text-gray-800">
+        <%= meaning.text %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

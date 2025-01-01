@@ -25,10 +25,10 @@
   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-7
   ">
     <% @entry_tag.dictionary_entries.each.with_index(1) do |entry, index| %>
-      <div class="relative bg-white shadow-md rounded-lg p-4 text-center">
+      <%= link_to dictionary_entry_path(entry.id), class: "relative bg-white shadow-md rounded-lg p-4 text-center" do %>
         <span class="absolute top-0 left-0 text-xs text-gray-500 p-1"><%= index %></span>
         <p class="text-2xl font-bold text-gray-800"><%= entry.text %></p>
-      </div>
+      <% end %>
     <% end %>
   </div>
 <% end %>
