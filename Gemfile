@@ -63,7 +63,7 @@ group :test do
   gem "webmock"
 end
 
-gem "rspec-rails", "~> 7.1", groups: [ :development, :test ]
+gem "rspec-rails", "~> 7.1", groups: [ :development, :test ],  github: 'rspec/rspec-rails', branch: 'main'
 
 gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ]
 
