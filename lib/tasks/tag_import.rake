@@ -20,7 +20,7 @@ end
 
 def find_or_create_top_level_tags(hsk_version)
     top_tag = find_or_create_tag("HSK", "HSK")
-    parent_tag = find_or_create_tag("HSK 2.0", "HSK")
+    parent_tag = find_or_create_tag(hsk_version, "HSK", top_tag.id)
     top_tag.add_child(parent_tag)
     parent_tag
 end
@@ -48,7 +48,7 @@ def import_hsk_file(hsk_level_files, parent_tag)
     File.open(logfile_path, "a") do |logfile|
     hsk_level_files.each.with_index do |file, file_index|
       tag_name = "HSK #{file.split("/").last.split(".").first}"
-      tag = find_or_create_tag(tag_name, "HSK")
+      tag = find_or_create_tag(tag_name, "HSK", parent_tag.id)
       parent_tag.add_child(tag)
 
       file_content = JSON.parse(File.read(file))
