@@ -24,6 +24,23 @@
   </head>
 
   <body>
+    <header class="bg-gray-800 text-white p-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <h1 class="text-xl font-bold"><%= link_to "Learn Hanzi", root_path %></h1>
+        <nav class="flex items-center">
+          <% if authenticated? %>
+              <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center mr-4">
+                <%= Current.user.email_address[0].upcase %>
+              </div>
+            <%= button_to 'Sign out', session_path, method: :delete %>
+          <% else %>
+            <%= link_to "Login", new_session_path, class: "text-white hover:underline ml-4" %>
+            <%= link_to "Sign Up", signup_path, class: "text-white hover:underline ml-4" %>
+          <% end %>
+        </nav>
+      </div>
+    </header>
+
     <main class="container mx-auto mt-28 px-5 flex">
       <%= yield %>
     </main>
