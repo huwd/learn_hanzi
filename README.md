@@ -2,18 +2,6 @@
 
 ## Up next
 
-### User model
-
-### Add DictionaryEntries for HSK vocab that isn't in CEDICT
-
-There's not a lot of this and most is here HSK treats a phrase as singular but CEDICT breaks it out.
-For instance "to wear" and "a necktie" both exist in CEDCIT, but HSK wants "wear a necktie" together.
-
-This is no great issue, let's just create a custom DictionaryEntry for this, associate our own meaning
-and cite outselves as the source.
-
-See [log/tag_import_errors.log] for the full list.
-
 ### Anki
 
 Let's do something really grim,
@@ -33,6 +21,7 @@ class AnkiBase < ActiveRecord::Base
   end
 end
 ```
+
 then creating models:
 
 ```ruby
@@ -73,6 +62,19 @@ Let's build it around the tags. Theory is:
 - For a tag page, show all characters as small squares (thinking Majong tile approach), all gridded up. That's MVP
 - Navigation that allows you to move up and down a tag, explore pagination for top level tags or if things are getting slower than 1 second
 
+### Add DictionaryEntries for HSK vocab that isn't in CEDICT
+
+There's not a lot of this and most is here HSK treats a phrase as singular but CEDICT breaks it out.
+For instance "to wear" and "a necktie" both exist in CEDCIT, but HSK wants "wear a necktie" together.
+
+This is no great issue, let's just create a custom DictionaryEntry for this, associate our own meaning
+and cite outselves as the source.
+
+See [log/tag_import_errors.log] for the full list.
+
+### User model
+
+used the `bin/rails generate authentication` to bootstrap a login
 
 ## Friday 27 Dec
 
