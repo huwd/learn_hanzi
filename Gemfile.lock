@@ -1,3 +1,17 @@
+GIT
+  remote: https://github.com/rspec/rspec-rails.git
+  revision: 4e0fa6eb3fa2015a900f4e1a7fca8d47de61cfff
+  branch: main
+  specs:
+    rspec-rails (7.2.0.pre)
+      actionpack (>= 7.0)
+      activesupport (>= 7.0)
+      railties (>= 7.0)
+      rspec-core (~> 3.13)
+      rspec-expectations (~> 3.13)
+      rspec-mocks (~> 3.13)
+      rspec-support (~> 3.13)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -278,14 +292,6 @@ GEM
     rspec-mocks (3.13.2)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.13.0)
-    rspec-rails (7.1.0)
-      actionpack (>= 7.0)
-      activesupport (>= 7.0)
-      railties (>= 7.0)
-      rspec-core (~> 3.13)
-      rspec-expectations (~> 3.13)
-      rspec-mocks (~> 3.13)
-      rspec-support (~> 3.13)
     rspec-support (3.13.2)
     rubocop (1.69.2)
       json (~> 2.3)
@@ -430,7 +436,7 @@ DEPENDENCIES
   pry-rails
   puma (>= 5.0)
   rails (~> 8.0.0)
-  rspec-rails (~> 7.1)
+  rspec-rails (~> 7.1)!
   rubocop-rails-omakase
   selenium-webdriver
   shoulda-matchers (~> 6.0)
