@@ -1,16 +1,8 @@
 # README
 
-## Friday 27 Dec
+## Up next
 
-How far I got:
-
-1. ~Created the base database models~
-2. ~Prep to import CC_CEDICT~
-3. ~Finish processing CC_CEDICT~
-4. ~Import HSK 2.0 and tag CC_CEDICT~
-5. ~Import HSK 3.0 and tag CC_CEDICT~
-
-What's next:
+### User model
 
 ### Add DictionaryEntries for HSK vocab that isn't in CEDICT
 
@@ -21,14 +13,6 @@ This is no great issue, let's just create a custom DictionaryEntry for this, ass
 and cite outselves as the source.
 
 See [log/tag_import_errors.log] for the full list.
-
-### Frontend
-
-Now is a good time to start,
-Let's build it around the tags. Theory is:
-
-- For a tag page, show all characters as small squares (thinking Majong tile approach), all gridded up. That's MVP
-- Navigation that allows you to move up and down a tag, explore pagination for top level tags or if things are getting slower than 1 second
 
 ### Anki
 
@@ -78,6 +62,27 @@ Initial aim is to do something like, a 1-10 strength score. Then do a green grad
 
 Now we'll be getting somewhere on my user need of:
 > Show me my progress against HSK learning
+
+## Wednesday Jan 1st
+
+### Frontend
+
+Now is a good time to start,
+Let's build it around the tags. Theory is:
+
+- For a tag page, show all characters as small squares (thinking Majong tile approach), all gridded up. That's MVP
+- Navigation that allows you to move up and down a tag, explore pagination for top level tags or if things are getting slower than 1 second
+
+
+## Friday 27 Dec
+
+How far I got:
+
+1. ~Created the base database models~
+2. ~Prep to import CC_CEDICT~
+3. ~Finish processing CC_CEDICT~
+4. ~Import HSK 2.0 and tag CC_CEDICT~
+5. ~Import HSK 3.0 and tag CC_CEDICT~
 
 ## Sun Dec 8
 
