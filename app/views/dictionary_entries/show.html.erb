@@ -19,4 +19,16 @@
       </p>
     <% end %>
   <% end %>
+
+  <h2 class="text-4l font-extrabold text-gray-800 mb-6">
+    Tags
+  </h2>
+
+  <ul>
+    <% @dictionary_entry.tags.each do |tag| %>
+      <li>
+        <%= link_to "#{tag.parent.name} |  #{tag.name}", tag_path(tag), data: { turbo_frame: "tag_#{tag.id}" }, class: "text-blue-500 hover:underline" %>
+      </li>
+    <% end %>
+  </ul>
 </div>
