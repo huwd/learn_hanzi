@@ -18,7 +18,7 @@ gem "stimulus-rails"
 gem "tailwindcss-rails"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -65,6 +65,6 @@ end
 
 gem "rspec-rails", "~> 7.1", groups: [ :development, :test ],  github: 'rspec/rspec-rails', branch: 'main'
 
-gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ]
+gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ], github: 'jeromedalbert/factory_bot_rails', branch: 'authentication-generator'
 
 gem "shoulda-matchers", "~> 6.0", groups: [ :development, :test ]
