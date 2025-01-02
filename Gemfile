@@ -67,4 +67,4 @@ gem "rspec-rails", "~> 7.1", groups: [ :development, :test ]
 
 gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ]
 
-gem "shoulda-matchers", "~> 5.0", groups: [ :development, :test ]
+gem "shoulda-matchers", "~> 6.0", groups: [ :development, :test ]
