@@ -1,6 +1,10 @@
 module TagImportHelper
-  def find_or_create_tag(tag_name, category)
-    Tag.find_or_create_by(name: tag_name, category: category)
+  def find_or_create_tag(tag_name, category, parent_id = nil)
+    Tag.find_or_create_by(
+      name: tag_name,
+      category: category,
+      parent_id: parent_id
+    )
   end
 
   def associate_dictionary_entry_to_tag(text, tag)
