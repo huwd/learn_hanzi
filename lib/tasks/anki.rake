@@ -1,30 +1,31 @@
 namespace :anki do
-  desc "Analyze compatibility of the ANKI_TARGET_DECK with DictionaryEntries"
-  task analyze_deck: :environment do
-    # Safeguard 1: Check if the Anki SQLite DB exists
-    anki_db_path = Anki::DB.connection_db_config.database
-    unless File.exist?(anki_db_path)
-      puts "[ERROR] Anki SQLite database not found at: #{anki_db_path}"
+  desc "Migrate data from Anki to UserLearning and ReviewLog models"
+  task :migrate_to_models, [ :email ] => :environment do |t, args|
+    # Validate email parameter
+    unless args[:email].present?
+      puts "[ERROR] Please provide an email parameter. Example: rake anki:migrate_to_models[email@example.com]"
       exit 1
     end
 
-    # Safeguard 2: Test connection to the Anki database
-    begin
-      Anki::DB.connection.execute("SELECT 1")
-    rescue => e
-      puts "[ERROR] Unable to connect to Anki SQLite database: #{e.message}"
+    # Look up the user
+    email = args[:email]
+    user = User.find_by(email_address: email)
+
+    unless user
+      puts "[ERROR] No user found with email: #{email}"
       exit 1
     end
 
-    # Load the target deck from Anki module
+    puts "Starting migration from Anki to UserLearning and ReviewLog..."
+
     target_deck = Anki::ANKI_DESK_TARGET
-    log_file = Rails.root.join("log", "anki_deck_analysis.log")
+    log_file = Rails.root.join("log", "anki_migration.log")
 
     File.open(log_file, "w") do |log|
-      log.puts "Analyzing Anki Deck: #{target_deck}"
+      log.puts "Migrating Anki Deck: #{target_deck}"
       log.puts "---"
 
-      # Get deck ID for the target deck name from the col table
+      # Get deck ID for the target deck
       col_metadata = Anki::DB.connection.execute("SELECT decks FROM col").first
       decks = JSON.parse(col_metadata["decks"])
 
@@ -37,42 +38,67 @@ namespace :anki do
 
       # Filter cards by deck ID
       cards = Anki::Card.where(did: deck_id)
-
       total_cards = cards.size
       processed_cards = 0
 
       cards.each do |card|
         begin
-          # Fetch the associated note
           note = Anki::Note.find(card.nid)
-
-          # Extract the simplified character from the note
           simplified_character = note.card_data["Simplified"]
 
-          if simplified_character.blank?
-            log.puts "[WARNING] Card #{card.id}: No simplified character found in note #{note.id}"
+          next if simplified_character.blank?
+
+          dictionary_entry = DictionaryEntry.find_by(text: simplified_character)
+          unless dictionary_entry
+            log.puts "[SKIP] No DictionaryEntry for Simplified Character: #{simplified_character}"
             next
           end
 
-          # Check if the character exists in the DictionaryEntries table
-          dictionary_entry = DictionaryEntry.find_by(text: simplified_character)
-
-          if dictionary_entry.nil?
-            log.puts "[MISSING] Card #{card.id}, Note #{note.id}: Simplified character '#{simplified_character}' not found in DictionaryEntries"
+          # Create or find UserLearning
+          user_learning = UserLearning.find_or_create_by!(
+            user: user, # Take the user we passed in
+            dictionary_entry: dictionary_entry
+          ) do |ul|
+            ul.state = case card.queue
+            when 0 then "new"
+            when 1 then "learning"
+            when 2 then "mastered"
+            when 3 then "learning" # Treat "Day Learning" as "learning"
+            when -1 then "suspended"
+            when -2 then "suspended" # Treat "Buried" as "suspended"
+            else
+              "unknown" # Fallback for unexpected states
+            end
+            ul.next_due = Time.at(card.due)
+            ul.last_interval = card.ivl
           end
+
+          # Migrate ReviewLogs for the card
+          revlogs = Anki::Revlog.where(cid: card.id)
+          revlogs.each do |revlog|
+            ReviewLog.create!(
+              user_learning: user_learning,
+              ease: revlog.ease,
+              interval: revlog.ivl,
+              time_spent: revlog.time,
+              reviewed_at: Time.at(revlog.id / 1000) # Convert millisecond timestamp to seconds
+            )
+          end
+
+          log.puts "[SUCCESS] Migrated Card #{card.id} -> UserLearning #{user_learning.id}"
         rescue => e
-          log.puts "[ERROR] Card #{card.id}: #{e.message}"
+          log.puts "[ERROR] Failed to migrate Card #{card.id}: #{e.message}"
         ensure
           processed_cards += 1
-          progress = (processed_cards.to_f / total_cards * 100).round
-          print "\r#{'=' * (progress / 10)}#{'>'} (#{processed_cards}/#{total_cards}) #{progress}%"
+          progress = (processed_cards.to_f / total_cards * 100).round(2)
+          print "\r(#{processed_cards} of #{total_cards}) #{progress}%"
         end
       end
 
       log.puts "---"
-      log.puts "Analysis complete."
+      log.puts "Migration complete."
     end
 
-    puts "\nAnalysis complete. Log written to: #{log_file}"
+    puts "\nMigration complete. Log written to: #{log_file}"
   end
 end
