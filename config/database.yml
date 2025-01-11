@@ -7,11 +7,19 @@ development:
   primary:
     <<: *default
     database: storage/development.sqlite3
+  anki:
+    <<: *default
+    database: /home/huw/Projects/Personal/learn_hanzi/tmp/anki/collection-20250111121952/collection.anki21
+    migrations_paths: []
 
 test:
   primary:
     <<: *default
     database: storage/test.sqlite3
+  anki:
+    <<: *default
+    database: storage/collection.anki21
+    migrations_paths: []
 
 production:
   primary:
@@ -25,3 +33,6 @@ production:
     <<: *default
     database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
+  anki:
+    <<: *default
+    database: storage/production_collection.anki21
