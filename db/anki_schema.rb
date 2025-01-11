@@ -86,12 +86,4 @@ ActiveRecord::Schema[8.0].define(version: 0) do
     t.index ["cid"], name: "ix_revlog_cid"
     t.index ["usn"], name: "ix_revlog_usn"
   end
-
-# Could not dump table "sqlite_stat1" because of following StandardError
-#   Unknown type '' for column 'tbl'
-
-
-# Could not dump table "sqlite_stat4" because of following StandardError
-#   Unknown type '' for column 'tbl'
-
 end
