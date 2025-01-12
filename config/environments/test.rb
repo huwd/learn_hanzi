@@ -39,4 +39,14 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Commonly used so we can see mail in the logs or use a gem like letter_opener
+  config.action_mailer.delivery_method = :smtp
+
+  # Example for local dev:
+  config.action_mailer.default_url_options = {
+    host: "localhost",
+    port: 3000,
+    from: "test@mnbvcxz.com"
+  }
 end
