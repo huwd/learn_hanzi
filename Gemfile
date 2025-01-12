@@ -50,9 +50,11 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "awesome_print"
+  gem "bullet"
   gem "pry"
   gem "pry-rails"
   gem "pry-byebug"
+  gem "rack-mini-profiler"
   gem "web-console"
 end
 
@@ -63,8 +65,8 @@ group :test do
   gem "webmock"
 end
 
-gem "rspec-rails", "~> 7.1", groups: [ :development, :test ],  github: 'rspec/rspec-rails', branch: 'main'
+gem "rspec-rails", "~> 7.1", groups: [ :development, :test ],  github: "rspec/rspec-rails", branch: "main"
 
-gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ], github: 'jeromedalbert/factory_bot_rails', branch: 'authentication-generator'
+gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ], github: "jeromedalbert/factory_bot_rails", branch: "authentication-generator"
 
 gem "shoulda-matchers", "~> 6.0", groups: [ :development, :test ]
