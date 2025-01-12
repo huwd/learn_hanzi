@@ -21,8 +21,7 @@ class DictionaryEntry < ApplicationRecord
     entry = includes(tags: :parent).find(id)
     meanings = entry.meanings.includes(:source)
     user_learning = entry.user_learning_for(user)
-    reviews = user_learning&.review_logs || []
-    { entry: entry, meanings: meanings, user_learning: user_learning, reviews: reviews }
+    { entry: entry, meanings: meanings, user_learning: user_learning }
   end
 
   private

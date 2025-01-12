@@ -42,13 +42,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_11_232936) do
 
   create_table "review_logs", force: :cascade do |t|
     t.integer "user_learning_id", null: false
+    t.integer "anki_id"
     t.integer "ease", null: false
     t.integer "interval"
     t.integer "time_spent"
-    t.datetime "reviewed_at", null: false
+    t.integer "factor"
+    t.integer "time"
+    t.integer "log_type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["reviewed_at"], name: "index_review_logs_on_reviewed_at"
     t.index ["user_learning_id"], name: "index_review_logs_on_user_learning_id"
   end
 
