@@ -42,4 +42,20 @@ RSpec.describe Tag, type: :model do
       end
     end
   end
+
+  describe "#add_child" do
+    let(:parent_tag) { create(:tag) }
+    let(:child_tag) { create(:tag) }
+
+    it "adds a child tag" do
+      parent_tag.add_child(child_tag)
+      expect(parent_tag.children).to include(child_tag)
+    end
+
+    it "does not add the same child tag twice" do
+      parent_tag.add_child(child_tag)
+      parent_tag.add_child(child_tag)
+      expect(parent_tag.children.where(id: child_tag.id).count).to eq(1)
+    end
+  end
 end
