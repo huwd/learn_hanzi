@@ -51,6 +51,7 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "awesome_print"
   gem "bullet"
+  gem "letter_opener"
   gem "pry"
   gem "pry-rails"
   gem "pry-byebug", ">= 3.10.1"
