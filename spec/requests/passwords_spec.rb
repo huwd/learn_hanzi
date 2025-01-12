@@ -15,6 +15,28 @@ RSpec.describe "Passwords", type: :request do
     end
   end
 
+  describe "POST /passwords" do
+    context "when user exists" do
+      it "sends password reset instructions" do
+        expect {
+          post passwords_path, params: { email_address: user.email_address }
+        }.to have_enqueued_mail(PasswordsMailer, :reset)
+        expect(response).to redirect_to(new_session_path)
+        follow_redirect!
+        expect(response.body).to include("Password reset instructions sent")
+      end
+    end
+
+    context "when user does not exist" do
+      it "redirects to the new session path with a notice" do
+        post passwords_path, params: { email_address: "nonexistent@example.com" }
+        expect(response).to redirect_to(new_session_path)
+        follow_redirect!
+        expect(response.body).to include("Password reset instructions sent")
+      end
+    end
+  end
+
   describe "GET /passwords/:token/edit" do
     context "with a valid token" do
       let(:token) { "valid_token" }
