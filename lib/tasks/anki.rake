@@ -43,7 +43,11 @@ namespace :anki do
 
       cards.each do |card|
         begin
-          note = Anki::Note.find(card.nid)
+          note = Anki::Note.find_by_id(card.nid)
+        rescue => e
+          log.puts "[ERROR] Failed to find Note for Card #{card.id}: #{e.message}"
+        end
+        begin
           simplified_character = note.card_data["Simplified"]
 
           next if simplified_character.blank?

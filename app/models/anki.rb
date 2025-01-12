@@ -17,6 +17,14 @@ module Anki
     self.table_name = "notes"
     self.primary_key = "id"
 
+    def self.find_by_character(character)
+      candidates = Anki::Note.where("flds LIKE ?", "%#{character}%")
+      results = candidates.select do |note|
+        data = note.card_data  # => e.g., { "Simplified" => "...", "Pinyin" => "...", ...}
+        data["Simplified"] == "好"
+      end
+    end
+
     def card_data
       if anki_deck.present?
         field_names = anki_deck["flds"].map { |f| f["name"] }
