@@ -6,6 +6,6 @@ FactoryBot.define do
     time_spent { rand(500..5000) } # Example: time spent in milliseconds
     factor { rand(1300..2000) } # Example: factor
     time { Time.now.to_i }
-    type { [ 0, 1, 2, 3 ].sample }
+    log_type { [ 0, 1, 2, 3 ].sample }
   end
 end
