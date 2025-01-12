@@ -53,7 +53,7 @@ group :development do
   gem "bullet"
   gem "pry"
   gem "pry-rails"
-  gem "pry-byebug"
+  gem "pry-byebug", ">= 3.10.1"
   gem "rack-mini-profiler"
   gem "web-console"
 end
