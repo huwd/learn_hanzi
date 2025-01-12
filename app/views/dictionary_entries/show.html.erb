@@ -31,4 +31,31 @@
       </li>
     <% end %>
   </ul>
+
+  <h2 class="text-4l font-extrabold text-gray-800 mb-6">
+    Learning Progress
+  </h2>
+
+  <p>
+    State: <%= @user_learning[:state] %>
+  </p>
+
+  <p>
+    Next Review: <%= @user_learning[:next_due] %>
+  </p>
+
+  <p>
+    Last Interval: <%= @user_learning[:last_interval] %>
+  </p>
+
+  <h2 class="text-4l font-extrabold text-gray-800 mb-6">
+    Revlog
+  </h2>
+
+  <% @reviews.sort.each do |review| %>
+    <p>
+      <%= review.created_at %>
+      <%= review.ease %>
+    </p>
+  <% end %>
 </div>
