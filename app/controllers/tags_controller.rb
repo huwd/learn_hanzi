@@ -10,7 +10,15 @@ class TagsController < ApplicationController
 
   def show
     @entry_tag = Tag.find(params[:id])
-    @dictionary_entries = @entry_tag.dictionary_entries
+    @child_tags = @entry_tag.children
+    @dictionary_entries_grouped = TagEntriesGrouper.new(@entry_tag, Current.user).grouped_by_learning_state
+    @states = {
+      not_learned: "Not Learned yet",
+      new_entries: "New",
+      learning:    "Learning",
+      mastered:    "Mastered",
+      suspended:   "Suspended"
+    }
 
     respond_to do |format|
       format.html # renders show.html.erb
