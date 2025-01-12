@@ -21,7 +21,7 @@ namespace :anki do
     target_deck = Anki::ANKI_DESK_TARGET
     log_file = Rails.root.join("log", "anki_migration.log")
 
-    File.open(log_file, "w") do |log|
+    File.open(log_file, "a") do |log| # Open in append mode
       log.puts "Migrating Anki Deck: #{target_deck}"
       log.puts "---"
 
@@ -76,18 +76,23 @@ namespace :anki do
           # Migrate ReviewLogs for the card
           revlogs = Anki::Revlog.where(cid: card.id)
           revlogs.each do |revlog|
+            # Skip if the ReviewLog with the same anki_id already exists
+            next if ReviewLog.exists?(anki_id: revlog.id)
             ReviewLog.create!(
-              user_learning: user_learning,
+              anki_id: revlog.id,
+              user_learning_id: user_learning.id,
               ease: revlog.ease,
               interval: revlog.ivl,
               time_spent: revlog.time,
-              reviewed_at: Time.at(revlog.id / 1000) # Convert millisecond timestamp to seconds
+              factor: revlog.factor,
+              time: revlog.id,
+              log_type: revlog.type
             )
           end
 
-          log.puts "[SUCCESS] Migrated Card #{card.id} -> UserLearning #{user_learning.id}"
+          # log.puts "[SUCCESS] Migrated Card #{card.id} -> UserLearning #{user_learning.id}"
         rescue => e
-          log.puts "[ERROR] Failed to migrate Card #{card.id}: #{e.message}"
+          log.puts "[ERROR] #{simplified_character}: Failed to migrate Card #{card.id}: #{e.message}"
         ensure
           processed_cards += 1
           progress = (processed_cards.to_f / total_cards * 100).round(2)
