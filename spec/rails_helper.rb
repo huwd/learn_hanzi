@@ -12,6 +12,7 @@ require 'webmock/rspec'
 
 # Add additional requires below this line. Rails is not loaded until this point!
 require_relative 'support/authentication_helpers'
+require_relative 'support/anki_helper'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -51,6 +52,10 @@ RSpec.configure do |config|
       with.library :active_model
       with.library :action_controller # Add this if you want to test controllers
     end
+  end
+
+  config.before(:suite) do
+    AnkiHelper.setup_dummy_db
   end
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
