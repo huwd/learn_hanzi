@@ -2,6 +2,8 @@ class UserLearning < ApplicationRecord
   belongs_to :user
   belongs_to :dictionary_entry
 
+  has_many :review_logs, dependent: :destroy
+
   validates :state, presence: true, inclusion: { in: [ "new", "learning", "mastered", "suspended" ] }
   validates :user, uniqueness: { scope: :dictionary_entry, message: "already has a learning record for this entry" }
 
