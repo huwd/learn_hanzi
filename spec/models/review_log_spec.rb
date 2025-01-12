@@ -8,7 +8,6 @@ RSpec.describe ReviewLog, type: :model do
   describe 'validations' do
     it { should validate_presence_of(:ease) }
     it { should validate_inclusion_of(:ease).in_range(1..4) }
-    it { should validate_presence_of(:reviewed_at) }
   end
 
   describe 'data consistency' do

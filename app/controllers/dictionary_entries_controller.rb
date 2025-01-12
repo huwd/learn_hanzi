@@ -4,6 +4,5 @@ class DictionaryEntriesController < ApplicationController
     @dictionary_entry = @entry[:entry]
     @meanings = @entry[:meanings].where(language: "en")
     @user_learning = @entry[:user_learning]
-    @reviews = @entry[:reviews]
   end
 end

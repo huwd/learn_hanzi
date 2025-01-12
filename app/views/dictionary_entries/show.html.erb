@@ -48,17 +48,6 @@
     <p>
       Last Interval: <%= @user_learning[:last_interval] %>
     </p>
-
-    <h2 class="text-4l font-extrabold text-gray-800 mb-6">
-      Revlog
-    </h2>
-
-    <% @reviews.sort.each do |review| %>
-      <p>
-        <%= review.created_at %>
-        <%= review.ease %>
-      </p>
-    <% end %>
   <% else %>
     <p>
     No record of current learning
