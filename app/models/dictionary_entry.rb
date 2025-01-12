@@ -2,6 +2,7 @@ class DictionaryEntry < ApplicationRecord
   has_many :dictionary_entry_tags, dependent: :destroy
   has_many :tags, through: :dictionary_entry_tags
   has_many :meanings, dependent: :destroy
+  has_many :user_learnings, dependent: :destroy
 
   validates :text, presence: true
   validate :must_have_at_least_one_meaning
@@ -10,6 +11,18 @@ class DictionaryEntry < ApplicationRecord
 
   def add_tag(tag)
     DictionaryEntryTag.find_or_create_by(dictionary_entry: self, tag: tag)
+  end
+
+  def user_learning_for(user)
+    user_learnings.find_by(user: user)
+  end
+
+  def self.find_with_associations(id, user)
+    entry = includes(tags: :parent).find(id)
+    meanings = entry.meanings.includes(:source)
+    user_learning = entry.user_learning_for(user)
+    reviews = user_learning&.review_logs || []
+    { entry: entry, meanings: meanings, user_learning: user_learning, reviews: reviews }
   end
 
   private

@@ -1,8 +1,9 @@
 class DictionaryEntriesController < ApplicationController
   def show
-    @dictionary_entry = DictionaryEntry.find_by_id(params[:id])
-    @meanings = @dictionary_entry.meanings.select { |meaning| meaning.language == "en" }
-    @user_learning = UserLearning.find { |ul| ul.user == Current.user && ul.dictionary_entry == @dictionary_entry }
-    @reviews = @user_learning.review_logs
+    @entry = DictionaryEntry.find_with_associations(params[:id], Current.user)
+    @dictionary_entry = @entry[:entry]
+    @meanings = @entry[:meanings].where(language: "en")
+    @user_learning = @entry[:user_learning]
+    @reviews = @entry[:reviews]
   end
 end
