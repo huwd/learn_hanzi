@@ -2,6 +2,41 @@
 
 ## Up next
 
+### 27th June
+
+Of course I've lost the thread of what I was doing here.
+
+So here's where I see outstanding issues.
+Core issue is that having imported my Anki Collection it's managed to import some but not all of my learnings, Charcters I know I've mastered are not showing up as learned.
+
+This is the big barrier to progress.
+
+I think the next step is to work out what an appropriately represenative test databsae is, ideally containing a range of characters that I know import well, and also ones that fail.
+
+It should be extensible so I can add future bugs to it. This is likely the core work as it's difficult to track the bug down without further tests.
+
+Additionally we have a few other issues:
+
+#### log/dictionary_import_errors.log
+
+This seems to show CEDICT items we've been unable to import.
+I suspect this is either genuine duplicates in CEDICT (surely not?), or something about the ways characters repeat in the language. However I'd understood that constraining uniqueness by meaning would sort it... :thinking:
+
+#### log/tag_import_errors.log
+
+these seem to be legitimate errors, ones where CEDICT doesn't have an entry for them, either because they're a turn of phrase or a combination that doesn't appear. These need custom dictionary entries.
+
+They should represent entries from HSK that don't appear in source CEDICT.
+
+Can draw these from HSK materials perhaps?
+
+
+#### log/anki_migration.log
+
+Similarly these would represent:
+
+Anki flashcards with phrases that aren't in CEDICT and need a custom entry.
+
 ### Anki
 
 Let's do something really grim,
