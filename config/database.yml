@@ -18,7 +18,7 @@ test:
     database: storage/test.sqlite3
   anki:
     <<: *default
-    database: storage/collection.anki21
+    database: storage/anki-test.sqlite3
     migrations_paths: []
 
 production:
