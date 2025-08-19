@@ -44,7 +44,6 @@ They should represent entries from HSK that don't appear in source CEDICT.
 
 Can draw these from HSK materials perhaps?
 
-
 #### log/anki_migration.log
 
 Similarly these would represent:
@@ -165,8 +164,6 @@ This bit I didn't complete, we have to:
   - parse out the meanings, find_or_create for each with CC_CEDICT as the source
   - save the row
 - Also impliamnet a progress bar that updates against a count of all non comment lines vs which line the enumerator is on.
-
-###  Then what
 
 ### # Tagging up HSK
 
