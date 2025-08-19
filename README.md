@@ -2,6 +2,20 @@
 
 ## Up next
 
+Line 21 of config/database.yml
+
+If i use my DB fixture it can't find the right records in col.
+If I use my actual anki from tmp i get better failures.
+
+So here's what we need to do:
+
+- Dump the schema from the real Anki sqlite
+- Ensure a script / seeds.yml can rebuild exactly that schema (test it)
+- Extract a random cross section of records (with a fixed seed), populate the DB with test data
+- Isolate troublesome records and bring those across
+
+Ideally automate this, this is going to be a source of many bugs
+
 ### 27th June
 
 Of course I've lost the thread of what I was doing here.
