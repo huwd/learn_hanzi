@@ -55,7 +55,7 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    AnkiHelper.setup_dummy_db
+    AnkiHelper.setup_test_db
   end
 
   # You can uncomment this line to turn off ActiveRecord support entirely.
