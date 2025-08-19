@@ -1,10 +1,4 @@
 module Anki
-  # Going to hard code the ANKI target for now
-  # Mostly as we're dealing with a single read only DB
-  # I know what's in it
-  # However this is something we'll want to vary, to allow
-  # A user to upload and select their own ANKI table and match
-  # with dictionary entries
   ANKI_DESK_TARGET = "Mandarin: Vocabulary::a. HSK"
 
   class DB < ReadOnlyRecord
@@ -19,9 +13,8 @@ module Anki
 
     def self.find_by_character(character)
       candidates = Anki::Note.where("flds LIKE ?", "%#{character}%")
-      results = candidates.select do |note|
-        data = note.card_data  # => e.g., { "Simplified" => "...", "Pinyin" => "...", ...}
-        data["Simplified"] == "好"
+      candidates.select do |note|
+        note.card_data["Simplified"] == character
       end
     end
 
