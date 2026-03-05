@@ -9,7 +9,7 @@ development:
     database: storage/development.sqlite3
   anki:
     <<: *default
-    database: /home/huw/Projects/Personal/learn_hanzi/tmp/anki/collection-20250111121952/collection.anki21
+    database: tmp/anki/collection.anki21
     migrations_paths: []
 
 test:
