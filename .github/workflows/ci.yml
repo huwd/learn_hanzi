@@ -82,6 +82,9 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Build assets
+        run: bin/rails tailwindcss:build
+
       - name: Run tests
         env:
           RAILS_ENV: test
