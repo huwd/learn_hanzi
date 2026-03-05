@@ -13,9 +13,12 @@ updates:
       patch: 3
   open-pull-requests-limit: 10
   groups:
-    ruby-dependencies:
+    ruby-minor-and-patch:
       patterns:
         - "*"
+      update-types:
+        - "minor"
+        - "patch"
 
 - package-ecosystem: github-actions
   directory: "/"
@@ -26,6 +29,9 @@ updates:
     minimum-age: 7
   open-pull-requests-limit: 5
   groups:
-    github-actions:
+    github-actions-minor-and-patch:
       patterns:
         - "*"
+      update-types:
+        - "minor"
+        - "patch"
