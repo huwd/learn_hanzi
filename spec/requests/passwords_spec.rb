@@ -60,7 +60,6 @@ RSpec.describe "Passwords", type: :request do
         follow_redirect!
         expect(response.body).to include("Password reset link is invalid or has expired.")
       end
-
     end
   end
 
