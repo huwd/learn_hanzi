@@ -89,3 +89,11 @@ jobs:
         env:
           RAILS_ENV: test
         run: bin/rails db:test:prepare && bundle exec rspec
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
