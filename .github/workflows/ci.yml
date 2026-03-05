@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libreadline-dev
+
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -33,6 +36,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libreadline-dev
+
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -48,6 +54,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libreadline-dev
+
       - name: Checkout code
         uses: actions/checkout@v6
 
@@ -71,7 +80,7 @@ jobs:
     #    options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libjemalloc2 sqlite3
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libjemalloc2 libreadline-dev sqlite3
 
       - name: Checkout code
         uses: actions/checkout@v6
