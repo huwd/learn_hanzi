@@ -47,18 +47,21 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 end
 
+group :development, :test do
+  gem "factory_bot_rails", "~> 6.5"
+  gem "rspec-rails", "~> 8.0"
+  gem "shoulda-matchers", "~> 6.0"
+end
+
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "awesome_print"
   gem "bullet"
-  gem "factory_bot_rails", "~> 6.5"
   gem "letter_opener"
   gem "pry"
   gem "pry-rails"
   gem "pry-byebug", ">= 3.10.1"
   gem "rack-mini-profiler"
-  gem "rspec-rails", "~> 8.0"
-  gem "shoulda-matchers", "~> 6.0"
   gem "web-console"
 end
 

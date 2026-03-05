@@ -14,9 +14,8 @@ module ImportFilesHelper
 
     Zip::File.open(temp_zip_path) do |zip_file|
       zip_file.each do |entry|
-        destination_path = File.join(unzip_dir, entry.name)
-        puts "Extracting #{entry.name} to #{destination_path}..."
-        entry.extract(destination_path) { true }
+        puts "Extracting #{entry.name} to #{unzip_dir}..."
+        entry.extract(destination_directory: unzip_dir) { true }
       end
     end
   end
