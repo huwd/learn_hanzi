@@ -14,8 +14,8 @@ Rails.application.routes.draw do
 
   resource :session
   resources :passwords, param: :token
-  resources :tags, only: [:index, :show]
-  resources :dictionary_entries, only: [:show]
+  resources :tags, only: [ :index, :show ]
+  resources :dictionary_entries, only: [ :show ]
   get "signup", to: "registrations#new"
   post "signup", to: "registrations#create"
 end

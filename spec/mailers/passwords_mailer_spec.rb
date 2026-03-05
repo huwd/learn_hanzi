@@ -7,8 +7,8 @@ RSpec.describe PasswordsMailer, type: :mailer do
 
     it 'renders the headers' do
       expect(mail.subject).to eq('Reset your password')
-      expect(mail.to).to eq([user.email_address])
-      expect(mail.from).to eq([Rails.application.config.action_mailer.default_url_options[:from]])
+      expect(mail.to).to eq([ user.email_address ])
+      expect(mail.from).to eq([ Rails.application.config.action_mailer.default_url_options[:from] ])
     end
 
     it 'renders the body' do
