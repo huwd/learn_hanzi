@@ -28,11 +28,11 @@ RSpec.describe TagEntriesGrouper do
       grouped_entries = grouper.grouped_by_learning_state
 
       expect(grouped_entries).to eq({
-          :learning => [],
-          :mastered => [],
-        :new_entries => [],
-        :not_learned => [],
-          :suspended => []
+          learning: [],
+          mastered: [],
+        new_entries: [],
+        not_learned: [],
+          suspended: []
       })
     end
   end
