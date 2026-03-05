@@ -67,7 +67,7 @@ group :test do
   gem "webmock"
 end
 
-gem "rspec-rails", "~> 7.1", groups: [ :development, :test ],  github: "rspec/rspec-rails", branch: "main"
+gem "rspec-rails", "~> 8.1.pre", groups: [ :development, :test ],  github: "rspec/rspec-rails", branch: "main"
 
 gem "factory_bot_rails", "~> 6.4", groups: [ :development, :test ], github: "jeromedalbert/factory_bot_rails", branch: "authentication-generator"
 
