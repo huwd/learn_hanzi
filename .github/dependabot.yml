@@ -5,6 +5,12 @@ updates:
   schedule:
     interval: weekly
     day: monday
+  cooldown:
+    minimum-age: 7
+    semver:
+      major: 30
+      minor: 7
+      patch: 3
   open-pull-requests-limit: 10
   groups:
     ruby-dependencies:
@@ -16,6 +22,8 @@ updates:
   schedule:
     interval: weekly
     day: monday
+  cooldown:
+    minimum-age: 7
   open-pull-requests-limit: 5
   groups:
     github-actions:
