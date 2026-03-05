@@ -51,6 +51,29 @@ Valid types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`
 - Order commits to tell a coherent narrative through repository history
 - Revise history on feature branches before opening pull requests
 
+## Branching
+
+**Always work on a branch — never commit directly to `main`.**
+
+Branch naming convention: `<type>/<issue-number>-<short-description>`
+
+```bash
+# Example for issue #38
+git checkout -b fix/38-ci-rspec-not-running
+
+# Example for issue #22
+git checkout -b chore/22-upgrade-rails-8-1
+```
+
+Valid prefixes match the commit types: `fix/`, `feat/`, `chore/`, `ci/`, `test/`, `docs/`, `refactor/`.
+
+When the work is complete, push the branch and open a PR against `main`:
+
+```bash
+git push -u origin <branch-name>
+gh pr create --base main
+```
+
 ## Development Workflow (TDD)
 
 New feature development follows a test-driven cycle with commits between stages:
