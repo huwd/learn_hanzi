@@ -42,7 +42,7 @@ RSpec.describe "Passwords", type: :request do
       let(:token) { "valid_token" }
 
       before do
-        allow(User).to receive(:find_by_password_reset_token!).with( token).and_return(user)
+        allow(User).to receive(:find_by_password_reset_token!).with(token).and_return(user)
       end
 
       it "returns the update password form" do
@@ -67,7 +67,7 @@ RSpec.describe "Passwords", type: :request do
     let(:token) { "valid_token" }
 
     before do
-      allow(User).to receive(:find_by_password_reset_token!).with( token).and_return(user)
+      allow(User).to receive(:find_by_password_reset_token!).with(token).and_return(user)
     end
 
     context "with valid parameters" do
