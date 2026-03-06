@@ -47,7 +47,7 @@ RSpec.describe "dictionary_import", type: :task do
       expect(percentages).to all(match(/\A[\d ]+\.\d{2}\z/))
     end
 
-    it "calls find_or_create_cc_cedict_source" do
+    it "calls find_or_create_cc_cedict_source with the correct arguments" do
       # Mock the module method directly
       allow(DictionaryImportHelper).to receive(:find_or_create_cc_cedict_source)
         .and_return(
@@ -69,6 +69,15 @@ RSpec.describe "dictionary_import", type: :task do
           fixture_file_path
         )
       end
+    end
+
+    it "calls find_or_create_cc_cedict_source exactly once regardless of how many entries the file has" do
+      # Pre-optimisation: source was looked up inside find_or_create_dictionary_entry,
+      # so it was called once per entry. Post-optimisation: looked up once before the
+      # loop and the Source object is passed directly to the helper.
+      expect(DictionaryImportHelper).to receive(:find_or_create_cc_cedict_source).once.and_call_original
+
+      silence_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
     end
   end
 end

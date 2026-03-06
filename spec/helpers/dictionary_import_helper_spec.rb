@@ -90,6 +90,31 @@ describe "DictionaryImportHelper" do
       }.to raise_error(RuntimeError, "Error parsing line: #{invalid_line}")
     end
 
+    context 'when passed a pre-loaded Source object instead of a hash' do
+      let(:pre_loaded_source) do
+        Source.create!(
+          name: "CC-CEDICT",
+          url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip",
+          date_accessed: Date.today
+        )
+      end
+
+      it 'creates the entry and meanings using the provided source' do
+        expect {
+          DictionaryImportHelper.find_or_create_dictionary_entry(sample_string, pre_loaded_source)
+        }.to change(DictionaryEntry, :count).by(1)
+          .and change(Meaning, :count).by(3)
+
+        meanings = DictionaryEntry.find_by!(text: "一口气").meanings
+        expect(meanings.map(&:source).uniq).to eq([ pre_loaded_source ])
+      end
+
+      it 'does not call find_or_create_cc_cedict_source' do
+        expect(DictionaryImportHelper).not_to receive(:find_or_create_cc_cedict_source)
+        DictionaryImportHelper.find_or_create_dictionary_entry(sample_string, pre_loaded_source)
+      end
+    end
+
     # Regression anchors: real CC-CEDICT lines that caused UNIQUE constraint
     # failures (logged in log/dictionary_import_errors.log) because the same
     # meaning text appears more than once within a single entry's meaning string.
