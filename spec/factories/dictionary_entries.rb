@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :dictionary_entry do
-    text { "感动" }
+    sequence(:text) { |n| "感动#{n}" }
 
     after(:build) do |entry|
       entry.meanings << build(:meaning, dictionary_entry: entry)
