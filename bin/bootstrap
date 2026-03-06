@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/bootstrap — full data import pipeline for a fresh development environment.
+#
+# Run this after bin/setup (which installs deps and creates an empty DB) to
+# download and import all reference data: CC-CEDICT dictionary, HSK vocabulary
+# tags, and custom dictionary entries.
+#
+# Safe to re-run — all import tasks are idempotent.
+#
+# Anki learning history is NOT imported here because it requires a personal
+# .colpkg file. See README.md for manual Anki setup instructions.
+
+require "fileutils"
+
+APP_ROOT = File.expand_path("..", __dir__)
+
+def system!(*args)
+  system(*args, exception: true)
+end
+
+def step(msg)
+  puts "\n== #{msg} =="
+  $stdout.flush
+end
+
+FileUtils.chdir APP_ROOT do
+  step "Installing dependencies"
+  system("bundle check") || system!("bundle install")
+
+  step "Preparing database"
+  system! "bin/rails db:schema:load"
+
+  step "Downloading CC-CEDICT dictionary"
+  system! "bin/rails dictionary_download:cc_cedict"
+
+  step "Importing CC-CEDICT dictionary"
+  system! "bin/rails dictionary_import:cc_cedict"
+
+  step "Importing custom dictionary entries"
+  system! "bin/rails dictionary_import:custom_entries"
+
+  step "Downloading HSK vocabulary files"
+  system! "bin/rails tag_download:hsk_2"
+  system! "bin/rails tag_download:hsk_3"
+
+  step "Importing HSK 2.0 tags"
+  system! "bin/rails tag_import:hsk_2"
+
+  step "Importing HSK 3.0 tags"
+  system! "bin/rails tag_import:hsk_3"
+
+  puts "\n== Bootstrap complete =="
+  puts ""
+  puts "To import your Anki learning history:"
+  puts "  1. Export from Anki: File → Export → Anki Collection Package"
+  puts "  2. unzip -o your_collection.colpkg collection.anki21 -d tmp/anki/"
+  puts "  3. bin/rails \"anki:migrate_to_models[your@email.com]\""
+end
