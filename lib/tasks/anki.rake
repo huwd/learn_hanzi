@@ -20,8 +20,9 @@ namespace :anki do
 
     target_deck = Anki::ANKI_DESK_TARGET
     log_file = Rails.root.join("log", "anki_migration.log")
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-    File.open(log_file, "a") do |log| # Open in append mode
+    File.open(log_file, "a") do |log|
       log.puts "Migrating Anki Deck: #{target_deck}"
       log.puts "---"
 
@@ -36,81 +37,109 @@ namespace :anki do
         exit 1
       end
 
-      # Filter cards by deck ID, including cards currently in a filtered deck
-      # (e.g. Custom Study Session) whose original home is the target deck.
+      # Filter cards by deck ID, including cards currently in a filtered deck.
       # Anki stores the original deck in `odid` when moving a card to a filtered
       # deck; `did` alone misses these cards.
-      cards = Anki::Card.where(did: deck_id).or(Anki::Card.where(odid: deck_id))
-      total_cards = cards.size
-      processed_cards = 0
+      cards = Anki::Card.where(did: deck_id).or(Anki::Card.where(odid: deck_id)).to_a
+      card_ids = cards.map(&:id)
+      note_ids  = cards.map(&:nid)
+
+      # Pre-load all Anki data in bulk (eliminates N+1 across the Anki DB)
+      notes_by_nid   = Anki::Note.where(id: note_ids).index_by(&:id)
+      revlogs_by_cid = Anki::Revlog.where(cid: card_ids).group_by(&:cid)
+
+      # Resolve the field layout once; avoids a SELECT models FROM col per note
+      deck_model    = Anki.deck
+      field_names   = deck_model["flds"].map { |f| f["name"] }
+      simplified_idx = field_names.index("Simplified")
+
+      # Map each card to its simplified character and queue state
+      card_simplified = {}
+      card_state      = {}
 
       cards.each do |card|
-        begin
-          note = Anki::Note.find_by_id(card.nid)
-        rescue => e
-          log.puts "[ERROR] Failed to find Note for Card #{card.id}: #{e.message}"
-        end
-        begin
-          simplified_character = note.card_data["Simplified"]
+        note = notes_by_nid[card.nid]
+        next unless note
 
-          next if simplified_character.blank?
+        simplified = note.flds.split("\u001F")[simplified_idx]
+        next if simplified.blank?
 
-          dictionary_entry = DictionaryEntry.find_by(text: simplified_character)
-          unless dictionary_entry
-            log.puts "[SKIP] No DictionaryEntry for Simplified Character: #{simplified_character}"
-            next
-          end
-
-          # Create or find UserLearning
-          user_learning = UserLearning.find_or_create_by!(
-            user: user, # Take the user we passed in
-            dictionary_entry: dictionary_entry
-          ) do |ul|
-            ul.state = case card.queue
-            when 0 then "new"
-            when 1 then "learning"
-            when 2 then "mastered"
-            when 3 then "learning" # Treat "Day Learning" as "learning"
-            when -1 then "suspended"
-            when -2 then "suspended" # Treat "Buried" as "suspended"
-            else
-              "unknown" # Fallback for unexpected states
-            end
-            ul.next_due = Time.at(card.due)
-            ul.last_interval = card.ivl
-          end
-
-          # Migrate ReviewLogs for the card
-          revlogs = Anki::Revlog.where(cid: card.id)
-          revlogs.each do |revlog|
-            # Skip if the ReviewLog with the same anki_id already exists
-            next if ReviewLog.exists?(anki_id: revlog.id)
-            ReviewLog.create!(
-              anki_id: revlog.id,
-              user_learning_id: user_learning.id,
-              ease: revlog.ease,
-              interval: revlog.ivl,
-              time_spent: revlog.time,
-              factor: revlog.factor,
-              time: revlog.id,
-              log_type: revlog.type
-            )
-          end
-
-          # log.puts "[SUCCESS] Migrated Card #{card.id} -> UserLearning #{user_learning.id}"
-        rescue => e
-          log.puts "[ERROR] #{simplified_character}: Failed to migrate Card #{card.id}: #{e.message}"
-        ensure
-          processed_cards += 1
-          progress = (processed_cards.to_f / total_cards * 100).round(2)
-          print "\r(#{processed_cards} of #{total_cards}) #{progress}%"
+        card_simplified[card.id] = simplified
+        card_state[card.id] = case card.queue
+        when 0      then "new"
+        when 1, 3   then "learning"
+        when 2      then "mastered"
+        when -1, -2 then "suspended"
+        else             "unknown"
         end
       end
+
+      # Pre-load matching DictionaryEntry IDs in one query
+      simplified_chars = card_simplified.values.uniq
+      entry_id_map = DictionaryEntry.where(text: simplified_chars).pluck(:text, :id).to_h
+
+      simplified_chars.each do |text|
+        log.puts "[SKIP] No DictionaryEntry for Simplified Character: #{text}" unless entry_id_map.key?(text)
+      end
+
+      # Build and bulk-insert UserLearning rows.
+      # ON CONFLICT DO NOTHING preserves state for cards already imported.
+      card_entry_id = {}
+      user_learning_rows = cards.filter_map do |card|
+        simplified = card_simplified[card.id]
+        next unless simplified
+
+        entry_id = entry_id_map[simplified]
+        next unless entry_id
+
+        card_entry_id[card.id] = entry_id
+        {
+          user_id:             user.id,
+          dictionary_entry_id: entry_id,
+          state:               card_state[card.id],
+          next_due:            Time.at(card.due),
+          last_interval:       card.ivl
+        }
+      end
+
+      UserLearning.insert_all(user_learning_rows) if user_learning_rows.any?
+
+      # Reload user_learning IDs for ReviewLog association
+      found_entry_ids = card_entry_id.values.uniq
+      ul_id_map = UserLearning
+        .where(user: user, dictionary_entry_id: found_entry_ids)
+        .pluck(:dictionary_entry_id, :id).to_h
+
+      # Build and bulk-insert ReviewLog rows.
+      # ON CONFLICT DO NOTHING on anki_id ensures idempotency.
+      review_log_rows = cards.flat_map do |card|
+        entry_id = card_entry_id[card.id]
+        next [] unless entry_id
+
+        ul_id = ul_id_map[entry_id]
+        next [] unless ul_id
+
+        (revlogs_by_cid[card.id] || []).map do |revlog|
+          {
+            anki_id:          revlog.id,
+            user_learning_id: ul_id,
+            ease:             revlog.ease,
+            interval:         revlog.ivl,
+            time_spent:       revlog.time,
+            factor:           revlog.factor,
+            time:             revlog.id,
+            log_type:         revlog.type
+          }
+        end
+      end
+
+      ReviewLog.insert_all(review_log_rows) if review_log_rows.any?
 
       log.puts "---"
       log.puts "Migration complete."
     end
 
-    puts "\nMigration complete. Log written to: #{log_file}"
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+    puts "\nMigration complete. Completed in #{elapsed.round(2)}s. Log written to: #{log_file}"
   end
 end
