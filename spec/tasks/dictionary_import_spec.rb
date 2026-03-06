@@ -37,6 +37,16 @@ RSpec.describe "dictionary_import", type: :task do
       expect(output).to include("Processing CC-CEDICT file at #{fixture_file_path}")
     end
 
+    it "displays progress with a fixed-width percentage (2 decimal places) to prevent terminal jitter" do
+      # Float#round(2) drops trailing zeros: 0.10 becomes 0.1, producing a
+      # variable-width string that leaves ghost characters when \r overwrites it.
+      # format("%6.2f%%") always emits exactly 2 decimal places.
+      output = capture_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
+      percentages = output.scan(/Processing:\s*([\d. ]+)%/).flatten
+      expect(percentages).not_to be_empty
+      expect(percentages).to all(match(/\A[\d ]+\.\d{2}\z/))
+    end
+
     it "calls find_or_create_cc_cedict_source" do
       # Mock the module method directly
       allow(DictionaryImportHelper).to receive(:find_or_create_cc_cedict_source)
