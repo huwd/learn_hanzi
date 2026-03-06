@@ -1,3 +1,5 @@
+require 'rails_helper'
+
 RSpec.describe UserLearning, type: :model do
   let(:user) { User.create(email_address: "e@mail.com", password: "password") }
 
