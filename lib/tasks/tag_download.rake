@@ -3,9 +3,9 @@ require_relative "../../app/helpers/import_files_helper"
 include ImportFilesHelper
 
 namespace :tag_download do
-  HSK_REPO_ROOT = "https://raw.githubusercontent.com/drkameleon/complete-hsk-vocabulary/refs/heads/main/by-level/"
+  HSK_REPO_ROOT = "https://raw.githubusercontent.com/drkameleon/complete-hsk-vocabulary/main/wordlists/exclusive/"
   HSK_2_FILES = (1..6).to_a.map { |lvl| HSK_REPO_ROOT + "old/#{lvl}.min.json" }
-  HSK_3_FILES = (1..6).to_a.map { |lvl| HSK_REPO_ROOT + "new/#{lvl}.min.json" } << HSK_REPO_ROOT + "new/7+.min.json"
+  HSK_3_FILES = (1..7).to_a.map { |lvl| HSK_REPO_ROOT + "new/#{lvl}.min.json" }
 
   desc "Download HSK 2 files"
   task hsk_2: :environment do

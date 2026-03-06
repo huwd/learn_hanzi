@@ -3,6 +3,7 @@ require "zip"
 
 module ImportFilesHelper
   def download_file_to_tmp(url, destination)
+    FileUtils.mkdir_p(File.dirname(destination))
     File.open(destination, "wb") do |file|
       file.write(URI.open(url).read)
     end
