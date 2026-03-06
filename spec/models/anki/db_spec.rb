@@ -23,12 +23,36 @@ end
 RSpec.describe Anki::DB, type: :model do
   include AnkiDBSpecHelpers
 
+  describe "database configuration" do
+    it "has database_tasks disabled for every anki connection" do
+      # database_tasks: false tells Rails db:create/migrate/schema:load to ignore
+      # this connection, preventing it from creating ar_internal_metadata /
+      # schema_migrations tables that would corrupt or replace a real Anki file.
+      anki_configs = ActiveRecord::Base.configurations.configurations
+                                       .select { |c| c.name == "anki" }
+      expect(anki_configs).not_to be_empty
+      expect(anki_configs).to all(
+        satisfy("have database_tasks? == false") { |c| c.database_tasks? == false }
+      )
+    end
+  end
+
   describe "schema" do
     it "exposes all required Anki tables" do
       tables = Anki::DB.connection
                        .execute("SELECT name FROM sqlite_master WHERE type='table'")
                        .map { |r| r["name"] }
       expect(tables).to include("notes", "cards", "revlog", "col", "graves")
+    end
+
+    it "does not contain Rails-managed tables" do
+      # ar_internal_metadata and schema_migrations belong to Rails, not Anki.
+      # Their presence means Rails wrote to the file (e.g. via db:create),
+      # which is the mechanism that silently replaces the real collection.
+      tables = Anki::DB.connection
+                       .execute("SELECT name FROM sqlite_master WHERE type='table'")
+                       .map { |r| r["name"] }
+      expect(tables).not_to include("ar_internal_metadata", "schema_migrations")
     end
 
     it "notes table has the expected columns" do
