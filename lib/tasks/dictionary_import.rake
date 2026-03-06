@@ -18,6 +18,7 @@ namespace :dictionary_import do
 
     puts "Processing CC-CEDICT file at #{file_path}..."
     file_lines = File.foreach(file_path).count
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
     puts "#{file_lines} lines found in file"
     puts "#{DictionaryEntry.count} entries found in database"
@@ -48,7 +49,8 @@ namespace :dictionary_import do
         end
       end
     end
-    puts "\nDone!"
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+    puts "\nDone! Completed in #{elapsed.round(2)}s"
     puts "#{DictionaryEntry.count} entries found in database after import"
     puts "#{failed_lines.count} lines failed to import, listing lines:"
     failed_lines.each do |failed_line|
