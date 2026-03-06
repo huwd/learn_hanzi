@@ -11,10 +11,12 @@
 #   2. Add a matching CARDS entry (same :id)
 #   3. Add a matching REVLOGS entry (same :id) if the card should have review history
 module AnkiSeedData
-  DECK_ID    = "1"
-  DECK_NAME  = "Mandarin: Vocabulary::a. HSK"
-  MODEL_ID   = "1234567890"
-  MODEL_NAME = "HSK"
+  DECK_ID             = "1"
+  DECK_NAME           = "Mandarin: Vocabulary::a. HSK"
+  FILTERED_DECK_ID    = "2"
+  FILTERED_DECK_NAME  = "Custom study session"
+  MODEL_ID            = "1234567890"
+  MODEL_NAME          = "HSK"
   FIELD_NAMES = [
     "ID", "Simplified", "Traditional", "Pinyin",
     "Audio", "English", "Part of Speech", "Audio Sentence"
@@ -91,12 +93,21 @@ module AnkiSeedData
       sfld:    "不",
       flds:    "80#{SEP}不#{SEP}不#{SEP}bù#{SEP}bu4#{SEP}not#{SEP}adverb#{SEP}",
       purpose: "REGRESSION ANCHOR: no matching DictionaryEntry — import must skip without crashing"
+    },
+    {
+      id:      9,
+      guid:    "note009",
+      sfld:    "爱",
+      flds:    "90#{SEP}爱#{SEP}愛#{SEP}ài#{SEP}ai4#{SEP}to love#{SEP}verb#{SEP}",
+      purpose: "REGRESSION ANCHOR: card homed in target deck but currently in a filtered deck " \
+               "(did=FILTERED_DECK_ID, odid=DECK_ID) — import must include it via odid"
     }
   ].freeze
   # rubocop:enable Layout/ExtraSpacing
 
   # One card per note, each exercising a different queue state.
-  # did matches DECK_ID; other fields use realistic Anki defaults.
+  # Cards default to did=DECK_ID and odid=0. Pass :did and :odid to override
+  # (e.g. to simulate a card stranded in a filtered deck).
   CARDS = [
     { id: 1, nid: 1, queue:  2, due: 1_234_567_890 },
     { id: 2, nid: 2, queue:  2, due: 1_234_567_890 },
@@ -105,7 +116,11 @@ module AnkiSeedData
     { id: 5, nid: 5, queue:  3, due: 1_234_567_890 },
     { id: 6, nid: 6, queue: -1, due: 1_234_567_890 },
     { id: 7, nid: 7, queue: -2, due: 1_234_567_890 },
-    { id: 8, nid: 8, queue:  2, due: 1_234_567_890 }  # note 8 has no DictionaryEntry
+    { id: 8, nid: 8, queue:  2, due: 1_234_567_890 }, # note 8 has no DictionaryEntry
+    # REGRESSION ANCHOR: card homed in target deck but currently in a filtered deck.
+    # did=FILTERED_DECK_ID means the current migration query (WHERE did=target) misses it.
+    # odid=DECK_ID is the only signal that it belongs to the target deck.
+    { id: 9, nid: 9, queue: 2, due: 1_234_567_890, did: FILTERED_DECK_ID, odid: DECK_ID }
   ].freeze
 
   # One review event per card — enough to verify ReviewLog creation.
