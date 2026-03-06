@@ -21,18 +21,32 @@ RSpec.describe TagEntriesGrouper do
       expect(grouped_entries[:mastered]).to include(dictionary_entry2)
     end
 
-    it "returns an empty hash if no entries are found" do
+    it "returns empty buckets for a user who has no learnings for the tag" do
       other_user = create(:user)
       grouper = TagEntriesGrouper.new(tag, other_user)
       grouped_entries = grouper.grouped_by_learning_state
 
-      expect(grouped_entries).to eq({
-          learning: [],
-          mastered: [],
-        new_entries: [],
-        not_learned: [],
-          suspended: []
-      })
+      expect(grouped_entries[:learning]).to eq([])
+      expect(grouped_entries[:mastered]).to eq([])
+      expect(grouped_entries[:new_entries]).to eq([])
+      expect(grouped_entries[:suspended]).to eq([])
+    end
+
+    it "includes entries the current user has not started, even if another user has" do
+      other_user = create(:user)
+      create(:user_learning, user: other_user, dictionary_entry: dictionary_entry1, state: "mastered")
+      grouper = TagEntriesGrouper.new(tag, user)
+
+      # user has a learning for entry1 (learning state), so entry1 must NOT be in not_learned
+      expect(grouper.grouped_by_learning_state[:not_learned]).not_to include(dictionary_entry1)
+    end
+
+    it "excludes entries the current user has already started from not_learned" do
+      other_user = create(:user)
+      grouper = TagEntriesGrouper.new(tag, other_user)
+
+      # other_user has no learnings — both entries must appear in not_learned
+      expect(grouper.grouped_by_learning_state[:not_learned]).to include(dictionary_entry1, dictionary_entry2)
     end
   end
 end
