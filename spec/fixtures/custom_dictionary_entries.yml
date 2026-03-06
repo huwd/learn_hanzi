@@ -1,0 +1,15 @@
+# Minimal fixture for testing dictionary_import:custom_entries rake task.
+# Not representative of real content — use db/custom_dictionary_entries.yml for that.
+entries:
+  - text: 打篮球
+    meanings:
+      - text: "to play basketball"
+        pinyin: "dǎ lánqiú"
+  - text: 弹钢琴
+    meanings:
+      - text: "to play the piano"
+        pinyin: "tán gāngqín"
+  - text: 红酒
+    meanings:
+      - text: "red wine"
+        pinyin: "hóng jiǔ"
