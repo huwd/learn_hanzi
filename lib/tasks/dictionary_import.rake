@@ -34,8 +34,8 @@ namespace :dictionary_import do
       File.foreach(file_path).with_index do |line, index|
         # Skip comments and blank lines
         next if line.start_with?("#") || line.strip.empty?
-        progress = ((index + 1).to_f / file_lines.to_f * 100).round(2)
-        print "\rProcessing: #{progress}% | Errors: #{error_count}"
+        progress = (index + 1).to_f / file_lines.to_f * 100
+        print format("\rProcessing: %6.2f%% | Errors: %d", progress, error_count)
         $stdout.flush
 
         begin
