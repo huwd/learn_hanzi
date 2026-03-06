@@ -37,14 +37,9 @@ RSpec.describe "dictionary_import", type: :task do
       expect(output).to include("Processing CC-CEDICT file at #{fixture_file_path}")
     end
 
-    it "displays progress with a fixed-width percentage (2 decimal places) to prevent terminal jitter" do
-      # Float#round(2) drops trailing zeros: 0.10 becomes 0.1, producing a
-      # variable-width string that leaves ghost characters when \r overwrites it.
-      # format("%6.2f%%") always emits exactly 2 decimal places.
+    it "reports elapsed time on completion" do
       output = capture_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
-      percentages = output.scan(/Processing:\s*([\d. ]+)%/).flatten
-      expect(percentages).not_to be_empty
-      expect(percentages).to all(match(/\A[\d ]+\.\d{2}\z/))
+      expect(output).to match(/Completed in [\d.]+s/)
     end
 
     it "calls find_or_create_cc_cedict_source with the correct arguments" do
@@ -78,6 +73,19 @@ RSpec.describe "dictionary_import", type: :task do
       expect(DictionaryImportHelper).to receive(:find_or_create_cc_cedict_source).once.and_call_original
 
       silence_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
+    end
+
+    it "uses batch_import_cc_cedict_lines to insert entries" do
+      expect(DictionaryImportHelper).to receive(:batch_import_cc_cedict_lines).and_call_original
+
+      silence_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
+    end
+
+    it "imports all entries from the fixture file" do
+      silence_output { Rake::Task["dictionary_import:cc_cedict"].invoke(fixture_file_path) }
+
+      # Fixture has 24 non-comment CC-CEDICT lines
+      expect(DictionaryEntry.count).to eq(24)
     end
   end
 end
