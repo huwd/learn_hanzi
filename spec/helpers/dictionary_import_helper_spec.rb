@@ -194,4 +194,54 @@ describe "DictionaryImportHelper" do
       end
     end
   end
+
+  describe '#batch_import_cc_cedict_lines' do
+    let(:source) do
+      Source.create!(
+        name: "CC-CEDICT",
+        url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip",
+        date_accessed: Date.today
+      )
+    end
+    let(:lines) do
+      [
+        "一口氣 一口气 [yi1 kou3 qi4] /one breath/in one breath/at a stretch/",
+        "# comment line — must be skipped",
+        "一同 一同 [yi1 tong2] /together/"
+      ]
+    end
+
+    it 'creates DictionaryEntries for each non-comment line' do
+      expect {
+        DictionaryImportHelper.batch_import_cc_cedict_lines(lines, source)
+      }.to change(DictionaryEntry, :count).by(2)
+    end
+
+    it 'creates Meanings with the correct attributes' do
+      DictionaryImportHelper.batch_import_cc_cedict_lines(lines, source)
+
+      entry = DictionaryEntry.find_by!(text: "一口气")
+      expect(entry.meanings.count).to eq(3)
+      expect(entry.meanings.map(&:text)).to match_array([ "one breath", "in one breath", "at a stretch" ])
+      expect(entry.meanings.map(&:source).uniq).to eq([ source ])
+    end
+
+    it 'is idempotent — running twice does not duplicate entries or meanings' do
+      DictionaryImportHelper.batch_import_cc_cedict_lines(lines, source)
+      entry_count  = DictionaryEntry.count
+      meaning_count = Meaning.count
+
+      DictionaryImportHelper.batch_import_cc_cedict_lines(lines, source)
+      expect(DictionaryEntry.count).to eq(entry_count)
+      expect(Meaning.count).to eq(meaning_count)
+    end
+
+    it 'skips lines that cannot be parsed without raising' do
+      bad_lines = lines + [ "not a valid CC-CEDICT line" ]
+
+      expect {
+        DictionaryImportHelper.batch_import_cc_cedict_lines(bad_lines, source)
+      }.to change(DictionaryEntry, :count).by(2)
+    end
+  end
 end
