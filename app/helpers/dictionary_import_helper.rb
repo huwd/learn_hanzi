@@ -19,7 +19,7 @@ module DictionaryImportHelper
         text: parsed_entry[:simplified]
       )
 
-      parsed_entry[:meaning_attributes].each do |meaning|
+      parsed_entry[:meaning_attributes].uniq { |m| [ m[:text], m[:pinyin] ] }.each do |meaning|
         payload = {
           text: meaning[:text],
           language: "en",
