@@ -90,8 +90,9 @@ RSpec.describe "dictionary_import:cc_cedict performance", :benchmark do
       puts format("  %-10d %10.2f %15.1f", size, r[:elapsed], size / r[:elapsed])
     end
     puts "#{"=" * 50}"
-    puts "  Baseline (pre-optimisation): 20→0.31s, 200→1.84s, 2000→18.01s"
-    puts "  Optimisation 1 (single txn + pre-load source): ~40% improvement"
+    puts "  Baseline (no optimisation):  20→0.31s, 200→1.84s,  2000→18.01s (~111/s)"
+    puts "  Opt 1 (single txn + pre-load source):          2000→12.68s (~158/s, +40%)"
+    puts "  Opt 2 (insert_all batch):                      2000→0.48s  (~4167/s, +37x)"
     puts "#{"=" * 50}\n"
   end
 end

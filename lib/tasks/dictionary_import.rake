@@ -28,38 +28,16 @@ namespace :dictionary_import do
       "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip"
     )
 
-    failed_lines = []
-    error_count = 0
-    logfile_path = Rails.root.join("log", "dictionary_import_errors.log")
+    puts "Reading file..."
+    lines = File.readlines(file_path)
+    print "Importing..."
+    $stdout.flush
 
-    File.open(logfile_path, "a") do |logfile|
-      DictionaryEntry.transaction do
-        File.foreach(file_path).with_index do |line, index|
-          # Skip comments and blank lines
-          next if line.start_with?("#") || line.strip.empty?
-          progress = (index + 1).to_f / file_lines.to_f * 100
-          print format("\rProcessing: %6.2f%% | Errors: %d", progress, error_count)
-          $stdout.flush
+    DictionaryImportHelper.batch_import_cc_cedict_lines(lines, pre_loaded_source)
 
-          begin
-            DictionaryImportHelper.find_or_create_dictionary_entry(line, pre_loaded_source)
-          rescue => e
-            error_count += 1
-            logfile.puts "Error processing line #{index + 1}: #{line.strip}"
-            logfile.puts "Error: #{e.message}"
-            next
-          end
-        end
-      end
-    end
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
     puts "\nDone! Completed in #{elapsed.round(2)}s"
     puts "#{DictionaryEntry.count} entries found in database after import"
-    puts "#{failed_lines.count} lines failed to import, listing lines:"
-    failed_lines.each do |failed_line|
-      puts failed_line[:line]
-      puts failed_line[:error]
-    end
   end
 
   desc "Import custom dictionary entries from db/custom_dictionary_entries.yml"
