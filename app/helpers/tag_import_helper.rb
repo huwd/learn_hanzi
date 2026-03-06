@@ -7,6 +7,22 @@ module TagImportHelper
     )
   end
 
+  def batch_associate_entries_to_tag(texts, tag)
+    raise "No tag provided" if tag.nil?
+
+    texts = texts.compact.reject(&:empty?)
+    entry_id_map = DictionaryEntry.where(text: texts).pluck(:text, :id).to_h
+
+    rows = texts.filter_map do |text|
+      id = entry_id_map[text]
+      { dictionary_entry_id: id, tag_id: tag.id } if id
+    end
+
+    DictionaryEntryTag.insert_all(rows) if rows.any?
+
+    texts.count - rows.count
+  end
+
   def associate_dictionary_entry_to_tag(text, tag)
     raise "No tag provided" if tag.nil?
     dictionary_entry = DictionaryEntry.find_by_text(text)
