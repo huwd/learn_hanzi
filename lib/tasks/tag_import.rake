@@ -44,30 +44,28 @@ end
 def import_hsk_file(hsk_level_files, parent_tag)
     file_count = hsk_level_files.count
     logfile_path = Rails.root.join("log", "tag_import_errors.log")
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    total_skipped = 0
 
     File.open(logfile_path, "a") do |logfile|
-    hsk_level_files.each.with_index do |file, file_index|
-      tag_name = "HSK #{file.split("/").last.split(".").first}"
-      tag = find_or_create_tag(tag_name, "HSK", parent_tag.id)
-      parent_tag.add_child(tag)
+      hsk_level_files.each.with_index do |file, file_index|
+        tag_name = "HSK #{file.split("/").last.split(".").first}"
+        tag = find_or_create_tag(tag_name, "HSK", parent_tag.id)
+        parent_tag.add_child(tag)
 
-      file_content = JSON.parse(File.read(file))
-      entry_count = file_content.count
-      error_count = 0
-      puts "\nProcessing file #{file_index + 1} of #{file_count} with #{entry_count} entries\n"
+        file_content = JSON.parse(File.read(file))
+        texts = file_content.map { |entry| entry["s"] }
+        puts "\nProcessing file #{file_index + 1} of #{file_count} with #{texts.count} entries"
 
-      file_content.each.with_index do |entry, entry_index|
-        progress = ((entry_index + 1).to_f / entry_count.to_f * 100).round(2)
-        print "\rProcessing: #{progress}% | Errors: #{error_count}"
-        begin
-          associate_dictionary_entry_to_tag(entry["s"], tag)
-        rescue => e
-          error_count += 1
-          logfile.puts "Error processing tag #{entry_index + 1} for #{tag.name}: #{entry["s"]}"
-          logfile.puts "Error: #{e.message}"
-          next
+        skipped = TagImportHelper.batch_associate_entries_to_tag(texts, tag)
+        total_skipped += skipped
+
+        if skipped > 0
+          logfile.puts "#{skipped} entries from #{File.basename(file)} had no matching DictionaryEntry"
         end
       end
     end
-  end
+
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+    puts "\nCompleted in #{elapsed.round(2)}s (#{total_skipped} entries skipped — not in dictionary)"
 end
