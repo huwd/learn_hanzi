@@ -14,9 +14,7 @@ class TagEntriesGrouper
 
     {
       not_learned:  @tag.dictionary_entries
-                          .left_joins(:user_learnings)
-                          .where(user_learnings: { id: nil })
-                          .distinct,
+                          .where.not(id: UserLearning.where(user: @user).select(:dictionary_entry_id)),
       new_entries:  grouped["new"]          || [],
       learning:     grouped["learning"]     || [],
       mastered:     grouped["mastered"]     || [],
