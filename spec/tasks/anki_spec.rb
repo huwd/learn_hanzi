@@ -122,6 +122,21 @@ RSpec.describe "anki:migrate_to_models", type: :task do
       end
     end
 
+    it "reports elapsed time on completion" do
+      Rake::Task["anki:migrate_to_models"].reenable
+      output = run_task(user.email_address)
+      expect(output).to match(/Completed in [\d.]+s/)
+    end
+
+    it "loads Anki notes in a single batch query, not one per card" do
+      # Pre-optimisation: Anki::Note.find_by_id was called once per card
+      # inside the loop. Post-optimisation: a single WHERE IN query replaces all
+      # of those round-trips.
+      Rake::Task["anki:migrate_to_models"].reenable
+      expect(Anki::Note).not_to receive(:find_by_id)
+      run_task(user.email_address)
+    end
+
     describe "idempotency" do
       it "does not create duplicate UserLearnings on re-run" do
         Rake::Task["anki:migrate_to_models"].reenable
