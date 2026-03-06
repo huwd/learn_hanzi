@@ -1,0 +1,172 @@
+# Custom dictionary entries curated for HSK vocabulary absent from CC-CEDICT.
+#
+# Source: learn_hanzi (self-curated). These entries fill gaps where:
+#   - HSK treats a multi-character phrase as a single vocabulary item
+#   - CC-CEDICT only covers the component characters separately
+#   - A word has an 儿化 (erhua) form common in HSK but not in CC-CEDICT
+#   - Modern vocabulary post-dating the CC-CEDICT corpus
+#
+# Format:
+#   text:     simplified Chinese (required)
+#   meanings: list of at least one meaning (required)
+#     - text:    English definition
+#       pinyin:  pinyin with tone marks
+#
+# To add entries: audit log/tag_import_errors.log and log/anki_migration.log.
+# See issue #34 for the full categorisation of the ~210 missing entries.
+# Do NOT add compositional verb+complement phrases (e.g. 放到, 送到, 看到) —
+# these are grammar constructions, not standalone vocabulary.
+
+entries:
+
+  # ---------------------------------------------------------------------------
+  # Anki deck items — blocked from UserLearning import by missing DictionaryEntry
+  # ---------------------------------------------------------------------------
+
+  - text: 打篮球
+    meanings:
+      - text: "to play basketball"
+        pinyin: "dǎ lánqiú"
+
+  - text: 弹钢琴
+    meanings:
+      - text: "to play the piano"
+        pinyin: "tán gāngqín"
+
+  - text: 系领带
+    meanings:
+      - text: "to tie a necktie; to put on a tie"
+        pinyin: "jì lǐngdài"
+
+  - text: 纽扣儿
+    meanings:
+      - text: "button (on clothing)"
+        pinyin: "niǔ kòur"
+
+  - text: 放暑假
+    meanings:
+      - text: "to have a summer holiday; to break for summer"
+        pinyin: "fàng shǔjià"
+
+  # ---------------------------------------------------------------------------
+  # 儿化 (erhua) variants — Beijing dialect forms used in HSK vocab lists
+  # Base forms exist in CC-CEDICT; these variants are the HSK-listed forms.
+  # ---------------------------------------------------------------------------
+
+  - text: 不一会儿
+    meanings:
+      - text: "in a moment; shortly; before long"
+        pinyin: "bù yī huìr"
+
+  - text: 笑话儿
+    meanings:
+      - text: "joke; jest"
+        pinyin: "xiàohuàr"
+
+  - text: 有空儿
+    meanings:
+      - text: "to have free time; to be free"
+        pinyin: "yǒu kòngr"
+
+  - text: 没法儿
+    meanings:
+      - text: "can't help it; have no way (to do something)"
+        pinyin: "méi fǎr"
+
+  - text: 名牌儿
+    meanings:
+      - text: "famous brand; name brand"
+        pinyin: "míng páir"
+
+  - text: 胡同儿
+    meanings:
+      - text: "hutong; lane; alley (Beijing dialect)"
+        pinyin: "hútòngr"
+
+  - text: 小偷儿
+    meanings:
+      - text: "thief; pickpocket"
+        pinyin: "xiǎo tōur"
+
+  - text: 大腕儿
+    meanings:
+      - text: "big shot; celebrity; leading figure"
+        pinyin: "dàwànr"
+
+  - text: 离谱儿
+    meanings:
+      - text: "outrageous; off the charts; going too far"
+        pinyin: "lí pǔr"
+
+  - text: 贪玩儿
+    meanings:
+      - text: "to love playing; to be addicted to fun; to neglect work for play"
+        pinyin: "tānwánr"
+
+  - text: 有劲儿
+    meanings:
+      - text: "vigorous; energetic; with gusto; strong"
+        pinyin: "yǒu jìnr"
+
+  - text: 那会儿
+    meanings:
+      - text: "at that time; back then; in those days"
+        pinyin: "nà huìr"
+
+  # ---------------------------------------------------------------------------
+  # Standalone compounds missing from CC-CEDICT — HSK 3–5
+  # ---------------------------------------------------------------------------
+
+  - text: 红酒
+    meanings:
+      - text: "red wine"
+        pinyin: "hóng jiǔ"
+
+  - text: 纯净水
+    meanings:
+      - text: "purified water; mineral water"
+        pinyin: "chún jìng shuǐ"
+
+  - text: 电动车
+    meanings:
+      - text: "electric vehicle; electric scooter; e-bike"
+        pinyin: "diàn dòng chē"
+
+  - text: 通知书
+    meanings:
+      - text: "written notice; admission letter; official notification"
+        pinyin: "tōng zhī shū"
+
+  - text: 大奖赛
+    meanings:
+      - text: "grand prix; major competition; championship"
+        pinyin: "dà jiǎng sài"
+
+  # ---------------------------------------------------------------------------
+  # Modern vocabulary post-dating the CC-CEDICT corpus — HSK 7+
+  # ---------------------------------------------------------------------------
+
+  - text: 大数据
+    meanings:
+      - text: "big data"
+        pinyin: "dà shù jù"
+
+  - text: 低碳
+    meanings:
+      - text: "low-carbon; low carbon emissions"
+        pinyin: "dī tàn"
+
+  - text: 正能量
+    meanings:
+      - text: "positive energy; positivity"
+        pinyin: "zhèng néng liàng"
+
+  - text: 电子版
+    meanings:
+      - text: "digital version; electronic edition"
+        pinyin: "diàn zǐ bǎn"
+
+  - text: 杀毒
+    meanings:
+      - text: "to run antivirus; antivirus (software)"
+        pinyin: "shā dú"
