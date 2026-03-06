@@ -1,5 +1,4 @@
 require 'rails_helper'
-require 'pry'
 
 RSpec.describe TagEntriesGrouper do
   let(:user) { create(:user) }
