@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# bin/teardown — removes the development database and all auto-downloaded
+# temporary files, returning the repo to a clean pre-bootstrap state.
+#
+# Safe to follow with bin/bootstrap for a full reseed from scratch.
+#
+# What is removed:
+#   storage/development.sqlite3   — the main app database
+#   tmp/cedict/                   — downloaded CC-CEDICT archive and file
+#   tmp/hsk_2/                    — downloaded HSK 2.0 vocab files
+#   tmp/hsk_3/                    — downloaded HSK 3.0 vocab files
+#
+# What is NOT removed:
+#   tmp/anki/                     — your personal Anki collection (manual copy)
+#   storage/anki-development.sqlite3  — read-only Anki mirror DB
+#   storage/test.sqlite3          — test database (managed by the test suite)
+
+require "fileutils"
+
+APP_ROOT = File.expand_path("..", __dir__)
+
+def remove(path)
+  full = File.join(APP_ROOT, path)
+  if File.exist?(full) || Dir.exist?(full)
+    FileUtils.rm_rf(full)
+    puts "  removed #{path}"
+  else
+    puts "  skipped #{path} (not present)"
+  end
+end
+
+FileUtils.chdir APP_ROOT do
+  puts "== Dropping development database =="
+  # Remove the file directly rather than using db:drop, which in Rails'
+  # multi-DB SQLite setup can also drop the test database.
+  remove "storage/development.sqlite3"
+
+  puts "\n== Removing downloaded data files =="
+  remove "tmp/cedict.zip"
+  remove "tmp/cedict"
+  remove "tmp/hsk_2"
+  remove "tmp/hsk_3"
+
+  puts "\n== Teardown complete =="
+  puts "Run bin/bootstrap to reimport all data from scratch."
+end
