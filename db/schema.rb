@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_194903) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_06_202906) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "text"
@@ -52,6 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_194903) do
     t.integer "time_spent"
     t.datetime "updated_at", null: false
     t.integer "user_learning_id", null: false
+    t.index ["anki_id"], name: "index_review_logs_on_anki_id", unique: true
     t.index ["user_learning_id"], name: "index_review_logs_on_user_learning_id"
   end
 
