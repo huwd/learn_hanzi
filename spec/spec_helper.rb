@@ -19,6 +19,9 @@ SimpleCov.start 'rails' do
 end
 
 RSpec.configure do |config|
+  # Benchmark specs are slow by design — opt in with: rspec --tag benchmark
+  config.filter_run_excluding :benchmark
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
