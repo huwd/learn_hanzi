@@ -15,7 +15,7 @@ RSpec.describe "DictionaryEntries", type: :request do
 
       it "renders the target vocab prominently" do
         get dictionary_entry_path(dictionary_entry)
-        expect(response.body).to include("感动")
+        expect(response.body).to include(dictionary_entry.text)
       end
     end
   end
