@@ -116,11 +116,13 @@ module AnkiHelper
     end
 
     AnkiSeedData::CARDS.each do |card|
+      did  = (card[:did]  || AnkiSeedData::DECK_ID).to_i
+      odid = (card[:odid] || 0).to_i
       db.execute(
         "INSERT INTO cards (id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, " \
         "reps, lapses, left, odue, odid, flags, data) " \
-        "VALUES (?, ?, ?, 0, 1234567890, -1, 2, ?, ?, 250, 2500, 5, 0, 2, 0, 0, 0, '')",
-        [ card[:id], card[:nid], AnkiSeedData::DECK_ID.to_i, card[:queue], card[:due] ]
+        "VALUES (?, ?, ?, 0, 1234567890, -1, 2, ?, ?, 250, 2500, 5, 0, 2, 0, ?, 0, '')",
+        [ card[:id], card[:nid], did, card[:queue], card[:due], odid ]
       )
     end
 
@@ -140,7 +142,8 @@ module AnkiHelper
     }.to_json
 
     decks_json = {
-      AnkiSeedData::DECK_ID => { "name" => AnkiSeedData::DECK_NAME }
+      AnkiSeedData::DECK_ID         => { "name" => AnkiSeedData::DECK_NAME },
+      AnkiSeedData::FILTERED_DECK_ID => { "name" => AnkiSeedData::FILTERED_DECK_NAME }
     }.to_json
 
     db.execute(

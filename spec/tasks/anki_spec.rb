@@ -53,6 +53,7 @@ RSpec.describe "anki:migrate_to_models", type: :task do
   context "with a valid user and the target deck present" do
     # DictionaryEntries matching each seeded Anki note (by Simplified field).
     # Note 8 ("不") intentionally has no entry to test the skip behaviour.
+    # Note 9 ("爱") is in a filtered deck (did=FILTERED_DECK_ID, odid=DECK_ID).
     let(:user)        { create(:user) }
     let!(:entry_hao)  { create(:dictionary_entry, text: "好") }  # card 1, queue 2  → mastered
     let!(:entry_hen)  { create(:dictionary_entry, text: "很") }  # card 2, queue 2  → mastered
@@ -61,6 +62,7 @@ RSpec.describe "anki:migrate_to_models", type: :task do
     let!(:entry_ren)  { create(:dictionary_entry, text: "人") }  # card 5, queue 3  → learning
     let!(:entry_da)   { create(:dictionary_entry, text: "大") }  # card 6, queue -1 → suspended
     let!(:entry_xiao) { create(:dictionary_entry, text: "小") }  # card 7, queue -2 → suspended
+    let!(:entry_ai)   { create(:dictionary_entry, text: "爱") }  # card 9, in filtered deck via odid
 
     before { run_task(user.email_address) }
 
@@ -102,8 +104,22 @@ RSpec.describe "anki:migrate_to_models", type: :task do
     end
 
     it "skips cards whose Simplified field has no matching DictionaryEntry" do
-      # 7 entries have matches; card 8 ("不") has none and must be skipped
-      expect(UserLearning.where(user: user).count).to eq(7)
+      # 8 entries have matches; card 8 ("不") has none and must be skipped
+      expect(UserLearning.where(user: user).count).to eq(8)
+    end
+
+    describe "filtered deck (odid) support" do
+      # Regression anchor for issue #31: cards temporarily housed in a Custom Study
+      # Session have did=filtered_deck and odid=target_deck. The migration must match
+      # on odid so these cards are not silently dropped.
+      it "imports a card whose odid matches the target deck" do
+        expect(UserLearning.find_by(user: user, dictionary_entry: entry_ai)).not_to be_nil
+      end
+
+      it "maps a filtered-deck card with queue 2 to 'mastered'" do
+        ul = UserLearning.find_by!(user: user, dictionary_entry: entry_ai)
+        expect(ul.state).to eq("mastered")
+      end
     end
 
     describe "idempotency" do
