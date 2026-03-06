@@ -89,6 +89,40 @@ describe "DictionaryImportHelper" do
         find_or_create_dictionary_entry(invalid_line, sample_source)
       }.to raise_error(RuntimeError, "Error parsing line: #{invalid_line}")
     end
+
+    # Regression anchors: real CC-CEDICT lines that caused UNIQUE constraint
+    # failures (logged in log/dictionary_import_errors.log) because the same
+    # meaning text appears more than once within a single entry's meaning string.
+    context 'when a CEDICT entry contains duplicate meanings' do
+      let(:di_line) do
+        "底 底 [di3] /background/bottom/base/end (of the month, year etc)/remnants/(math.) radix/base/"
+      end
+      let(:pan_line) do
+        "盤 盘 [pan2] /plate/dish/tray/board/hard drive (computing)/to build/to coil/to check/" \
+          "to examine/to transfer (property)/to make over/classifier for food: dish, helping/" \
+          "to coil/classifier for coils of wire/classifier for games of chess/"
+      end
+
+      it 'imports 底 without raising a constraint error' do
+        expect { find_or_create_dictionary_entry(di_line, sample_source) }.not_to raise_error
+      end
+
+      it 'stores only one meaning for the repeated text in 底' do
+        find_or_create_dictionary_entry(di_line, sample_source)
+        entry = DictionaryEntry.find_by!(text: "底")
+        expect(entry.meanings.where(text: "base").count).to eq(1)
+      end
+
+      it 'imports 盘 without raising a constraint error' do
+        expect { find_or_create_dictionary_entry(pan_line, sample_source) }.not_to raise_error
+      end
+
+      it 'stores only one meaning for the repeated text in 盘' do
+        find_or_create_dictionary_entry(pan_line, sample_source)
+        entry = DictionaryEntry.find_by!(text: "盘")
+        expect(entry.meanings.where(text: "to coil").count).to eq(1)
+      end
+    end
   end
 
   describe "parse_cc_cedict_line" do
