@@ -33,4 +33,22 @@ RSpec.describe "Tags", type: :request do
       expect(response.body).to include("#{tag.name}</h1>")
     end
   end
+
+  context "when unauthenticated" do
+    before { delete session_path }
+
+    describe "GET /tags" do
+      it "redirects to the login page" do
+        get tags_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    describe "GET /tags/:id" do
+      it "redirects to the login page" do
+        get tag_path(tag)
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+  end
 end

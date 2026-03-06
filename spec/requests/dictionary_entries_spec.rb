@@ -19,4 +19,15 @@ RSpec.describe "DictionaryEntries", type: :request do
       expect(response.body).to include("感动")
     end
   end
+
+  context "when unauthenticated" do
+    before { delete session_path }
+
+    describe "GET /dictionary_entries/:id" do
+      it "redirects to the login page" do
+        get dictionary_entry_path(dictionary_entry)
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+  end
 end
