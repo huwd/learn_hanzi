@@ -23,6 +23,43 @@ RSpec.describe TagImportHelper, type: :helper do
     end
   end
 
+  describe "#batch_associate_entries_to_tag" do
+    let(:tag) { create(:tag) }
+    let!(:entry_a) { create(:dictionary_entry, text: "你好") }
+    let!(:entry_b) { create(:dictionary_entry, text: "谢谢") }
+
+    it "associates all matching dictionary entries with the tag" do
+      helper.batch_associate_entries_to_tag([ "你好", "谢谢" ], tag)
+
+      expect(entry_a.tags.reload).to include(tag)
+      expect(entry_b.tags.reload).to include(tag)
+    end
+
+    it "returns the count of texts not found in the dictionary" do
+      skipped = helper.batch_associate_entries_to_tag([ "你好", "不存在" ], tag)
+
+      expect(skipped).to eq(1)
+    end
+
+    it "silently skips texts with no matching DictionaryEntry" do
+      expect {
+        helper.batch_associate_entries_to_tag([ "不存在" ], tag)
+      }.not_to raise_error
+    end
+
+    it "is idempotent — running twice does not duplicate associations" do
+      helper.batch_associate_entries_to_tag([ "你好", "谢谢" ], tag)
+      expect {
+        helper.batch_associate_entries_to_tag([ "你好", "谢谢" ], tag)
+      }.not_to change(DictionaryEntryTag, :count)
+    end
+
+    it "issues a single SELECT to fetch entry IDs regardless of input size" do
+      expect(DictionaryEntry).to receive(:where).once.and_call_original
+      helper.batch_associate_entries_to_tag([ "你好", "谢谢" ], tag)
+    end
+  end
+
   describe "#associate_dictionary_entry_to_tag" do
     let(:tag) { create(:tag) }
     let(:dictionary_entry) { create(:dictionary_entry, text: "学习") }
