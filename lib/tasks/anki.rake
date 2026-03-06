@@ -36,8 +36,11 @@ namespace :anki do
         exit 1
       end
 
-      # Filter cards by deck ID
-      cards = Anki::Card.where(did: deck_id)
+      # Filter cards by deck ID, including cards currently in a filtered deck
+      # (e.g. Custom Study Session) whose original home is the target deck.
+      # Anki stores the original deck in `odid` when moving a card to a filtered
+      # deck; `did` alone misses these cards.
+      cards = Anki::Card.where(did: deck_id).or(Anki::Card.where(odid: deck_id))
       total_cards = cards.size
       processed_cards = 0
 
