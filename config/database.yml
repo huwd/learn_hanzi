@@ -11,6 +11,7 @@ development:
     <<: *default
     database: tmp/anki/collection.anki21
     migrations_paths: []
+    database_tasks: false
 
 test:
   primary:
@@ -20,6 +21,7 @@ test:
     <<: *default
     database: storage/anki-test.sqlite3
     migrations_paths: []
+    database_tasks: false
 
 production:
   primary:
@@ -36,3 +38,4 @@ production:
   anki:
     <<: *default
     database: storage/production_collection.anki21
+    database_tasks: false

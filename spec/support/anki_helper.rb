@@ -104,14 +104,6 @@ module AnkiHelper
     db.execute <<-SQL
       CREATE TABLE graves (usn INTEGER, oid INTEGER, type INTEGER);
     SQL
-
-    db.execute <<-SQL
-      CREATE TABLE schema_migrations (version VARCHAR(255) PRIMARY KEY);
-    SQL
-
-    db.execute <<-SQL
-      CREATE TABLE ar_internal_metadata (key VARCHAR(255) PRIMARY KEY, value TEXT, created_at DATETIME, updated_at DATETIME);
-    SQL
   end
 
   def self.seed_db(db)
