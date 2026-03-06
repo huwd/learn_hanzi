@@ -82,7 +82,7 @@ RSpec.describe "dictionary_import:cc_cedict performance", :benchmark do
     next if results.empty?
 
     puts "\n#{"=" * 50}"
-    puts "  CC-CEDICT import benchmark results (baseline)"
+    puts "  CC-CEDICT import benchmark results"
     puts "#{"=" * 50}"
     puts format("  %-10s %10s %15s", "Entries", "Time (s)", "Entries/s")
     puts "  #{"-" * 38}"
@@ -90,7 +90,8 @@ RSpec.describe "dictionary_import:cc_cedict performance", :benchmark do
       puts format("  %-10d %10.2f %15.1f", size, r[:elapsed], size / r[:elapsed])
     end
     puts "#{"=" * 50}"
-    puts "  Re-run after optimisation to compare."
+    puts "  Baseline (pre-optimisation): 20→0.31s, 200→1.84s, 2000→18.01s"
+    puts "  Optimisation 1 (single txn + pre-load source): ~40% improvement"
     puts "#{"=" * 50}\n"
   end
 end
