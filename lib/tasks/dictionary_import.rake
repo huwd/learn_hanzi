@@ -22,30 +22,33 @@ namespace :dictionary_import do
 
     puts "#{file_lines} lines found in file"
     puts "#{DictionaryEntry.count} entries found in database"
-    source = {
-      name: "CC-CEDICT",
-      url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip"
-    }
+
+    pre_loaded_source = DictionaryImportHelper.find_or_create_cc_cedict_source(
+      "CC-CEDICT",
+      "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip"
+    )
 
     failed_lines = []
     error_count = 0
     logfile_path = Rails.root.join("log", "dictionary_import_errors.log")
 
     File.open(logfile_path, "a") do |logfile|
-      File.foreach(file_path).with_index do |line, index|
-        # Skip comments and blank lines
-        next if line.start_with?("#") || line.strip.empty?
-        progress = (index + 1).to_f / file_lines.to_f * 100
-        print format("\rProcessing: %6.2f%% | Errors: %d", progress, error_count)
-        $stdout.flush
+      DictionaryEntry.transaction do
+        File.foreach(file_path).with_index do |line, index|
+          # Skip comments and blank lines
+          next if line.start_with?("#") || line.strip.empty?
+          progress = (index + 1).to_f / file_lines.to_f * 100
+          print format("\rProcessing: %6.2f%% | Errors: %d", progress, error_count)
+          $stdout.flush
 
-        begin
-          DictionaryImportHelper.find_or_create_dictionary_entry(line, source)
-        rescue => e
-          error_count += 1
-          logfile.puts "Error processing line #{index + 1}: #{line.strip}"
-          logfile.puts "Error: #{e.message}"
-          next
+          begin
+            DictionaryImportHelper.find_or_create_dictionary_entry(line, pre_loaded_source)
+          rescue => e
+            error_count += 1
+            logfile.puts "Error processing line #{index + 1}: #{line.strip}"
+            logfile.puts "Error: #{e.message}"
+            next
+          end
         end
       end
     end

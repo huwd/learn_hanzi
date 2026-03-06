@@ -10,11 +10,12 @@ module DictionaryImportHelper
   end
 
   def find_or_create_dictionary_entry(line, source)
-    parsed_entry = parse_cc_cedict_line(line, source)
+    resolved_source = source.is_a?(Source) ? source : find_or_create_cc_cedict_source(source[:name], source[:url])
+    source_hash = { name: resolved_source.name, url: resolved_source.url }
+    parsed_entry = parse_cc_cedict_line(line, source_hash)
     raise "Error parsing line: #{line}" if parsed_entry.nil?
 
     DictionaryEntry.transaction do
-      source = find_or_create_cc_cedict_source(source[:name], source[:url])
       dictionary_entry = DictionaryEntry.find_or_initialize_by(
         text: parsed_entry[:simplified]
       )
@@ -23,7 +24,7 @@ module DictionaryImportHelper
         payload = {
           text: meaning[:text],
           language: "en",
-          source: source,
+          source: resolved_source,
           pinyin: meaning[:pinyin]
         }
         unless dictionary_entry.meanings.exists?(**payload)
