@@ -83,15 +83,6 @@ This supports fast decisions after a break: start with the “top-left” (fragi
 
 **Break-aware sessions.** If last activity was a while ago, bias toward diagnostic testing and reactivation.
 
-**Confusion-focused study sessions.** Some items need a different intervention than ordinary spaced review. The app should detect characters the learner repeatedly confuses or hesitates on, then offer a dedicated remediation mode that:
-
-- Puts commonly confused characters side by side
-- Breaks each character into components, radicals, or distinctive strokes
-- Surfaces a memorable differentiator or mnemonic hook
-- Tests the distinction directly, not just the character in isolation
-
-This is especially useful for visually similar characters, overlapping radical patterns, and items that the learner consistently maps to the wrong peer.
-
 **Progressive richness.** The product should aim to get the learner into richer material quickly, while staying within measurable comprehension. That means:
 
 - Start with isolated review when necessary
@@ -116,9 +107,21 @@ This is especially useful for visually similar characters, overlapping radical p
 
 Longer term, Anki becomes one input among others (in-app exercises, writing practice, etc.).
 
+### Knowledge as Data
+
+**Expose “what I know” as a data product.** The learning log should be queryable and composable, not just a personal display. Examples:
+
+- Article coverage: “What % of characters/words in this text are mastered/learning/new?”
+- Targeted generation: ask an LLM to produce a dialogue using ~60% mastered, ~20% learning, and a few new items
+- Contextual progression: choose or generate reading material that stretches the learner without dropping them into incomprehensible content
+
+The product value is controllability and honesty — generated or selected content constrained by _measured_ familiarity, not guesswork.
+
+These features depend on a solid learning log and stable definitions of “known/learning/new”, so they are later-stage but worth designing toward from the start.
+
 ### Social & Sharing
 
-**Expose “what I know” as a data product.** Examples:
+**Shareable progress summaries.** Examples:
 
 - Shareable summaries (by HSK level, by lesson)
 - A public “profile” view of coverage (optional, privacy-first)
@@ -207,6 +210,15 @@ This keeps the initial learning log honest without overfitting to an overly acad
 
 This likely requires in-app testing (not only Anki imports) so each axis can be directly exercised and logged.
 
+**Confusion-focused study (future).** Some items need a different intervention than ordinary spaced review. The app should detect characters the learner repeatedly confuses or hesitates on, then offer a dedicated remediation mode that:
+
+- Puts commonly confused characters side by side
+- Breaks each character into components, radicals, or distinctive strokes
+- Surfaces a memorable differentiator or mnemonic hook
+- Tests the distinction directly, not just the character in isolation
+
+This is especially useful for visually similar characters, overlapping radical patterns, and items that the learner consistently maps to the wrong peer. It connects directly to the Form and Composition axes above.
+
 **Exercise framework (future).** A small set of exercise types that feed the learning log, such as:
 
 - Recognition: show Hanzi → pick meaning
@@ -223,27 +235,23 @@ This likely requires in-app testing (not only Anki imports) so each axis can be 
 - A full Anki replacement (at least initially)
 - Gamification-heavy features as a substitute for accurate progress tracking
 - Premature multi-user/community complexity before the core learning loop works
+- Traditional Chinese support in v1 — Simplified only for now, but the data model should not foreclose it (see [docs/research/script-support.md](research/script-support.md))
 
 ## Open Questions
 
-- What is the canonical definition of “mastered” per entry, and how should it decay over time?
-- How should multiple axes roll up into a single overall state (if at all)?
-- Which axes matter most for the first version (keep it small)?
-- What exercise types are highest leverage and simplest to implement?
-- How should we handle polysemy and multiple readings (multiple meanings/pinyin)?
-- Privacy: do we want any sharing by default, and what is opt-in?
-- LLM integrations (later): what inputs/outputs are acceptable, and how do we evaluate usefulness?
+### Decide before building core features
 
-### Long-term “knowledge as data” ideas
+- **Mastery definition** — what counts as “mastered” per entry, and how should it decay over time? See [docs/research/mastery-definition.md](research/mastery-definition.md)
+- **Axis rollup** — how should multiple axes combine into an overall state (if at all)? See [docs/research/axis-rollup.md](research/axis-rollup.md)
+- **MVP axes** — which axes matter for the first version? See [docs/research/mvp-axes.md](research/mvp-axes.md)
+- **Exercise types** — which exercise types are highest leverage and simplest to implement first?
 
-These depend on a solid learning log and stable definitions of “known / learning / new”:
+### Decide when relevant
 
-- Article coverage: “What % of characters/words in this text are mastered/learning/new?”
-- Targeted generation: ask an LLM to produce a dialogue that uses (for example) ~60% mastered, ~20% learning, and a small number of new items
-
-The product value here is controllability and honesty: generated content should be constrained by _measured_ familiarity, not vibes.
-
-This same model should support contextual progression: if the app knows what proportion of a text is mastered, learning, or new, it can deliberately choose or generate reading material that stretches the learner without dropping them into incomprehensible content.
+- **Script support** — how should the Form axis handle Traditional vs Simplified when Traditional is added? See [docs/research/script-support.md](research/script-support.md)
+- **Polysemy** — how should we handle characters with multiple meanings or readings?
+- **Privacy** — do we want any sharing by default, and what is opt-in?
+- **LLM integrations** — what inputs/outputs are acceptable, and how do we evaluate usefulness?
 
 ## Success Metrics (Personal)
 
