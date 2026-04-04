@@ -105,9 +105,15 @@ module AnkiSeedData
   ].freeze
   # rubocop:enable Layout/ExtraSpacing
 
+  # Structured collection seed data. Keep values that are persisted to `col`
+  # here so constants can derive from the same source and cannot drift.
+  COL = {
+    crt: 1_234_567_890
+  }.freeze
+
   # Collection creation timestamp stored in col.crt (Unix seconds).
   # Used as the epoch for converting queue=2 "due day" values to real dates.
-  COL_CRT = 1_234_567_890
+  COL_CRT = COL.fetch(:crt)
 
   # One card per note, each exercising a different queue state.
   # Cards default to did=DECK_ID and odid=0. Pass :did and :odid to override
