@@ -43,6 +43,24 @@ RSpec.describe Tag, type: :model do
     end
   end
 
+  describe "#ancestors" do
+    let(:root)  { create(:tag, name: "HSK 2.0") }
+    let(:level) { create(:tag, name: "HSK 4", parent: root) }
+    let(:leaf)  { create(:tag, name: "Lesson 1", parent: level) }
+
+    it "returns an empty array for a root tag" do
+      expect(root.ancestors).to eq([])
+    end
+
+    it "returns the parent for a one-level-deep tag" do
+      expect(level.ancestors).to eq([ root ])
+    end
+
+    it "returns the full ancestry chain top-down for a deeply nested tag" do
+      expect(leaf.ancestors).to eq([ root, level ])
+    end
+  end
+
   describe "#add_child" do
     let(:parent_tag) { create(:tag) }
     let(:child_tag) { create(:tag) }
