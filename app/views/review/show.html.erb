@@ -10,39 +10,41 @@
 
   <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
 
-  <%# ---- FRONT ---- %>
-  <div data-card-flip-target="front">
-    <div class="w-80 bg-white rounded-2xl shadow-lg flex items-center justify-center p-10" style="height: 20rem;">
-      <span class="text-9xl font-bold text-gray-900 select-none whitespace-nowrap"><%= entry.text %></span>
+  <%# ---- CARD (always visible) ---- %>
+  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-10 text-center" style="min-height: 20rem;">
+
+    <span class="text-9xl font-bold text-gray-900 select-none whitespace-nowrap"><%= entry.text %></span>
+
+    <%# ---- BACK (hidden until revealed) ---- %>
+    <div data-card-flip-target="back" class="hidden">
+      <p class="text-3xl text-gray-400 mt-6 mb-2"><%= pinyin %></p>
+      <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
+      <% if overflow > 0 %>
+        <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
+      <% end %>
     </div>
 
+  </div>
+
+  <%# ---- FRONT: show answer button (hidden after reveal) ---- %>
+  <div data-card-flip-target="front">
     <button data-action="click->card-flip#reveal"
-            class="mt-8 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+            class="mt-6 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
       Show answer
     </button>
   </div>
 
-  <%# ---- BACK (hidden until revealed) ---- %>
+  <%# ---- BACK: rating buttons (hidden until revealed) ---- %>
   <div data-card-flip-target="back" class="hidden">
-    <div class="flex flex-col items-center">
-      <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-10 py-12 text-center" style="min-height: 20rem;">
-        <p class="text-3xl text-gray-400 mb-4"><%= pinyin %></p>
-        <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
-        <% if overflow > 0 %>
-          <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
-        <% end %>
-      </div>
-
-      <div class="mt-8 grid grid-cols-4 gap-3 w-80">
-        <%= button_to "Again", review_card_path, params: { ease: 1 },
-              class: "py-3 px-4 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors" %>
-        <%= button_to "Hard",  review_card_path, params: { ease: 2 },
-              class: "py-3 px-4 bg-orange-50 text-orange-600 font-medium rounded-xl hover:bg-orange-100 transition-colors" %>
-        <%= button_to "Good",  review_card_path, params: { ease: 3 },
-              class: "py-3 px-4 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-colors" %>
-        <%= button_to "Easy",  review_card_path, params: { ease: 4 },
-              class: "py-3 px-4 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors" %>
-      </div>
+    <div class="mt-6 grid grid-cols-4 gap-3 w-80">
+      <%= button_to "Again", review_card_path, params: { ease: 1 },
+            class: "py-3 px-4 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors" %>
+      <%= button_to "Hard",  review_card_path, params: { ease: 2 },
+            class: "py-3 px-4 bg-orange-50 text-orange-600 font-medium rounded-xl hover:bg-orange-100 transition-colors" %>
+      <%= button_to "Good",  review_card_path, params: { ease: 3 },
+            class: "py-3 px-4 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-colors" %>
+      <%= button_to "Easy",  review_card_path, params: { ease: 4 },
+            class: "py-3 px-4 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors" %>
     </div>
   </div>
 
