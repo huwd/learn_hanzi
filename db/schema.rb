@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_202906) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_04_131541) do
   create_table "dictionary_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "text"
@@ -87,6 +87,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_202906) do
   create_table "user_learnings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "dictionary_entry_id", null: false
+    t.integer "factor", default: 2500, null: false
     t.integer "last_interval"
     t.datetime "next_due"
     t.string "state", null: false
