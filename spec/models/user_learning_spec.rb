@@ -46,4 +46,41 @@ RSpec.describe UserLearning, type: :model do
       expect(UserLearning.suspended.count).to eq(1)
     end
   end
+
+  describe 'due-card scopes' do
+    let!(:overdue_learning) do
+      create(:user_learning, user: user, state: 'learning', next_due: 2.days.ago)
+    end
+    let!(:future_learning) do
+      create(:user_learning, user: user, state: 'learning', next_due: 3.days.from_now)
+    end
+    let!(:overdue_mastered) do
+      create(:user_learning, user: user, state: 'mastered', next_due: 1.day.ago)
+    end
+    let!(:future_mastered) do
+      create(:user_learning, user: user, state: 'mastered', next_due: 7.days.from_now)
+    end
+
+    describe '.due' do
+      it "returns records with next_due in the past" do
+        expect(UserLearning.due).to include(overdue_learning, overdue_mastered)
+      end
+
+      it "excludes records not yet due" do
+        expect(UserLearning.due).not_to include(future_learning, future_mastered)
+      end
+    end
+
+    describe '.overdue_learning' do
+      it "returns only learning cards that are overdue" do
+        expect(UserLearning.overdue_learning).to contain_exactly(overdue_learning)
+      end
+    end
+
+    describe '.due_mastered' do
+      it "returns only mastered cards that are due" do
+        expect(UserLearning.due_mastered).to contain_exactly(overdue_mastered)
+      end
+    end
+  end
 end
