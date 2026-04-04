@@ -22,6 +22,15 @@
       <% if overflow > 0 %>
         <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
       <% end %>
+      <% if entry.tags.any? %>
+        <div class="mt-4 flex flex-wrap gap-1 justify-center">
+          <% entry.tags.each do |tag| %>
+            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">
+              <%= tag.parent&.name %> · <%= tag.name %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
     </div>
 
   </div>
