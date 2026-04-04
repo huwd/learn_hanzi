@@ -54,21 +54,32 @@ RSpec.describe TagEntriesGrouper do
       end
     end
 
-    it "includes entries the current user has not started, even if another user has" do
-      other_user = create(:user)
-      create(:user_learning, user: other_user, dictionary_entry: dictionary_entry1, state: "mastered")
-      grouper = TagEntriesGrouper.new(tag, user)
-
-      # user has a learning for entry1 (learning state), so entry1 must NOT be in not_learned
-      expect(grouper.grouped_by_learning_state[:not_learned]).not_to include(dictionary_entry1)
+    it "does not return a not_learned key" do
+      grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+      expect(grouped).not_to have_key(:not_learned)
     end
 
-    it "excludes entries the current user has already started from not_learned" do
-      other_user = create(:user)
-      grouper = TagEntriesGrouper.new(tag, other_user)
+    context "new_entries bucket" do
+      let(:unstarted_entry) { create(:dictionary_entry) }
+      let(:new_state_entry) { create(:dictionary_entry) }
+      let!(:new_ul) { create(:user_learning, user: user, dictionary_entry: new_state_entry, state: "new") }
 
-      # other_user has no learnings — both entries must appear in not_learned
-      expect(grouper.grouped_by_learning_state[:not_learned]).to include(dictionary_entry1, dictionary_entry2)
+      before { tag.dictionary_entries << unstarted_entry << new_state_entry }
+
+      it "includes entries with no UserLearning record" do
+        grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+        expect(grouped[:new_entries]).to include(unstarted_entry)
+      end
+
+      it "includes entries with state=new" do
+        grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+        expect(grouped[:new_entries]).to include(new_state_entry)
+      end
+
+      it "excludes entries already in a non-new state" do
+        grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+        expect(grouped[:new_entries]).not_to include(dictionary_entry1, dictionary_entry2)
+      end
     end
   end
 end
