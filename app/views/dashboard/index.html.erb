@@ -58,11 +58,20 @@
     <% if @vocabulary_sections.any? %>
       <div class="space-y-8">
         <% @vocabulary_sections.each do |section| %>
-          <div>
+          <div data-controller="collapsible">
             <%# Version header with aggregate bar %>
             <div class="flex items-center gap-4 mb-3">
-              <%= link_to section[:version].name, tag_path(section[:version]),
-                    class: "text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-blue-600 transition-colors w-20 shrink-0" %>
+              <button data-action="click->collapsible#toggle"
+                      class="flex items-center gap-1 w-20 shrink-0 group">
+                <svg data-collapsible-target="chevron"
+                     class="rotate-90 w-3 h-3 text-gray-400 transition-transform shrink-0"
+                     viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors truncate">
+                  <%= section[:version].name %>
+                </span>
+              </button>
               <div class="flex-grow">
                 <%= render "progress_bar", stats: section[:aggregate] %>
               </div>
@@ -72,7 +81,7 @@
             </div>
 
             <%# Level rows %>
-            <div class="space-y-2 pl-4 border-l-2 border-gray-100">
+            <div data-collapsible-target="content" class="space-y-2 pl-4 border-l-2 border-gray-100">
               <% section[:levels].each do |level| %>
                 <% next if level[:stats][:total] == 0 %>
                 <div class="flex items-center gap-4">
