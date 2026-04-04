@@ -7,6 +7,16 @@ class Tag < ApplicationRecord
 
   validates :name, presence: true
 
+  def ancestors
+    chain = []
+    node = parent
+    while node
+      chain.unshift(node)
+      node = node.parent
+    end
+    chain
+  end
+
   def add_child(child_tag)
     children << child_tag unless children.exists?(child_tag.id)
   end
