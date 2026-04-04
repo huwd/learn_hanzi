@@ -55,12 +55,15 @@ module SpacedRepetition
 
     def calculated_state
       case [ @user_learning.state, @ease ]
+      # Any ease on a new card moves it to learning — even Again/Hard. Once a card
+      # has been seen it is no longer new regardless of performance, matching Anki's
+      # behaviour and keeping the new queue as a clean "unseen" set.
       in [ "new", (1 | 2 | 3 | 4) ] then "learning"
       in [ "learning", (1 | 2) ]     then "learning"
       in [ "learning", (3 | 4) ]     then "mastered"
       in [ "mastered", 1 ]            then "learning"
       in [ "mastered", (2 | 3 | 4) ] then "mastered"
-      else @user_learning.state
+      else raise ArgumentError, "unexpected ease #{@ease.inspect} for state #{@user_learning.state.inspect}"
       end
     end
   end
