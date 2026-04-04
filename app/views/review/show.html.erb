@@ -16,27 +16,29 @@
 
   <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
 
-  <%# ---- CARD (always visible) ---- %>
-  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-10 text-center" style="min-height: 20rem;">
+  <%# ---- CARD — character pinned to top, expands downward on reveal ---- %>
+  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
 
     <span class="text-9xl font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
 
-    <%# ---- BACK (hidden until revealed) ---- %>
+    <%# ---- BACK: answer content (hidden until revealed) ---- %>
     <div data-card-flip-target="back" class="hidden">
-      <p class="text-3xl text-gray-400 mt-6 mb-2"><%= pinyin %></p>
-      <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
-      <% if overflow > 0 %>
-        <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
-      <% end %>
-      <% if entry.tags.any? %>
-        <div class="mt-4 flex flex-wrap gap-1 justify-center">
-          <% entry.tags.each do |tag| %>
-            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">
-              <%= tag.parent&.name %> · <%= tag.name %>
-            </span>
-          <% end %>
-        </div>
-      <% end %>
+      <div class="mt-6 w-full border-t border-gray-100 pt-6">
+        <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
+        <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
+        <% if overflow > 0 %>
+          <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
+        <% end %>
+        <% if entry.tags.any? %>
+          <div class="mt-4 flex flex-wrap gap-1 justify-center">
+            <% entry.tags.each do |tag| %>
+              <span class="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">
+                <%= tag.parent&.name %> · <%= tag.name %>
+              </span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
     </div>
 
   </div>
