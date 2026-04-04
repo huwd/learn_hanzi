@@ -148,7 +148,7 @@ module AnkiHelper
 
     db.execute(
       "INSERT INTO col (id, crt, mod, scm, ver, dty, usn, ls, conf, models, decks, dconf, tags) " \
-      "VALUES (1, 1234567890, 1234567890, 1234567890, 11, 0, 0, 0, '{}', ?, ?, '{}', '{}')",
+      "VALUES (1, #{AnkiSeedData::COL_CRT}, #{AnkiSeedData::COL_CRT}, #{AnkiSeedData::COL_CRT}, 11, 0, 0, 0, '{}', ?, ?, '{}', '{}')",
       [ models_json, decks_json ]
     )
   end
