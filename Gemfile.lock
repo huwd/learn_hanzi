@@ -80,7 +80,7 @@ GEM
     ast (2.4.3)
     awesome_print (1.9.2)
     base64 (0.3.0)
-    bcrypt (3.1.21)
+    bcrypt (3.1.22)
     bcrypt_pbkdf (1.1.2)
     bigdecimal (4.1.0)
     bindex (0.8.1)
@@ -463,7 +463,7 @@ PLATFORMS
 
 DEPENDENCIES
   awesome_print
-  bcrypt (~> 3.1.21)
+  bcrypt (~> 3.1.22)
   bootsnap
   brakeman
   bullet
