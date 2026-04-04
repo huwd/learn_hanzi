@@ -31,7 +31,7 @@
     <% unless entries_in_state.empty? %>
       <div class="flex items-baseline gap-4 mb-6">
         <h2 class="text-4xl font-extrabold text-gray-800"><%= label %></h2>
-        <% if key == :not_learned || key == :new_entries %>
+        <% if key == :new_entries %>
           <%= link_to learn_path(tag_id: @entry_tag.id),
                 class: "text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors" do %>
             Learn these &rarr;
