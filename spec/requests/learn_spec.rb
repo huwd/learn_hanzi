@@ -68,6 +68,73 @@ RSpec.describe "Learn", type: :request do
           expect(response).to have_http_status(:success)
         end
       end
+
+      context "with a tag_id param (tag-filtered session)" do
+        let(:tag) { create(:tag) }
+        let!(:tagged_entry) { create(:dictionary_entry).tap { |e| e.tags << tag } }
+
+        before { new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1) }
+
+        context "when the tag has unlearned entries (no UserLearning)" do
+          it "creates UserLearning records for unlearned entries" do
+            expect {
+              get learn_path(tag_id: tag.id)
+            }.to change(UserLearning, :count).by(1)
+          end
+
+          it "sets the new records to state new" do
+            get learn_path(tag_id: tag.id)
+            expect(UserLearning.last.state).to eq("new")
+          end
+
+          it "queues the newly created card" do
+            get learn_path(tag_id: tag.id)
+            new_ul = UserLearning.find_by(user: user, dictionary_entry: tagged_entry)
+            expect(request.session[:learn_queue]).to include(new_ul.id)
+          end
+
+          it "redirects to the learn card path" do
+            get learn_path(tag_id: tag.id)
+            expect(response).to redirect_to(learn_card_path)
+          end
+        end
+
+        context "when the tag has existing new-state entries" do
+          let!(:existing_new) { create(:user_learning, user: user, state: "new", dictionary_entry: tagged_entry) }
+
+          it "does not create duplicate UserLearning records" do
+            expect {
+              get learn_path(tag_id: tag.id)
+            }.not_to change(UserLearning, :count)
+          end
+
+          it "queues the existing new card" do
+            get learn_path(tag_id: tag.id)
+            expect(request.session[:learn_queue]).to include(existing_new.id)
+          end
+        end
+
+        context "prioritisation: unlearned before existing new" do
+          let(:other_entry) { create(:dictionary_entry).tap { |e| e.tags << tag } }
+          let!(:existing_new) { create(:user_learning, user: user, state: "new", dictionary_entry: other_entry) }
+
+          it "puts the unlearned (newly created) card before the existing new card" do
+            get learn_path(tag_id: tag.id)
+            queue   = request.session[:learn_queue]
+            new_ul  = UserLearning.find_by(user: user, dictionary_entry: tagged_entry)
+            expect(queue.index(new_ul.id)).to be < queue.index(existing_new.id)
+          end
+        end
+
+        context "when the tag has no unlearned or new entries" do
+          before { tagged_entry.user_learnings.create!(user: user, state: "mastered", last_interval: 10, factor: 2500, next_due: 1.day.from_now) }
+
+          it "renders the empty state" do
+            get learn_path(tag_id: tag.id)
+            expect(response).to have_http_status(:success)
+          end
+        end
+      end
     end
   end
 

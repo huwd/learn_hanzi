@@ -29,8 +29,16 @@
   <% @states.each do |key, label| %>
     <% entries_in_state = @dictionary_entries_grouped[key] || [] %>
     <% unless entries_in_state.empty? %>
-      <h2 class="text-4xl font-extrabold text-gray-800 mb-6"><%= label %></h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-7">
+      <div class="flex items-baseline gap-4 mb-6">
+        <h2 class="text-4xl font-extrabold text-gray-800"><%= label %></h2>
+        <% if key == :not_learned || key == :new_entries %>
+          <%= link_to learn_path(tag_id: @entry_tag.id),
+                class: "text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors" do %>
+            Learn these &rarr;
+          <% end %>
+        <% end %>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-7 mb-6">
         <% entries_in_state.each.with_index(1) do |entry, index| %>
           <%= link_to dictionary_entry_path(entry.id), class: "relative bg-white shadow-md rounded-lg p-4 text-center" do %>
             <span class="absolute top-0 left-0 text-xs text-gray-500 p-1"><%= index %></span>
