@@ -19,7 +19,8 @@
   <%# ---- CARD (always visible) ---- %>
   <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-10 text-center" style="min-height: 20rem;">
 
-    <span class="text-9xl font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+    <span class="text-9xl text-gray-900 select-none whitespace-nowrap antialiased"
+          style="font-family: 'Ma Shan Zheng', 'PingFang SC', sans-serif;"><%= entry.text %></span>
 
     <%# ---- BACK (hidden until revealed) ---- %>
     <div data-card-flip-target="back" class="hidden">
