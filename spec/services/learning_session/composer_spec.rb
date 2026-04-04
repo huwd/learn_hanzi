@@ -4,7 +4,7 @@ RSpec.describe LearningSession::Composer do
   let(:user) { create(:user) }
 
   describe ".call" do
-    subject(:queue) { described_class.call(user: user, size: size, new_cap: new_cap) }
+    subject(:queue) { described_class.call(user: user, size: size, new_cap: new_cap, include_new: true) }
 
     let(:size) { 10 }
     let(:new_cap) { 3 }
@@ -107,7 +107,7 @@ RSpec.describe LearningSession::Composer do
       it "limits new cards to new_cap even when session has remaining capacity" do
         learning_cards = create_list(:user_learning, 5, user: user, state: "learning",
                                      next_due: 1.day.ago, last_interval: 1)
-        result = described_class.call(user: user, size: 10, new_cap: 2)
+        result = described_class.call(user: user, size: 10, new_cap: 2, include_new: true)
         new_in_queue = result.count { |ul| ul.state == "new" }
         expect(new_in_queue).to eq(2)
       end
@@ -129,6 +129,24 @@ RSpec.describe LearningSession::Composer do
 
       it "does not duplicate cards" do
         expect(queue.map(&:id).uniq.size).to eq(queue.size)
+      end
+    end
+
+    context "when include_new is false (default)" do
+      subject(:queue) { described_class.call(user: user, size: size, new_cap: new_cap) }
+
+      before do
+        create_list(:user_learning, 3, user: user, state: "new")
+        create(:user_learning, user: user, state: "learning",
+               next_due: 1.day.ago, last_interval: 1)
+      end
+
+      it "excludes new cards" do
+        expect(queue.map(&:state)).not_to include("new")
+      end
+
+      it "still includes overdue learning cards" do
+        expect(queue.map(&:state)).to include("learning")
       end
     end
 
