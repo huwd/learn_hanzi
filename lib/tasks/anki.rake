@@ -26,9 +26,10 @@ namespace :anki do
       log.puts "Migrating Anki Deck: #{target_deck}"
       log.puts "---"
 
-      # Get deck ID for the target deck
-      col_metadata = Anki::DB.connection.execute("SELECT decks FROM col").first
-      decks = JSON.parse(col_metadata["decks"])
+      # Read collection metadata in one query
+      col_metadata = Anki::DB.connection.execute("SELECT crt, decks FROM col").first
+      col_crt      = col_metadata["crt"]
+      decks        = JSON.parse(col_metadata["decks"])
 
       deck_id = decks.find { |_, deck| deck["name"] == target_deck }&.first
 
@@ -97,7 +98,7 @@ namespace :anki do
           user_id:             user.id,
           dictionary_entry_id: entry_id,
           state:               card_state[card.id],
-          next_due:            Time.at(card.due),
+          next_due:            anki_next_due(card, col_crt),
           last_interval:       card.ivl
         }
       end
@@ -141,5 +142,21 @@ namespace :anki do
 
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
     puts "\nMigration complete. Completed in #{elapsed.round(2)}s. Log written to: #{log_file}"
+  end
+end
+
+# Converts an Anki card's due field to a Ruby Time, respecting Anki's
+# per-queue encoding:
+#
+#   queue 0 (new)       — due is an ordinal sort position, not a date → nil
+#   queue 1, 3          — due is a Unix timestamp in seconds
+#   queue 2             — due is days since col.crt
+#   queue -1, -2        — inherited from prior queue; treat as days since crt
+#                         (most suspended/buried cards were previously queue 2)
+def anki_next_due(card, col_crt)
+  case card.queue
+  when 0      then nil
+  when 1, 3   then Time.at(card.due)
+  else             Time.at(col_crt + card.due * 86_400)
   end
 end
