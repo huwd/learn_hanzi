@@ -15,7 +15,6 @@ module LearningSession
 
     def call
       queue = []
-      remaining_new = all_new_cards
 
       # Priority 1: all overdue learning cards
       queue.concat(overdue_learning_cards)
@@ -23,7 +22,7 @@ module LearningSession
 
       # Priority 2: new cards, capped to avoid flooding
       new_limit = [ @size - queue.size, @new_cap ].min
-      queue.concat(remaining_new.shift(new_limit))
+      queue.concat(new_cards(new_limit))
       return queue if queue.size >= @size
 
       # Priority 3: due mastered cards (spot checks)
@@ -39,8 +38,8 @@ module LearningSession
       @user.user_learnings.overdue_learning.order(:next_due).to_a
     end
 
-    def all_new_cards
-      @user.user_learnings.new_learnings.order(:created_at).to_a
+    def new_cards(limit)
+      @user.user_learnings.new_learnings.order(:created_at).limit(limit).to_a
     end
 
     def due_mastered_cards
