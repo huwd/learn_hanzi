@@ -177,14 +177,14 @@ RSpec.describe "Review", type: :request do
           expect(response).to have_http_status(:unprocessable_content)
         end
       end
+    end
 
-      context "with no review session" do
-        before { session.delete(:review_queue) }
+    context "with no review session" do
+      before { sign_in user }
 
-        it "redirects to review start" do
-          post review_card_path, params: { ease: 3 }
-          expect(response).to redirect_to(review_path)
-        end
+      it "redirects to review start" do
+        post review_card_path, params: { ease: 3 }
+        expect(response).to redirect_to(review_path)
       end
     end
   end
