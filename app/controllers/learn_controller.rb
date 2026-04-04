@@ -131,7 +131,7 @@ class LearnController < ApplicationController
   def current_review_card
     id = session[:learn_introduced][session[:learn_review_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: [ :meanings, { tags: :parent } ])
+           .includes(dictionary_entry: :meanings)
            .find(id)
   end
 end
