@@ -1,0 +1,92 @@
+<% content_for :head do %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<% end %>
+
+<%
+  entry    = @user_learning.dictionary_entry
+  pinyin   = entry.meanings.first&.pinyin
+  meanings = entry.meanings.reject { |m| m.text.start_with?("CL:") }
+  shown    = meanings.first(3)
+%>
+
+<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="learn-card">
+
+  <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
+
+  <%# Card %>
+  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
+    <span class="text-9xl font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+
+    <div data-learn-card-target="pinyin" class="hidden mt-6 w-full border-t border-gray-100 pt-6">
+      <p class="text-3xl text-gray-400"><%= pinyin %></p>
+    </div>
+
+    <div data-learn-card-target="meaning" class="hidden mt-4">
+      <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
+    </div>
+  </div>
+
+  <%# Phase 1: reveal pronunciation %>
+  <button data-learn-card-target="revealPinyinBtn"
+          data-action="click->learn-card#revealPinyin"
+          class="mt-6 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+    Reveal pronunciation
+  </button>
+
+  <%# Phase 2: reveal meaning %>
+  <button data-learn-card-target="revealMeaningBtn"
+          data-action="click->learn-card#revealMeaning"
+          class="hidden mt-6 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+    Reveal meaning
+  </button>
+
+  <%# Phase 3: binary buttons %>
+  <div data-learn-card-target="binaryButtons" class="hidden mt-6 flex gap-3 w-80">
+    <%= button_to learn_card_path, params: { know_it: "true" },
+          class: "flex-1 py-3 bg-green-50 text-green-700 font-semibold rounded-xl hover:bg-green-100 transition-colors" do %>
+      I know this
+    <% end %>
+    <button data-action="click->learn-card#needToLearn"
+            class="flex-1 py-3 bg-amber-50 text-amber-700 font-semibold rounded-xl hover:bg-amber-100 transition-colors">
+      I need to learn this
+    </button>
+  </div>
+
+  <%# Contextual panel (shown after "I need to learn this") %>
+  <div data-learn-card-target="contextual" class="hidden mt-6 w-80 space-y-3">
+
+    <div class="bg-gray-50 rounded-xl p-4">
+      <% if @related.any? %>
+        <p class="text-sm font-medium text-gray-600 mb-3">
+          Words you already know containing <span class="font-hanzi text-lg"><%= entry.text %></span>:
+        </p>
+        <ul class="space-y-2">
+          <% @related.each do |rel| %>
+            <% rel_meaning = rel.dictionary_entry.meanings.reject { |m| m.text.start_with?("CL:") }.first %>
+            <li class="flex items-baseline gap-2 text-sm">
+              <span class="font-hanzi text-xl text-gray-800"><%= rel.dictionary_entry.text %></span>
+              <span class="text-gray-400"><%= rel.dictionary_entry.meanings.first&.pinyin %></span>
+              <span class="text-gray-600"><%= rel_meaning&.text %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-gray-400 text-center">
+          No related words in your mastered vocabulary yet.
+        </p>
+      <% end %>
+    </div>
+
+    <%# Radical breakdown placeholder — see issue #146 %>
+    <div class="bg-gray-50 rounded-xl p-3 text-center opacity-40">
+      <p class="text-xs text-gray-400">Radical breakdown coming soon</p>
+    </div>
+
+    <%= button_to "Got it, next character", learn_card_path, params: { know_it: "false" },
+          class: "w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" %>
+
+  </div>
+
+</div>
