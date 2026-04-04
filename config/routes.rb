@@ -12,6 +12,11 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "tags#index"
 
+  get  "review",         to: "review#start",   as: :review
+  get  "review/card",    to: "review#show",    as: :review_card
+  post "review/card",    to: "review#submit"
+  get  "review/summary", to: "review#summary", as: :review_summary
+
   resource :session
   resources :passwords, param: :token
   resources :tags, only: [ :index, :show ]
