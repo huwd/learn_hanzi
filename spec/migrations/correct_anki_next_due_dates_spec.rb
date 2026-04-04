@@ -3,17 +3,15 @@ require Rails.root.join('db/migrate/20260404215231_correct_anki_next_due_dates')
 
 # Tests for the CorrectAnkiNextDueDates data migration.
 #
-# The Anki test DB seeds card 1 (好, queue=2, due=300) and card 3 (学, queue=0,
-# due=3), which provide the Anki-side data the migration reads.
-# We create matching UserLearning rows with wrong epoch dates and assert the
-# migration corrects them.
+# The Anki test DB seeds card 1 (好, queue=2, due=300) which provides the
+# Anki-side data the mastered-card pass reads. New-card clearing no longer
+# requires an Anki lookup so any entry works for that case.
 RSpec.describe "CorrectAnkiNextDueDates migration" do
   let(:migration) { CorrectAnkiNextDueDates.new }
   let(:user)      { create(:user) }
   let(:crt)       { AnkiSeedData::COL_CRT }
 
   let!(:entry_hao) { create(:dictionary_entry, text: "好") }  # card 1, queue=2, due=300
-  let!(:entry_xue) { create(:dictionary_entry, text: "学") }  # card 3, queue=0,  due=3
 
   describe "#up" do
     context "mastered card with an epoch next_due (bad import)" do
@@ -74,7 +72,7 @@ RSpec.describe "CorrectAnkiNextDueDates migration" do
       let!(:ul) do
         create(:user_learning,
           user:             user,
-          dictionary_entry: entry_xue,
+          dictionary_entry: entry_hao,
           state:            "new",
           next_due:         Time.at(3))  # wrong: treated ordinal 3 as 3 seconds
       end
