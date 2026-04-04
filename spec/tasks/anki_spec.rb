@@ -117,6 +117,13 @@ RSpec.describe "anki:migrate_to_models", type: :task do
         ul = UserLearning.find_by!(user: user, dictionary_entry: entry_xue)
         expect(ul.next_due).to be_nil
       end
+
+      it "stores nil for suspended/buried cards whose due encoding is ambiguous" do
+        [entry_da, entry_xiao].each do |entry|
+          ul = UserLearning.find_by!(user: user, dictionary_entry: entry)
+          expect(ul.next_due).to be_nil
+        end
+      end
     end
 
     it "creates ReviewLog records linked to the UserLearning" do

@@ -28,7 +28,7 @@ namespace :anki do
 
       # Read collection metadata in one query
       col_metadata = Anki::DB.connection.execute("SELECT crt, decks FROM col").first
-      col_crt      = col_metadata["crt"]
+      col_crt      = col_metadata["crt"].to_i
       decks        = JSON.parse(col_metadata["decks"])
 
       deck_id = decks.find { |_, deck| deck["name"] == target_deck }&.first
@@ -151,12 +151,13 @@ end
 #   queue 0 (new)       — due is an ordinal sort position, not a date → nil
 #   queue 1, 3          — due is a Unix timestamp in seconds
 #   queue 2             — due is days since col.crt
-#   queue -1, -2        — inherited from prior queue; treat as days since crt
-#                         (most suspended/buried cards were previously queue 2)
+#   queue -1, -2        — suspended/buried; due encoding is ambiguous → nil
+#   any other queue     — unknown encoding → nil
 def anki_next_due(card, col_crt)
   case card.queue
   when 0      then nil
-  when 1, 3   then Time.at(card.due)
-  else             Time.at(col_crt + card.due * 86_400)
+  when 1, 3   then Time.at(card.due.to_i)
+  when 2      then Time.at(col_crt + card.due.to_i * 86_400)
+  else             nil
   end
 end
