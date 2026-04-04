@@ -4,6 +4,8 @@ inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 AllCops:
   # RuboCop 1.70 doesn't recognise Ruby 4.0 yet; pin to highest known version.
   TargetRubyVersion: 3.4
+  Exclude:
+    - 'docs/**/*'
 
 # Overwrite or add rules to create your own house style
 #
