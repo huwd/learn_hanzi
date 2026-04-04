@@ -119,7 +119,7 @@ RSpec.describe "anki:migrate_to_models", type: :task do
       end
 
       it "stores nil for suspended/buried cards whose due encoding is ambiguous" do
-        [entry_da, entry_xiao].each do |entry|
+        [ entry_da, entry_xiao ].each do |entry|
           ul = UserLearning.find_by!(user: user, dictionary_entry: entry)
           expect(ul.next_due).to be_nil
         end
