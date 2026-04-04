@@ -14,5 +14,12 @@ class TagsController < ApplicationController
       mastered:    "Mastered",
       suspended:   "Suspended"
     }
+    @due_entry_ids = Set.new(
+      Current.user.user_learnings
+             .where(dictionary_entry: @entry_tag.dictionary_entries)
+             .where(state: %w[learning mastered])
+             .due
+             .pluck(:dictionary_entry_id)
+    )
   end
 end
