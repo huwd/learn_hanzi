@@ -5,7 +5,7 @@ RSpec.describe TagEntriesGrouper do
   let(:tag) { create(:tag) }
   let(:dictionary_entry1) { create(:dictionary_entry) }
   let(:dictionary_entry2) { create(:dictionary_entry) }
-  let!(:user_learning1) { create(:user_learning, user: user, dictionary_entry: dictionary_entry1, state: 'learning') }
+  let!(:user_learning1) { create(:user_learning, user: user, dictionary_entry: dictionary_entry1, state: 'learning', factor: 2500) }
   let!(:user_learning2) { create(:user_learning, user: user, dictionary_entry: dictionary_entry2, state: 'mastered') }
 
   before do
@@ -27,9 +27,31 @@ RSpec.describe TagEntriesGrouper do
       grouped_entries = grouper.grouped_by_learning_state
 
       expect(grouped_entries[:learning]).to eq([])
+      expect(grouped_entries[:struggling]).to eq([])
       expect(grouped_entries[:mastered]).to eq([])
       expect(grouped_entries[:new_entries]).to eq([])
       expect(grouped_entries[:suspended]).to eq([])
+    end
+
+    context "struggling bucket" do
+      let(:struggling_entry) { create(:dictionary_entry) }
+      let!(:struggling_learning) do
+        create(:user_learning, user: user, dictionary_entry: struggling_entry, state: 'learning', factor: 1999)
+      end
+
+      before { tag.dictionary_entries << struggling_entry }
+
+      it "puts learning entries with factor < 2000 into struggling" do
+        grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+        expect(grouped[:struggling]).to include(struggling_entry)
+        expect(grouped[:learning]).not_to include(struggling_entry)
+      end
+
+      it "keeps learning entries with factor >= 2000 in learning" do
+        grouped = TagEntriesGrouper.new(tag, user).grouped_by_learning_state
+        expect(grouped[:learning]).to include(dictionary_entry1)
+        expect(grouped[:struggling]).not_to include(dictionary_entry1)
+      end
     end
 
     it "includes entries the current user has not started, even if another user has" do
