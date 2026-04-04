@@ -88,7 +88,7 @@ RSpec.describe "Review", type: :request do
 
         it "shows a progress indicator" do
           get review_card_path
-          expect(response.body).to match(/1.*of.*1/i)
+          expect(response.body).to match(/1.*\/.*1/)
         end
       end
 
