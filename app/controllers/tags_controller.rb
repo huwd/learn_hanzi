@@ -8,7 +8,6 @@ class TagsController < ApplicationController
     @child_tags = @entry_tag.children
     @dictionary_entries_grouped = TagEntriesGrouper.new(@entry_tag, Current.user).grouped_by_learning_state
     @states = {
-      not_learned: "Not Learned yet",
       new_entries: "New",
       learning:    "Learning",
       mastered:    "Mastered",

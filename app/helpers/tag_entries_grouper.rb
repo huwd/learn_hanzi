@@ -13,10 +13,11 @@ class TagEntriesGrouper
     grouped = entries.group_by(&:learning_state)
     learning = grouped["learning"] || []
 
+    unstarted = @tag.dictionary_entries
+                    .where.not(id: UserLearning.where(user: @user).select(:dictionary_entry_id))
+
     {
-      not_learned:  @tag.dictionary_entries
-                          .where.not(id: UserLearning.where(user: @user).select(:dictionary_entry_id)),
-      new_entries:  grouped["new"]      || [],
+      new_entries:  (grouped["new"] || []) + unstarted.to_a,
       learning:     learning.reject { |e| e.learning_factor < 2000 },
       struggling:   learning.select { |e| e.learning_factor < 2000 },
       mastered:     grouped["mastered"] || [],
