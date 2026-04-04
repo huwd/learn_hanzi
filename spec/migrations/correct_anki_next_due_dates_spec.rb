@@ -1,4 +1,5 @@
 require 'rails_helper'
+require Rails.root.join('db/migrate/20260404215231_correct_anki_next_due_dates')
 
 # Tests for the CorrectAnkiNextDueDates data migration.
 #
@@ -43,6 +44,29 @@ RSpec.describe "CorrectAnkiNextDueDates migration" do
       it "leaves next_due unchanged" do
         migration.up
         expect(ul.reload.next_due).to be_within(1.second).of(future_due)
+      end
+    end
+
+    context "mastered card with epoch next_due and no Anki card in target deck" do
+      # Simulate a card that moved decks: no DictionaryEntry text matches any
+      # Anki note, so the first pass skips it. The fallback must reconstruct
+      # next_due from the review log.
+      let!(:orphan_entry) { create(:dictionary_entry, text: "孤") }
+      let(:review_time_ms) { 1_700_000_000_000 } # 2023-11-14 in ms
+      let!(:ul) do
+        create(:user_learning,
+          user:             user,
+          dictionary_entry: orphan_entry,
+          state:            "mastered",
+          next_due:         Time.at(300),
+          last_interval:    30)
+      end
+      let!(:log) { create(:review_log, user_learning: ul, time: review_time_ms) }
+
+      it "reconstructs next_due from the most recent review log" do
+        migration.up
+        expected = Time.at(review_time_ms / 1000.0) + 30.days
+        expect(ul.reload.next_due).to be_within(1.second).of(expected)
       end
     end
 
