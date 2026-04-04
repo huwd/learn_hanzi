@@ -1,0 +1,30 @@
+<div class="flex flex-col items-center justify-center" data-controller="card-flip">
+  <p class="text-sm text-gray-400 mb-6">Card <%= @position %> of <%= @total %></p>
+
+  <div class="w-64 h-64 flex items-center justify-center bg-white rounded-2xl shadow-lg cursor-pointer"
+       data-action="click->card-flip#reveal">
+    <div data-card-flip-target="front">
+      <span class="text-8xl font-bold text-gray-800"><%= @user_learning.dictionary_entry.text %></span>
+    </div>
+
+    <div data-card-flip-target="back" class="hidden w-full px-6 text-center">
+      <p class="text-2xl text-gray-600 mb-2">
+        <%= @user_learning.dictionary_entry.meanings.first&.pinyin %>
+      </p>
+      <p class="text-gray-700 mb-6">
+        <%= @user_learning.dictionary_entry.meanings.map(&:text).join("; ") %>
+      </p>
+
+      <div class="flex gap-2 justify-center">
+        <%= button_to "Again", review_card_path, params: { ease: 1 },
+              class: "px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" %>
+        <%= button_to "Hard",  review_card_path, params: { ease: 2 },
+              class: "px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500" %>
+        <%= button_to "Good",  review_card_path, params: { ease: 3 },
+              class: "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" %>
+        <%= button_to "Easy",  review_card_path, params: { ease: 4 },
+              class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+      </div>
+    </div>
+  </div>
+</div>
