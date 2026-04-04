@@ -1,0 +1,227 @@
+require 'rails_helper'
+
+RSpec.describe "Learn", type: :request do
+  let(:user) { create(:user) }
+  let!(:new_card) { create(:user_learning, user: user, state: "new") }
+
+  # -------------------------------------------------------------------------
+  # GET /learn — start session
+  # -------------------------------------------------------------------------
+  describe "GET /learn" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        get learn_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated" do
+      before { sign_in user }
+
+      context "when new cards are available" do
+        it "redirects to the learn card path" do
+          get learn_path
+          expect(response).to redirect_to(learn_card_path)
+        end
+
+        it "stores the queue in the session" do
+          get learn_path
+          expect(request.session[:learn_queue]).to include(new_card.id)
+        end
+
+        it "initialises the index at 0" do
+          get learn_path
+          expect(request.session[:learn_index]).to eq(0)
+        end
+
+        it "initialises learn_introduced as an empty array" do
+          get learn_path
+          expect(request.session[:learn_introduced]).to eq([])
+        end
+      end
+
+      context "when no new cards are available" do
+        before { new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1) }
+
+        it "renders the empty state" do
+          get learn_path
+          expect(response).to have_http_status(:success)
+        end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /learn/card — show introduction card
+  # -------------------------------------------------------------------------
+  describe "GET /learn/card" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        get learn_card_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated with an active learn session" do
+      before do
+        sign_in user
+        get learn_path
+      end
+
+      it "returns a successful response" do
+        get learn_card_path
+        expect(response).to have_http_status(:success)
+      end
+
+      it "includes the character in the response" do
+        get learn_card_path
+        expect(response.body).to include(new_card.dictionary_entry.text)
+      end
+    end
+
+    context "when authenticated without an active learn session" do
+      before { sign_in user }
+
+      it "redirects to learn start" do
+        get learn_card_path
+        expect(response).to redirect_to(learn_path)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # POST /learn/card — submit know_it / don't know it
+  # -------------------------------------------------------------------------
+  describe "POST /learn/card" do
+    context "when authenticated with an active learn session" do
+      before do
+        sign_in user
+        get learn_path
+      end
+
+      context "when know_it is true" do
+        it "sets the card state to learning" do
+          post learn_card_path, params: { know_it: "true" }
+          expect(new_card.reload.state).to eq("learning")
+        end
+
+        it "adds the card to learn_introduced" do
+          post learn_card_path, params: { know_it: "true" }
+          expect(request.session[:learn_introduced]).to include(new_card.id)
+        end
+      end
+
+      context "when know_it is false" do
+        it "sets the card state to learning" do
+          post learn_card_path, params: { know_it: "false" }
+          expect(new_card.reload.state).to eq("learning")
+        end
+
+        it "adds the card to learn_introduced" do
+          post learn_card_path, params: { know_it: "false" }
+          expect(request.session[:learn_introduced]).to include(new_card.id)
+        end
+      end
+
+      context "when the last card is submitted" do
+        it "redirects to the learn review path" do
+          post learn_card_path, params: { know_it: "true" }
+          expect(response).to redirect_to(learn_review_path)
+        end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /learn/review — mini SM-2 review
+  # -------------------------------------------------------------------------
+  describe "GET /learn/review" do
+    context "when authenticated, session complete, review phase active" do
+      before do
+        sign_in user
+        get learn_path
+        post learn_card_path, params: { know_it: "true" }
+      end
+
+      it "returns a successful response" do
+        get learn_review_path
+        expect(response).to have_http_status(:success)
+      end
+
+      it "includes the character in the response" do
+        get learn_review_path
+        expect(response.body).to include(new_card.dictionary_entry.text)
+      end
+    end
+
+    context "when authenticated without an active review phase" do
+      before { sign_in user }
+
+      it "redirects to learn start" do
+        get learn_review_path
+        expect(response).to redirect_to(learn_path)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # POST /learn/review — submit SM-2 ease rating
+  # -------------------------------------------------------------------------
+  describe "POST /learn/review" do
+    before do
+      sign_in user
+      get learn_path
+      post learn_card_path, params: { know_it: "true" }
+    end
+
+    context "with a valid ease rating" do
+      it "creates a ReviewLog entry" do
+        expect {
+          post learn_review_path, params: { ease: 3 }
+        }.to change(ReviewLog, :count).by(1)
+      end
+
+      context "when the last review card is rated" do
+        it "redirects to the learn summary" do
+          post learn_review_path, params: { ease: 3 }
+          expect(response).to redirect_to(learn_summary_path)
+        end
+      end
+    end
+
+    context "with an invalid ease rating" do
+      it "returns unprocessable content" do
+        post learn_review_path, params: { ease: 5 }
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /learn/summary
+  # -------------------------------------------------------------------------
+  describe "GET /learn/summary" do
+    context "when authenticated with a completed session" do
+      before do
+        sign_in user
+        get learn_path
+        post learn_card_path, params: { know_it: "true" }
+        post learn_review_path, params: { ease: 3 }
+      end
+
+      it "returns a successful response" do
+        get learn_summary_path
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context "when authenticated without a started session" do
+      before { sign_in user }
+
+      it "redirects to learn start" do
+        get learn_summary_path
+        expect(response).to redirect_to(learn_path)
+      end
+    end
+  end
+end

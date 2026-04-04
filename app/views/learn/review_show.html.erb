@@ -1,0 +1,54 @@
+<% content_for :head do %>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<% end %>
+
+<%
+  entry    = @user_learning.dictionary_entry
+  pinyin   = entry.meanings.first&.pinyin
+  meanings = entry.meanings.reject { |m| m.text.start_with?("CL:") }
+  shown    = meanings.first(3)
+  overflow = meanings.size - shown.size
+%>
+
+<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="card-flip">
+
+  <p class="text-sm text-gray-400 mb-2"><%= @position %> / <%= @total %></p>
+  <p class="text-xs text-gray-300 mb-6">Quick review of today's new characters</p>
+
+  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
+    <span class="text-9xl font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+
+    <div data-card-flip-target="back" class="hidden">
+      <div class="mt-6 w-full border-t border-gray-100 pt-6">
+        <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
+        <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
+        <% if overflow > 0 %>
+          <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div data-card-flip-target="front">
+    <button data-action="click->card-flip#reveal"
+            class="mt-6 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+      Show answer
+    </button>
+  </div>
+
+  <div data-card-flip-target="back" class="hidden">
+    <div class="mt-6 grid grid-cols-4 gap-3 w-80">
+      <%= button_to "Again", learn_review_path, params: { ease: 1 },
+            class: "py-3 px-4 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors" %>
+      <%= button_to "Hard",  learn_review_path, params: { ease: 2 },
+            class: "py-3 px-4 bg-orange-50 text-orange-600 font-medium rounded-xl hover:bg-orange-100 transition-colors" %>
+      <%= button_to "Good",  learn_review_path, params: { ease: 3 },
+            class: "py-3 px-4 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-colors" %>
+      <%= button_to "Easy",  learn_review_path, params: { ease: 4 },
+            class: "py-3 px-4 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors" %>
+    </div>
+  </div>
+
+</div>
