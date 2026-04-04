@@ -40,6 +40,26 @@ RSpec.describe "Learn", type: :request do
         end
       end
 
+      context "queue ordering by HSK level" do
+        let(:hsk_version) { create(:tag, name: "HSK 2.0") }
+        let(:hsk1_tag)    { create(:tag, name: "HSK 1", parent: hsk_version) }
+        let(:hsk4_tag)    { create(:tag, name: "HSK 4", parent: hsk_version) }
+
+        let!(:hsk4_entry) { create(:dictionary_entry).tap { |e| e.tags << hsk4_tag } }
+        let!(:hsk1_entry) { create(:dictionary_entry).tap { |e| e.tags << hsk1_tag } }
+
+        let!(:hsk4_card) { create(:user_learning, user: user, state: "new", dictionary_entry: hsk4_entry) }
+        let!(:hsk1_card) { create(:user_learning, user: user, state: "new", dictionary_entry: hsk1_entry) }
+
+        before { new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1) }
+
+        it "puts the lower HSK level card first in the queue" do
+          get learn_path
+          queue = request.session[:learn_queue]
+          expect(queue.index(hsk1_card.id)).to be < queue.index(hsk4_card.id)
+        end
+      end
+
       context "when no new cards are available" do
         before { new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1) }
 
