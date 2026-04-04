@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = ["front", "back"]
 
   reveal() {
-    this.frontTarget.classList.add("hidden")
-    this.backTarget.classList.remove("hidden")
+    this.frontTargets.forEach(el => el.classList.add("hidden"))
+    this.backTargets.forEach(el => el.classList.remove("hidden"))
   }
 }
