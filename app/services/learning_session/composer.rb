@@ -29,11 +29,6 @@ module LearningSession
       # Priority 3: due mastered cards (spot checks)
       needed = @size - queue.size
       queue.concat(due_mastered_cards.first(needed))
-      return queue if queue.size >= @size
-
-      # Fallback: fill remaining slots with additional new cards
-      needed = @size - queue.size
-      queue.concat(remaining_new.first(needed))
 
       queue
     end
