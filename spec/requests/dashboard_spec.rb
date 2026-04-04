@@ -24,9 +24,9 @@ RSpec.describe "Dashboard", type: :request do
         expect(response.body).to include(review_path)
       end
 
-      it "includes a link to browse vocabulary" do
+      it "includes a link to start learning" do
         get root_path
-        expect(response.body).to include(tags_path)
+        expect(response.body).to include(learn_path)
       end
 
       context "with cards due" do
