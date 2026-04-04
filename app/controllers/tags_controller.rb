@@ -12,7 +12,8 @@ class TagsController < ApplicationController
       new_entries: "New",
       learning:    "Learning",
       mastered:    "Mastered",
-      suspended:   "Suspended"
+      suspended:   "Suspended",
+      struggling:  "Struggling"
     }
   end
 end
