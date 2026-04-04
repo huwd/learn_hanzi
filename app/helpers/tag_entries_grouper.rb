@@ -8,17 +8,19 @@ class TagEntriesGrouper
     entries = @tag.dictionary_entries
                     .joins(:user_learnings)
                     .where(user_learnings: { user_id: @user.id })
-                    .select("dictionary_entries.*, user_learnings.state as learning_state")
+                    .select("dictionary_entries.*, user_learnings.state as learning_state, user_learnings.factor as learning_factor")
 
     grouped = entries.group_by(&:learning_state)
+    learning = grouped["learning"] || []
 
     {
       not_learned:  @tag.dictionary_entries
                           .where.not(id: UserLearning.where(user: @user).select(:dictionary_entry_id)),
-      new_entries:  grouped["new"]          || [],
-      learning:     grouped["learning"]     || [],
-      mastered:     grouped["mastered"]     || [],
-      suspended:    grouped["suspended"]    || []
+      new_entries:  grouped["new"]      || [],
+      learning:     learning.reject { |e| e.learning_factor < 2000 },
+      struggling:   learning.select { |e| e.learning_factor < 2000 },
+      mastered:     grouped["mastered"] || [],
+      suspended:    grouped["suspended"] || []
     }
   end
 end

@@ -12,7 +12,8 @@ class TagsController < ApplicationController
       new_entries: "New",
       learning:    "Learning",
       mastered:    "Mastered",
-      suspended:   "Suspended"
+      suspended:   "Suspended",
+      struggling:  "Struggling"
     }
     @due_entry_ids = Set.new(
       Current.user.user_learnings
