@@ -105,22 +105,32 @@ module AnkiSeedData
   ].freeze
   # rubocop:enable Layout/ExtraSpacing
 
+  # Collection creation timestamp stored in col.crt (Unix seconds).
+  # Used as the epoch for converting queue=2 "due day" values to real dates.
+  COL_CRT = 1_234_567_890
+
   # One card per note, each exercising a different queue state.
   # Cards default to did=DECK_ID and odid=0. Pass :did and :odid to override
   # (e.g. to simulate a card stranded in a filtered deck).
+  #
+  # due field semantics by queue:
+  #   queue 0       — ordinal sort position (not a date)
+  #   queue 1, 3    — Unix timestamp in seconds
+  #   queue 2       — days since col.crt  ← IMPORTANT: not a Unix timestamp
+  #   queue -1, -2  — inherited from prior queue; ambiguous, not asserted on
   CARDS = [
-    { id: 1, nid: 1, queue:  2, due: 1_234_567_890 },
-    { id: 2, nid: 2, queue:  2, due: 1_234_567_890 },
-    { id: 3, nid: 3, queue:  0, due: 0             }, # new cards use ordinal position as due
-    { id: 4, nid: 4, queue:  1, due: 1_234_567_890 },
-    { id: 5, nid: 5, queue:  3, due: 1_234_567_890 },
-    { id: 6, nid: 6, queue: -1, due: 1_234_567_890 },
-    { id: 7, nid: 7, queue: -2, due: 1_234_567_890 },
-    { id: 8, nid: 8, queue:  2, due: 1_234_567_890 }, # note 8 has no DictionaryEntry
+    { id: 1, nid: 1, queue:  2, due: 300           }, # mastered — 300 days after crt
+    { id: 2, nid: 2, queue:  2, due: 300           }, # mastered — 300 days after crt
+    { id: 3, nid: 3, queue:  0, due: 3             }, # new — ordinal position, not a date
+    { id: 4, nid: 4, queue:  1, due: 1_234_567_890 }, # learning — Unix timestamp
+    { id: 5, nid: 5, queue:  3, due: 1_234_567_890 }, # day-learning — Unix timestamp
+    { id: 6, nid: 6, queue: -1, due: 1_234_567_890 }, # suspended
+    { id: 7, nid: 7, queue: -2, due: 1_234_567_890 }, # buried
+    { id: 8, nid: 8, queue:  2, due: 300           }, # no DictionaryEntry — must be skipped
     # REGRESSION ANCHOR: card homed in target deck but currently in a filtered deck.
     # did=FILTERED_DECK_ID means the current migration query (WHERE did=target) misses it.
     # odid=DECK_ID is the only signal that it belongs to the target deck.
-    { id: 9, nid: 9, queue: 2, due: 1_234_567_890, did: FILTERED_DECK_ID, odid: DECK_ID }
+    { id: 9, nid: 9, queue: 2, due: 300, did: FILTERED_DECK_ID, odid: DECK_ID }
   ].freeze
 
   # One review event per card — enough to verify ReviewLog creation.
