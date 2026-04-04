@@ -45,7 +45,7 @@ RSpec.describe "Sessions", type: :request do
         post session_path, params: valid_params
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include("Tags")
+        expect(response.body).to include("Dashboard")
       end
     end
 

@@ -1,0 +1,52 @@
+require 'rails_helper'
+
+RSpec.describe "Dashboard", type: :request do
+  let(:user) { create(:user) }
+
+  describe "GET /" do
+    context "when unauthenticated" do
+      it "redirects to the login page" do
+        get root_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated" do
+      before { sign_in user }
+
+      it "returns a successful response" do
+        get root_path
+        expect(response).to have_http_status(:success)
+      end
+
+      it "includes a link to start a review" do
+        get root_path
+        expect(response.body).to include(review_path)
+      end
+
+      it "includes a link to browse vocabulary" do
+        get root_path
+        expect(response.body).to include(tags_path)
+      end
+
+      context "with cards due" do
+        before do
+          create(:user_learning, user: user, state: "learning",
+                 next_due: 1.day.ago, last_interval: 3)
+        end
+
+        it "shows the number of cards due" do
+          get root_path
+          expect(response.body).to include("1")
+        end
+      end
+
+      context "with no cards due" do
+        it "shows zero cards due" do
+          get root_path
+          expect(response.body).to include("0")
+        end
+      end
+    end
+  end
+end

@@ -1,0 +1,72 @@
+<div class="flex-grow max-w-4xl mx-auto w-full">
+  <h1 class="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+    <%# Review panel %>
+    <div class="bg-white rounded-xl shadow-md p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 mb-1">Review</h2>
+      <p class="text-gray-500 text-sm mb-4">Cards due for review today</p>
+
+      <div class="text-6xl font-extrabold text-gray-900 mb-6">
+        <%= @cards_due %>
+      </div>
+
+      <%= link_to review_path,
+            class: "mt-auto inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>
+        <% if @cards_due > 0 %>
+          Start review
+        <% else %>
+          No cards due
+        <% end %>
+      <% end %>
+    </div>
+
+    <%# Progress panel %>
+    <div class="bg-white rounded-xl shadow-md p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 mb-1">Progress</h2>
+      <p class="text-gray-500 text-sm mb-4">Your learning state breakdown</p>
+
+      <dl class="space-y-3 flex-grow">
+        <div class="flex justify-between items-center">
+          <dt class="text-gray-600">Mastered</dt>
+          <dd class="font-bold text-green-600 text-lg"><%= @state_counts[:mastered] %></dd>
+        </div>
+        <div class="flex justify-between items-center">
+          <dt class="text-gray-600">Learning</dt>
+          <dd class="font-bold text-amber-500 text-lg"><%= @state_counts[:learning] %></dd>
+        </div>
+        <div class="flex justify-between items-center">
+          <dt class="text-gray-600">New</dt>
+          <dd class="font-bold text-gray-400 text-lg"><%= @state_counts[:new] %></dd>
+        </div>
+      </dl>
+    </div>
+
+  </div>
+
+  <%# Vocabulary section %>
+  <div class="bg-white rounded-xl shadow-md p-6">
+    <div class="flex justify-between items-baseline mb-4">
+      <h2 class="text-xl font-semibold text-gray-700">Vocabulary</h2>
+      <%= link_to "Browse all", tags_path, class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+
+    <% if @root_tags.any? %>
+      <ul class="divide-y divide-gray-100">
+        <% @root_tags.each do |tag| %>
+          <li>
+            <%= link_to tag_path(tag),
+                  class: "flex justify-between items-center py-3 hover:text-blue-600 transition-colors" do %>
+              <span class="font-medium text-gray-800"><%= tag.name %></span>
+              <span class="text-gray-400 text-sm"><%= pluralize(tag.children.size, "sub-list") %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-gray-400 text-sm">No vocabulary lists yet.</p>
+    <% end %>
+  </div>
+
+</div>
