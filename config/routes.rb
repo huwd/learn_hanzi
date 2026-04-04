@@ -12,6 +12,13 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "dashboard#index"
 
+  get  "learn",          to: "learn#start",        as: :learn
+  get  "learn/card",     to: "learn#show",         as: :learn_card
+  post "learn/card",     to: "learn#submit"
+  get  "learn/review",   to: "learn#review_show",  as: :learn_review
+  post "learn/review",   to: "learn#review_submit"
+  get  "learn/summary",  to: "learn#summary",      as: :learn_summary
+
   get  "review",         to: "review#start",   as: :review
   get  "review/card",    to: "review#show",    as: :review_card
   post "review/card",    to: "review#submit"

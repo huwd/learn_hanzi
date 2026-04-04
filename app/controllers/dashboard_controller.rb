@@ -11,6 +11,8 @@ class DashboardController < ApplicationController
       mastered:  user_learnings.mastered.count
     }
 
+    @new_cards_count = user_learnings.new_learnings.count
+
     @root_tags = Tag.where(parent_id: nil).order(:name)
   end
 end

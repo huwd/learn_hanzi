@@ -29,6 +29,7 @@
         <h1 class="text-xl font-bold"><%= link_to "Learn Hanzi", root_path %></h1>
         <nav class="flex items-center gap-6">
           <% if authenticated? %>
+            <%= link_to "Learn", learn_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <%= link_to "Review", review_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <%= link_to "Vocabulary", tags_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center">
