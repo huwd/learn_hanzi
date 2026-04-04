@@ -5,5 +5,6 @@ FactoryBot.define do
     state { 'new' }
     next_due { Time.now + 7.days }
     last_interval { 1 }
+    factor { 2500 }
   end
 end
