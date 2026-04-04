@@ -117,7 +117,7 @@ module AnkiSeedData
   #   queue 0       — ordinal sort position (not a date)
   #   queue 1, 3    — Unix timestamp in seconds
   #   queue 2       — days since col.crt  ← IMPORTANT: not a Unix timestamp
-  #   queue -1, -2  — inherited from prior queue; ambiguous, not asserted on
+  #   queue -1, -2  — inherited from prior queue in Anki; treated as next_due=nil here
   CARDS = [
     { id: 1, nid: 1, queue:  2, due: 300             }, # mastered — 300 days after crt
     { id: 2, nid: 2, queue:  2, due: 300             }, # mastered — 300 days after crt
