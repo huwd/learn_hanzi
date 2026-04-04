@@ -47,6 +47,37 @@ RSpec.describe "Dashboard", type: :request do
           expect(response.body).to include("0")
         end
       end
+
+      context "with an HSK tag hierarchy" do
+        let!(:hsk_root)    { create(:tag, name: "HSK") }
+        let!(:hsk_version) { create(:tag, name: "HSK 2.0", parent: hsk_root) }
+        let!(:hsk_level)   { create(:tag, name: "HSK 1",   parent: hsk_version) }
+        let!(:entry)       { create(:dictionary_entry).tap { |e| e.tags << hsk_level } }
+
+        it "renders the version tag name" do
+          get root_path
+          expect(response.body).to include("HSK 2.0")
+        end
+
+        it "renders the level tag name" do
+          get root_path
+          expect(response.body).to include("HSK 1")
+        end
+
+        it "links to the level tag page" do
+          get root_path
+          expect(response.body).to include(tag_path(hsk_level))
+        end
+
+        context "with a mastered entry" do
+          before { create(:user_learning, user: user, dictionary_entry: entry, state: "mastered") }
+
+          it "includes mastered count in the level stats" do
+            get root_path
+            expect(response.body).to include("1")
+          end
+        end
+      end
     end
   end
 end
