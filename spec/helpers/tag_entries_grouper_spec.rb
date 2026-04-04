@@ -21,16 +21,15 @@ RSpec.describe TagEntriesGrouper do
       expect(grouped_entries[:mastered]).to include(dictionary_entry2)
     end
 
-    it "returns empty buckets for a user who has no learnings for the tag" do
+    it "places all tag entries in new_entries for a user who has no learnings" do
       other_user = create(:user)
-      grouper = TagEntriesGrouper.new(tag, other_user)
-      grouped_entries = grouper.grouped_by_learning_state
+      grouped = TagEntriesGrouper.new(tag, other_user).grouped_by_learning_state
 
-      expect(grouped_entries[:learning]).to eq([])
-      expect(grouped_entries[:struggling]).to eq([])
-      expect(grouped_entries[:mastered]).to eq([])
-      expect(grouped_entries[:new_entries]).to eq([])
-      expect(grouped_entries[:suspended]).to eq([])
+      expect(grouped[:new_entries]).to include(dictionary_entry1, dictionary_entry2)
+      expect(grouped[:learning]).to eq([])
+      expect(grouped[:struggling]).to eq([])
+      expect(grouped[:mastered]).to eq([])
+      expect(grouped[:suspended]).to eq([])
     end
 
     context "struggling bucket" do
