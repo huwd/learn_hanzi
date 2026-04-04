@@ -31,11 +31,11 @@ RSpec.describe LearningSession::Composer do
       end
     end
 
-    context "when the user has more new cards than the session size" do
+    context "when the user has more new cards than new_cap" do
       before { create_list(:user_learning, 15, user: user, state: "new") }
 
-      it "does not exceed session size even with fallback fill" do
-        expect(queue.size).to eq(size)
+      it "returns at most new_cap new cards" do
+        expect(queue.size).to eq(new_cap)
       end
     end
 
@@ -114,17 +114,18 @@ RSpec.describe LearningSession::Composer do
       end
     end
 
-    context "fallback fill with additional new cards" do
+    context "new_cap is a hard ceiling on new cards" do
       before do
-        # Only 2 overdue learning, 6 new, no mastered due
         create_list(:user_learning, 2, user: user, state: "learning",
                     next_due: 1.day.ago, last_interval: 1)
         create_list(:user_learning, 6, user: user, state: "new")
       end
 
-      it "fills remaining slots beyond new_cap with additional new cards" do
-        # size=10, new_cap=3: 2 learning + 3 new = 5, then 5 more from remaining new
-        expect(queue.size).to eq(8) # 2 learning + 6 new (no mastered to fill with)
+      it "never exceeds new_cap new cards even with remaining slots" do
+        # size=10, new_cap=3: 2 learning + 3 new = 5; remaining slots are not filled
+        # with more new cards because new_cap is a hard limit
+        expect(queue.size).to eq(5)
+        expect(queue.count { |ul| ul.state == "new" }).to eq(3)
       end
 
       it "does not duplicate cards" do
