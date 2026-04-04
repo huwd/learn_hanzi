@@ -74,6 +74,8 @@ class ReviewController < ApplicationController
 
   def current_card
     id = session[:review_queue][session[:review_index]]
-    Current.user.user_learnings.find(id)
+    Current.user.user_learnings
+           .includes(dictionary_entry: [ :meanings, :tags ])
+           .find(id)
   end
 end
