@@ -8,9 +8,9 @@ class LearnController < ApplicationController
   def start
     queue = Current.user.user_learnings
                    .new_learnings
-                   .order(:created_at)
-                   .limit(QUEUE_SIZE)
-                   .to_a
+                   .includes(dictionary_entry: { tags: { parent: :parent } })
+                   .sort_by { |ul| hsk_sort_key(ul) }
+                   .first(QUEUE_SIZE)
 
     if queue.empty?
       render :start
@@ -108,6 +108,38 @@ class LearnController < ApplicationController
   end
 
   private
+
+  # Sort key for ordering new cards by HSK version then level number.
+  # Walks up the tag parent chain to find the version tag (e.g. "HSK 2.0")
+  # and the level tag (e.g. "HSK 1"). Handles both 2-level structures
+  # (entry → level → version) and 3-level (entry → lesson → level → version).
+  # Cards with no recognisable HSK tags sort to the end.
+  def hsk_sort_key(user_learning)
+    best = nil
+
+    user_learning.dictionary_entry.tags.each do |tag|
+      version_tag, level_tag = hsk_version_and_level(tag)
+      next unless version_tag && level_tag
+
+      level_num = level_tag.name.scan(/\d+/).first.to_i
+      key = [ version_tag.name, level_num ]
+      best = key if best.nil? || key < best
+    end
+
+    best || [ "\xff", Float::INFINITY ]
+  end
+
+  def hsk_version_and_level(tag)
+    if tag.parent.nil?
+      [ nil, nil ]
+    elsif tag.parent.parent.nil?
+      # 2-level: tag is the level tag, tag.parent is the version tag
+      tag.parent.name.match?(/HSK \d+\.\d+/) ? [ tag.parent, tag ] : [ nil, nil ]
+    else
+      # 3-level: tag is a lesson tag, tag.parent is the level tag, tag.parent.parent is the version tag
+      tag.parent.parent.name.match?(/HSK \d+\.\d+/) ? [ tag.parent.parent, tag.parent ] : [ nil, nil ]
+    end
+  end
 
   def require_learn_session
     redirect_to learn_path unless session[:learn_queue].present?
