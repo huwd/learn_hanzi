@@ -98,6 +98,27 @@ RSpec.describe "anki:migrate_to_models", type: :task do
       end
     end
 
+    describe "next_due calculation" do
+      # crt is the collection creation timestamp seeded into col.crt.
+      # queue=2 due values are days since crt, not Unix seconds.
+      let(:crt) { AnkiSeedData::COL_CRT }
+
+      it "converts queue=2 (mastered) due days to a real datetime via crt" do
+        ul = UserLearning.find_by!(user: user, dictionary_entry: entry_hao)
+        expect(ul.next_due).to be_within(1.second).of(Time.at(crt + 300 * 86_400))
+      end
+
+      it "stores a unix-timestamp due for queue=1 (learning) unchanged" do
+        ul = UserLearning.find_by!(user: user, dictionary_entry: entry_tian)
+        expect(ul.next_due).to be_within(1.second).of(Time.at(1_234_567_890))
+      end
+
+      it "stores nil for queue=0 (new) cards whose due is an ordinal, not a date" do
+        ul = UserLearning.find_by!(user: user, dictionary_entry: entry_xue)
+        expect(ul.next_due).to be_nil
+      end
+    end
+
     it "creates ReviewLog records linked to the UserLearning" do
       ul = UserLearning.find_by!(user: user, dictionary_entry: entry_hao)
       expect(ul.review_logs).not_to be_empty
