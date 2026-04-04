@@ -28,20 +28,22 @@ class ReviewController < ApplicationController
     user_learning = current_card
     result = SpacedRepetition::SM2.call(user_learning: user_learning, ease: ease)
 
-    user_learning.update!(
-      state:         result.new_state,
-      last_interval: result.interval,
-      factor:        result.factor,
-      next_due:      result.next_due
-    )
+    ApplicationRecord.transaction do
+      user_learning.update!(
+        state:         result.new_state,
+        last_interval: result.interval,
+        factor:        result.factor,
+        next_due:      result.next_due
+      )
 
-    ReviewLog.create!(
-      user_learning: user_learning,
-      ease:          ease,
-      interval:      result.interval,
-      factor:        result.factor,
-      log_type:      0
-    )
+      ReviewLog.create!(
+        user_learning: user_learning,
+        ease:          ease,
+        interval:      result.interval,
+        factor:        result.factor,
+        log_type:      0
+      )
+    end
 
     session[:review_index] += 1
 
