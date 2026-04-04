@@ -15,7 +15,7 @@ class CorrectAnkiNextDueDates < ActiveRecord::Migration[8.1]
 
     fix_mastered_cards(deck_id, col_crt)
     fix_mastered_cards_from_review_logs
-    fix_new_cards(deck_id)
+    fix_new_cards
   end
 
   def down
@@ -74,14 +74,13 @@ class CorrectAnkiNextDueDates < ActiveRecord::Migration[8.1]
     remaining = UserLearning
                   .where(state: "mastered")
                   .where("next_due < ?", EPOCH_CUTOFF)
-                  .includes(:review_logs)
 
     updated = 0
-    remaining.each do |ul|
-      last_log = ul.review_logs.max_by(&:time)
-      next unless last_log
+    remaining.find_each do |ul|
+      last_review_time = ul.review_logs.maximum(:time)
+      next unless last_review_time
 
-      correct_due = Time.at(last_log.time / 1000.0) + ul.last_interval.days
+      correct_due = Time.at(last_review_time / 1000.0) + ul.last_interval.to_i.days
       ul.update_columns(next_due: correct_due)
       updated += 1
     end
@@ -89,17 +88,13 @@ class CorrectAnkiNextDueDates < ActiveRecord::Migration[8.1]
     say "Reconstructed next_due from review logs for #{updated} mastered UserLearning records"
   end
 
-  def fix_new_cards(deck_id)
-    char_map = char_to_next_due(deck_id, queues: 0)
-
-    updated = 0
-    DictionaryEntry.where(text: char_map.keys).find_each do |entry|
-      n = UserLearning
-            .where(dictionary_entry: entry, state: "new")
-            .where("next_due < ?", EPOCH_CUTOFF)
-            .update_all(next_due: nil)
-      updated += n
-    end
+  def fix_new_cards
+    # queue=0 due values are always ordinals regardless of deck, so no Anki
+    # lookup needed — clear every state=new row with an epoch-era next_due.
+    updated = UserLearning
+                .where(state: "new")
+                .where("next_due < ?", EPOCH_CUTOFF)
+                .update_all(next_due: nil)
 
     say "Cleared next_due for #{updated} new UserLearning records"
   end
