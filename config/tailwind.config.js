@@ -11,6 +11,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Inter var', ...defaultTheme.fontFamily.sans],
+        hanzi: ['"Ma Shan Zheng"', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
       },
     },
   },
