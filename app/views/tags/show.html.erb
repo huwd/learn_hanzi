@@ -42,6 +42,9 @@
         <% entries_in_state.each.with_index(1) do |entry, index| %>
           <%= link_to dictionary_entry_path(entry.id), class: "relative bg-white shadow-md rounded-lg p-4 text-center" do %>
             <span class="absolute top-0 left-0 text-xs text-gray-500 p-1"><%= index %></span>
+            <% if @due_entry_ids.include?(entry.id) %>
+              <span class="due-indicator absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <% end %>
             <p class="text-2xl font-bold text-gray-800"><%= entry.text %></p>
           <% end %>
         <% end %>

@@ -50,6 +50,41 @@ RSpec.describe "Tags", type: :request do
       end
     end
 
+    describe "GET /tags/:id — due indicator" do
+      let(:due_entry) { create(:dictionary_entry).tap { |e| e.tags << root_tag } }
+
+      context "when an entry is due for review" do
+        before do
+          create(:user_learning, user: user, dictionary_entry: due_entry,
+                 state: "learning", next_due: 1.day.ago, last_interval: 1)
+        end
+
+        it "renders a due indicator for that tile" do
+          get tag_path(root_tag)
+          expect(response.body).to include("due-indicator")
+        end
+      end
+
+      context "when an entry is not yet due" do
+        before do
+          create(:user_learning, user: user, dictionary_entry: due_entry,
+                 state: "learning", next_due: 1.day.from_now, last_interval: 1)
+        end
+
+        it "does not render a due indicator" do
+          get tag_path(root_tag)
+          expect(response.body).not_to include("due-indicator")
+        end
+      end
+
+      context "when an entry has no UserLearning" do
+        it "does not render a due indicator" do
+          get tag_path(root_tag)
+          expect(response.body).not_to include("due-indicator")
+        end
+      end
+    end
+
     describe "GET /tags/:id (nested tag)" do
       before { leaf_tag }
 
