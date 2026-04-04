@@ -6,11 +6,12 @@ class LearnController < ApplicationController
   before_action :require_started_session, only: [ :summary ]
 
   def start
-    queue = Current.user.user_learnings
-                   .new_learnings
-                   .includes(dictionary_entry: { tags: { parent: :parent } })
-                   .sort_by { |ul| hsk_sort_key(ul) }
-                   .first(QUEUE_SIZE)
+    queue = if params[:tag_id].present?
+      tag = Tag.find_by(id: params[:tag_id])
+      tag ? build_tagged_queue(tag) : build_global_queue
+    else
+      build_global_queue
+    end
 
     if queue.empty?
       render :start
@@ -99,33 +100,67 @@ class LearnController < ApplicationController
   end
 
   def summary
-    started_at    = Time.parse(session[:learn_started_at])
-    @introduced   = session[:learn_introduced]&.size || 0
-    @review_logs  = ReviewLog.joins(:user_learning)
-                             .where(user_learnings: { user: Current.user })
-                             .where(created_at: started_at..)
-                             .order(:created_at)
+    started_at   = Time.parse(session[:learn_started_at])
+    @introduced  = session[:learn_introduced]&.size || 0
+    @review_logs = ReviewLog.joins(:user_learning)
+                            .where(user_learnings: { user: Current.user })
+                            .where(created_at: started_at..)
+                            .order(:created_at)
   end
 
   private
 
-  # Sort key for ordering new cards by HSK version then level number.
-  # Walks up the tag parent chain to find the version tag (e.g. "HSK 2.0")
-  # and the level tag (e.g. "HSK 1"). Handles both 2-level structures
-  # (entry → level → version) and 3-level (entry → lesson → level → version).
-  # Cards with no recognisable HSK tags sort to the end.
-  def hsk_sort_key(user_learning)
-    best = nil
+  # Build a queue filtered to a specific tag.
+  # Priority 1: entries with no UserLearning yet ("Not Learned Yet") — create records on demand.
+  # Priority 2: existing UserLearnings with state "new" for this tag.
+  # Both groups are sorted by HSK level within their priority band.
+  def build_tagged_queue(tag)
+    learned_entry_ids = Current.user.user_learnings
+                               .joins(:dictionary_entry)
+                               .where(dictionary_entries: { id: tag.dictionary_entries.select(:id) })
+                               .pluck(:dictionary_entry_id)
 
-    user_learning.dictionary_entry.tags.each do |tag|
+    unlearned_entries = tag.dictionary_entries
+                           .where.not(id: learned_entry_ids)
+                           .includes(tags: { parent: :parent })
+                           .sort_by { |e| hsk_entry_sort_key(e) }
+
+    existing_new = Current.user.user_learnings
+                          .new_learnings
+                          .joins(:dictionary_entry)
+                          .where(dictionary_entries: { id: tag.dictionary_entries.select(:id) })
+                          .includes(dictionary_entry: { tags: { parent: :parent } })
+                          .sort_by { |ul| hsk_sort_key(ul) }
+
+    newly_created = unlearned_entries.first(QUEUE_SIZE).map do |entry|
+      Current.user.user_learnings.create!(dictionary_entry: entry, state: "new")
+    end
+
+    remaining = QUEUE_SIZE - newly_created.size
+    (newly_created + existing_new.first(remaining))
+  end
+
+  def build_global_queue
+    Current.user.user_learnings
+           .new_learnings
+           .includes(dictionary_entry: { tags: { parent: :parent } })
+           .sort_by { |ul| hsk_sort_key(ul) }
+           .first(QUEUE_SIZE)
+  end
+
+  def hsk_sort_key(user_learning)
+    hsk_entry_sort_key(user_learning.dictionary_entry)
+  end
+
+  def hsk_entry_sort_key(entry)
+    best = nil
+    entry.tags.each do |tag|
       version_tag, level_tag = hsk_version_and_level(tag)
       next unless version_tag && level_tag
-
       level_num = level_tag.name.scan(/\d+/).first.to_i
       key = [ version_tag.name, level_num ]
       best = key if best.nil? || key < best
     end
-
     best || [ "\xff", Float::INFINITY ]
   end
 
@@ -133,10 +168,8 @@ class LearnController < ApplicationController
     if tag.parent.nil?
       [ nil, nil ]
     elsif tag.parent.parent.nil?
-      # 2-level: tag is the level tag, tag.parent is the version tag
       tag.parent.name.match?(/HSK \d+\.\d+/) ? [ tag.parent, tag ] : [ nil, nil ]
     else
-      # 3-level: tag is a lesson tag, tag.parent is the level tag, tag.parent.parent is the version tag
       tag.parent.parent.name.match?(/HSK \d+\.\d+/) ? [ tag.parent.parent, tag.parent ] : [ nil, nil ]
     end
   end
