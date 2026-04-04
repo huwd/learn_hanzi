@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .font-hanzi {
+    font-family: 'Ma Shan Zheng', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}
+
 /*
 
 @layer components {
