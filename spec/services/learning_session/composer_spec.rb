@@ -104,8 +104,7 @@ RSpec.describe LearningSession::Composer do
         create_list(:user_learning, 6, user: user, state: "new")
       end
 
-      it "limits new cards to new_cap initially" do
-        # With no other cards, fallback fill kicks in, so we need overdue cards to test cap
+      it "limits new cards to new_cap even when session has remaining capacity" do
         learning_cards = create_list(:user_learning, 5, user: user, state: "learning",
                                      next_due: 1.day.ago, last_interval: 1)
         result = described_class.call(user: user, size: 10, new_cap: 2)
