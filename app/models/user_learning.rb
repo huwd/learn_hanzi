@@ -12,4 +12,9 @@ class UserLearning < ApplicationRecord
   scope :in_progress, -> { where(state: "learning") }
   scope :mastered, -> { where(state: "mastered") }
   scope :suspended, -> { where(state: "suspended") }
+
+  # Scopes for session composition
+  scope :due, -> { where("next_due <= ?", Time.current) }
+  scope :overdue_learning, -> { in_progress.due }
+  scope :due_mastered, -> { mastered.due }
 end
