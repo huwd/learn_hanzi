@@ -1,6 +1,6 @@
 <h1>Import Anki Collection</h1>
 
-<%= form_with url: admin_anki_imports_path, multipart: true do |f| %>
+<%= form_with url: anki_imports_path, multipart: true do |f| %>
   <div>
     <%= f.label :file, "Anki collection file (.anki21 or .apkg)" %>
     <%= f.file_field :file, accept: ".anki21,.apkg,.colpkg" %>
@@ -13,7 +13,7 @@
   <ul>
     <% @recent_imports.each do |import| %>
       <li>
-        <%= link_to import.created_at.to_fs(:short), admin_anki_import_path(import) %>
+        <%= link_to import.created_at.to_fs(:short), anki_import_path(import) %>
         — <%= import.state %>
         <% if import.complete? %>
           (<%= import.cards_imported %> cards, <%= import.review_logs_imported %> review logs)

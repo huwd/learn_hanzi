@@ -24,9 +24,7 @@ Rails.application.routes.draw do
   post "review/card",    to: "review#submit"
   get  "review/summary", to: "review#summary", as: :review_summary
 
-  namespace :admin do
-    resources :anki_imports, only: %i[new create show]
-  end
+  resources :anki_imports, only: %i[new create show]
 
   resource :session
   resources :passwords, param: :token

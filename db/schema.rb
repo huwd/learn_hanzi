@@ -12,15 +12,15 @@
 
 ActiveRecord::Schema[8.1].define(version: 2026_04_05_124838) do
   create_table "anki_imports", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.string "state", default: "pending", null: false
-    t.datetime "started_at"
-    t.datetime "completed_at"
     t.integer "cards_imported", default: 0
-    t.integer "review_logs_imported", default: 0
-    t.text "error_message"
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.text "error_message"
+    t.integer "review_logs_imported", default: 0
+    t.datetime "started_at"
+    t.string "state", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
     t.index ["user_id", "created_at"], name: "index_anki_imports_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_anki_imports_on_user_id"
   end

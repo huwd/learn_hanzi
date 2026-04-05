@@ -1,12 +1,12 @@
-require 'rails_helper'
+require "rails_helper"
 
-RSpec.describe "Admin::AnkiImports", type: :request do
+RSpec.describe "AnkiImports", type: :request do
   let(:user) { create(:user) }
 
-  describe "GET /admin/anki_imports/new" do
+  describe "GET /anki_imports/new" do
     context "when unauthenticated" do
       it "redirects to login" do
-        get new_admin_anki_import_path
+        get new_anki_import_path
         expect(response).to redirect_to(new_session_path)
       end
     end
@@ -15,22 +15,22 @@ RSpec.describe "Admin::AnkiImports", type: :request do
       before { sign_in user }
 
       it "returns 200" do
-        get new_admin_anki_import_path
+        get new_anki_import_path
         expect(response).to have_http_status(:ok)
       end
 
       it "shows recent imports for this user" do
         create(:anki_import, user: user, state: "complete")
-        get new_admin_anki_import_path
+        get new_anki_import_path
         expect(response.body).to include("complete")
       end
     end
   end
 
-  describe "POST /admin/anki_imports" do
+  describe "POST /anki_imports" do
     context "when unauthenticated" do
       it "redirects to login" do
-        post admin_anki_imports_path
+        post anki_imports_path
         expect(response).to redirect_to(new_session_path)
       end
     end
@@ -40,8 +40,8 @@ RSpec.describe "Admin::AnkiImports", type: :request do
 
       context "with no file" do
         it "redirects back with an alert" do
-          post admin_anki_imports_path, params: { file: nil }
-          expect(response).to redirect_to(new_admin_anki_import_path)
+          post anki_imports_path, params: { file: nil }
+          expect(response).to redirect_to(new_anki_import_path)
         end
       end
 
@@ -57,8 +57,8 @@ RSpec.describe "Admin::AnkiImports", type: :request do
         after  { FileUtils.rm_f(Rails.root.join("spec/fixtures/files/not_an_anki_file.txt")) }
 
         it "redirects back with an alert" do
-          post admin_anki_imports_path, params: { file: bad_file }
-          expect(response).to redirect_to(new_admin_anki_import_path)
+          post anki_imports_path, params: { file: bad_file }
+          expect(response).to redirect_to(new_anki_import_path)
         end
       end
 
@@ -76,28 +76,28 @@ RSpec.describe "Admin::AnkiImports", type: :request do
 
         it "creates an AnkiImport record" do
           expect {
-            post admin_anki_imports_path, params: { file: anki_file }
+            post anki_imports_path, params: { file: anki_file }
           }.to change { AnkiImport.count }.by(1)
         end
 
         it "enqueues an AnkiImportJob" do
-          post admin_anki_imports_path, params: { file: anki_file }
+          post anki_imports_path, params: { file: anki_file }
           expect(AnkiImportJob).to have_received(:perform_later)
         end
 
         it "redirects to the import status page" do
-          post admin_anki_imports_path, params: { file: anki_file }
-          expect(response).to redirect_to(admin_anki_import_path(AnkiImport.last))
+          post anki_imports_path, params: { file: anki_file }
+          expect(response).to redirect_to(anki_import_path(AnkiImport.last))
         end
       end
     end
   end
 
-  describe "GET /admin/anki_imports/:id" do
+  describe "GET /anki_imports/:id" do
     context "when unauthenticated" do
       it "redirects to login" do
         import = create(:anki_import, user: create(:user))
-        get admin_anki_import_path(import)
+        get anki_import_path(import)
         expect(response).to redirect_to(new_session_path)
       end
     end
@@ -107,7 +107,7 @@ RSpec.describe "Admin::AnkiImports", type: :request do
 
       it "shows the import status" do
         import = create(:anki_import, user: user, state: "running")
-        get admin_anki_import_path(import)
+        get anki_import_path(import)
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("running")
       end
