@@ -4,7 +4,7 @@
   learning_w  = total > 0 ? (stats[:learning]    / total * 100).round(1) : 0
   new_w       = total > 0 ? (stats[:new_count]   / total * 100).round(1) : 0
 %>
-<div class="flex h-2 rounded-full overflow-hidden bg-gray-100">
+<div class="flex h-2 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
   <% if mastered_w > 0 %>
     <div class="bg-green-500 transition-all" style="width: <%= mastered_w %>%"></div>
   <% end %>

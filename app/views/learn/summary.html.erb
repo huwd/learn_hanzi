@@ -1,12 +1,12 @@
 <div class="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-  <h2 class="text-3xl font-bold text-gray-800 mb-8">Learning complete</h2>
+  <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-8">Learning complete</h2>
 
-  <div class="bg-white rounded-2xl shadow p-8 w-full mb-8">
-    <p class="text-5xl font-bold text-gray-800 mb-2"><%= @introduced %></p>
-    <p class="text-gray-500 mb-6"><%= @introduced == 1 ? "character" : "characters" %> introduced</p>
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-8 w-full mb-8">
+    <p class="text-5xl font-bold text-gray-800 dark:text-gray-200 mb-2"><%= @introduced %></p>
+    <p class="text-gray-500 dark:text-gray-400 mb-6"><%= @introduced == 1 ? "character" : "characters" %> introduced</p>
 
     <% if @review_logs.any? %>
-      <div class="border-t border-gray-100 pt-6">
+      <div class="border-t border-gray-100 dark:border-gray-700 pt-6">
         <p class="text-sm text-gray-400 mb-4">Mini-review results</p>
         <dl class="grid grid-cols-4 gap-4 text-center">
           <% { "Again" => 1, "Hard" => 2, "Good" => 3, "Easy" => 4 }.each do |label, ease| %>
@@ -22,6 +22,6 @@
 
   <div class="flex gap-4">
     <%= link_to "Start review", review_path, class: "px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" %>
-    <%= link_to "Back to dashboard", root_path, class: "px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" %>
+    <%= link_to "Back to dashboard", root_path, class: "px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" %>
   </div>
 </div>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="color-scheme" content="light dark">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -23,8 +24,8 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <header class="bg-gray-800 text-white p-4">
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors">
+    <header class="bg-gray-800 dark:bg-gray-950 text-white p-4">
       <div class="container mx-auto flex justify-between items-center">
         <h1 class="text-xl font-bold"><%= link_to "Learn Hanzi", root_path %></h1>
         <nav class="flex items-center gap-6">
