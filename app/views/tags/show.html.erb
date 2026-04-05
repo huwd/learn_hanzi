@@ -12,7 +12,15 @@
     </nav>
   <% end %>
 
-  <h1 class="text-4xl font-extrabold text-gray-800 mb-6"><%= @entry_tag.name %></h1>
+  <div class="flex items-center gap-4 mb-6">
+    <h1 class="text-4xl font-extrabold text-gray-800"><%= @entry_tag.name %></h1>
+    <% if @overdue_in_subtree %>
+      <%= link_to review_path(tag_id: @entry_tag.id),
+            class: "text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors" do %>
+        Review overdue &rarr;
+      <% end %>
+    <% end %>
+  </div>
 
   <% if @entry_tag.children.any? %>
     <div class="mb-6">

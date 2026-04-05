@@ -3,7 +3,8 @@ class ReviewController < ApplicationController
   before_action :require_started_session, only: [ :summary ]
 
   def start
-    queue = LearningSession::Composer.call(user: Current.user)
+    tag   = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
+    queue = LearningSession::Composer.call(user: Current.user, tag: tag)
 
     if queue.empty?
       render :start
