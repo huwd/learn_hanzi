@@ -153,7 +153,7 @@ RSpec.describe "AnkiImports", type: :request do
         import = create(:anki_import, user: user, state: "running")
         get anki_import_path(import)
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("running")
+        expect(response.body).to include("Running")
       end
     end
   end

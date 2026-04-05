@@ -1,27 +1,47 @@
-<h1>Import Anki Collection</h1>
+<div class="flex-grow max-w-2xl mx-auto w-full">
+  <h1 class="text-3xl font-bold text-gray-800 mb-8">Import Anki Collection</h1>
 
-<%= form_with url: anki_imports_path, multipart: true do |f| %>
-  <div>
-    <%= f.label :file, "Anki collection file (.anki21 or .apkg)" %>
-    <%= f.file_field :file, accept: ".anki21,.apkg,.colpkg" %>
-  </div>
-  <%= f.submit "Import" %>
-<% end %>
+  <div class="bg-white rounded-xl shadow-md p-8 mb-6">
+    <p class="text-gray-500 text-sm mb-1">Supported deck:</p>
+    <p class="font-mono text-sm text-indigo-700 bg-indigo-50 rounded px-3 py-2 inline-block mb-6">
+      <%= AnkiImportService::DECK_NAME %>
+    </p>
 
-<% if @recent_imports.any? %>
-  <h2>Recent imports</h2>
-  <ul>
-    <% @recent_imports.each do |import| %>
-      <li>
-        <%= link_to import.created_at.to_fs(:short), anki_import_path(import) %>
-        — <%= import.state %>
-        <% if import.complete? %>
-          (<%= import.cards_imported %> cards, <%= import.review_logs_imported %> review logs)
-        <% end %>
-        <% if import.failed? %>
-          — Error: <%= import.error_message %>
-        <% end %>
-      </li>
+    <%= form_with url: anki_imports_path, multipart: true do |f| %>
+      <div class="mb-6">
+        <%= f.label :file, "Anki collection file (.anki21 or .apkg)",
+              class: "block text-sm font-medium text-gray-700 mb-2" %>
+        <%= f.file_field :file,
+              accept: ".anki21,.apkg,.colpkg",
+              class: "block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" %>
+        <p class="mt-2 text-xs text-gray-400">Maximum file size: 50 MB</p>
+      </div>
+      <%= f.submit "Import",
+            class: "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors cursor-pointer" %>
     <% end %>
-  </ul>
-<% end %>
+  </div>
+
+  <% if @recent_imports.any? %>
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent imports</h2>
+      <ul class="space-y-3">
+        <% @recent_imports.each do |import| %>
+          <li class="flex items-center justify-between text-sm">
+            <%= link_to import.created_at.to_fs(:short), anki_import_path(import),
+                  class: "text-indigo-600 hover:underline" %>
+            <span class="<%= import.complete? ? 'text-green-600' : import.failed? ? 'text-red-600' : 'text-amber-500' %> font-medium">
+              <%= import.state %>
+            </span>
+            <span class="text-gray-400">
+              <% if import.complete? %>
+                <%= import.cards_imported %> cards, <%= import.review_logs_imported %> review logs
+              <% elsif import.failed? %>
+                <%= import.error_message %>
+              <% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>
