@@ -1,5 +1,5 @@
 class AnkiImportsController < ApplicationController
-  ALLOWED_CONTENT_TYPES = %w[application/octet-stream application/zip].freeze
+  ALLOWED_CONTENT_TYPES = %w[application/octet-stream].freeze
   MAX_FILE_SIZE = 50 * 1024 * 1024 # 50 MB
   SQLITE_MAGIC = "SQLite format 3\x00"
 
@@ -35,12 +35,19 @@ class AnkiImportsController < ApplicationController
       return
     end
 
-    dest = import_storage_path
-    FileUtils.mkdir_p(File.dirname(dest))
-    FileUtils.cp(file.tempfile.path, dest)
+    dest   = import_storage_path
+    import = nil
 
-    import = Current.user.anki_imports.create!(state: "pending")
-    AnkiImportJob.perform_later(import.id, dest)
+    begin
+      FileUtils.mkdir_p(File.dirname(dest))
+      FileUtils.cp(file.tempfile.path, dest)
+      import = Current.user.anki_imports.create!(state: "pending")
+      AnkiImportJob.perform_later(import.id, dest)
+    rescue StandardError
+      FileUtils.rm_f(dest)
+      import&.destroy
+      raise
+    end
 
     redirect_to anki_import_path(import)
   end
