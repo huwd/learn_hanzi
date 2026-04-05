@@ -18,7 +18,7 @@ RSpec.describe AnkiImportService do
   # 不 has no entry — tests skip behaviour
 
   describe ".call" do
-    subject(:result) { described_class.call(user: user) }
+    subject(:result) { described_class.call(user: user, file_path: AnkiHelper.test_db_path) }
 
     it "returns a result with cards_imported count" do
       expect(result[:cards_imported]).to be > 0
@@ -52,13 +52,13 @@ RSpec.describe AnkiImportService do
     end
 
     it "is idempotent — running twice does not duplicate UserLearning records" do
-      described_class.call(user: user)
-      expect { described_class.call(user: user) }.not_to change { UserLearning.count }
+      described_class.call(user: user, file_path: AnkiHelper.test_db_path)
+      expect { described_class.call(user: user, file_path: AnkiHelper.test_db_path) }.not_to change { UserLearning.count }
     end
 
     it "is idempotent — running twice does not duplicate ReviewLog records" do
-      described_class.call(user: user)
-      expect { described_class.call(user: user) }.not_to change { ReviewLog.count }
+      described_class.call(user: user, file_path: AnkiHelper.test_db_path)
+      expect { described_class.call(user: user, file_path: AnkiHelper.test_db_path) }.not_to change { ReviewLog.count }
     end
   end
 end

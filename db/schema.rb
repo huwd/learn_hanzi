@@ -10,7 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_04_215231) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_05_124838) do
+  create_table "anki_imports", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "state", default: "pending", null: false
+    t.datetime "started_at"
+    t.datetime "completed_at"
+    t.integer "cards_imported", default: 0
+    t.integer "review_logs_imported", default: 0
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_anki_imports_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_anki_imports_on_user_id"
+  end
+
   create_table "dictionary_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "text"
@@ -106,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_04_215231) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  add_foreign_key "anki_imports", "users"
   add_foreign_key "dictionary_entry_tags", "dictionary_entries"
   add_foreign_key "dictionary_entry_tags", "tags"
   add_foreign_key "meanings", "dictionary_entries"

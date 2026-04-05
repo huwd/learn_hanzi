@@ -16,7 +16,7 @@ RSpec.describe AnkiImportJob, type: :job do
   describe "#perform" do
     context "when the import succeeds" do
       before do
-        allow(AnkiImportService).to receive(:call).with(user: user).and_return(
+        allow(AnkiImportService).to receive(:call).with(user: user, file_path: file_path).and_return(
           { cards_imported: 8, review_logs_imported: 42, skipped: [] }
         )
       end
