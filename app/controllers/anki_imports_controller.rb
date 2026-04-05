@@ -1,5 +1,6 @@
 class AnkiImportsController < ApplicationController
   ALLOWED_CONTENT_TYPES = %w[application/octet-stream application/zip].freeze
+  MAX_FILE_SIZE = 50 * 1024 * 1024 # 50 MB
 
   def new
     @recent_imports = Current.user.anki_imports.recent.limit(10)
@@ -15,6 +16,11 @@ class AnkiImportsController < ApplicationController
 
     unless ALLOWED_CONTENT_TYPES.include?(file.content_type)
       redirect_to new_anki_import_path, alert: "Unsupported file type. Please upload an Anki collection file."
+      return
+    end
+
+    if file.size > MAX_FILE_SIZE
+      redirect_to new_anki_import_path, alert: "File is too large. Maximum size is 50 MB."
       return
     end
 
