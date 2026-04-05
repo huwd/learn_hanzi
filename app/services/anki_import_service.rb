@@ -20,7 +20,7 @@ class AnkiImportService
   end
 
   def call
-    db = SQLite3::Database.new(@file_path)
+    db = SQLite3::Database.new(@file_path, readonly: true)
     db.results_as_hash = true
 
     col        = db.execute("SELECT crt, decks, models FROM col").first
