@@ -56,14 +56,11 @@ RSpec.describe "AnkiImports", type: :request do
 
       context "with an unsupported file type" do
         let(:bad_file) do
-          fixture_file_upload(
-            Rails.root.join("spec/fixtures/files/not_an_anki_file.txt"),
-            "text/plain"
-          )
+          t = Tempfile.new([ "not_an_anki_file", ".txt" ])
+          t.write("hello")
+          t.rewind
+          fixture_file_upload(t.path, "text/plain")
         end
-
-        before { File.write(Rails.root.join("spec/fixtures/files/not_an_anki_file.txt"), "hello") }
-        after  { FileUtils.rm_f(Rails.root.join("spec/fixtures/files/not_an_anki_file.txt")) }
 
         it "redirects back with an alert" do
           post anki_imports_path, params: { file: bad_file }
@@ -73,14 +70,11 @@ RSpec.describe "AnkiImports", type: :request do
 
       context "with a file that has the right content-type but wrong magic bytes" do
         let(:fake_anki_file) do
-          fixture_file_upload(
-            Rails.root.join("spec/fixtures/files/fake.anki21"),
-            "application/octet-stream"
-          )
+          t = Tempfile.new([ "fake", ".anki21" ])
+          t.write("not a sqlite file")
+          t.rewind
+          fixture_file_upload(t.path, "application/octet-stream")
         end
-
-        before { File.write(Rails.root.join("spec/fixtures/files/fake.anki21"), "not a sqlite file") }
-        after  { FileUtils.rm_f(Rails.root.join("spec/fixtures/files/fake.anki21")) }
 
         it "redirects back with an alert" do
           post anki_imports_path, params: { file: fake_anki_file }
