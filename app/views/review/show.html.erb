@@ -12,13 +12,6 @@
   overflow = meanings.size - shown.size
 %>
 
-<%
-  char_size_class = case entry.text.length
-                    when 1, 2 then "text-9xl"
-                    when 3    then "text-8xl"
-                    else           "text-7xl"
-                    end
-%>
 
 <div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="card-flip">
 
@@ -29,7 +22,7 @@
     <%# ---- CARD — character pinned to top, expands downward on reveal ---- %>
     <div class="bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
 
-      <span class="<%= char_size_class %> font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+      <span class="<%= hanzi_size_class(entry.text) %> font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
 
       <%# ---- BACK: answer content (hidden until revealed) ---- %>
       <div data-card-flip-target="back" class="hidden">
