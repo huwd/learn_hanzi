@@ -27,12 +27,15 @@ class AnkiImportService
     col_crt    = col["crt"].to_i
     decks      = JSON.parse(col["decks"])
     models     = JSON.parse(col["models"])
-    deck_id    = decks.find { |_, d| d["name"] == DECK_NAME }&.first
+    deck_entry = decks.find { |_, d| d["name"] == DECK_NAME }
+    raise "No deck found: #{DECK_NAME}" unless deck_entry
 
-    raise "No deck found: #{DECK_NAME}" unless deck_id
-
-    field_names    = models.values.first["flds"].map { |f| f["name"] }
+    deck_id    = deck_entry.first
+    deck_mid   = deck_entry.last["mid"]&.to_s
+    model      = models[deck_mid] || models.values.first
+    field_names    = model["flds"].map { |f| f["name"] }
     simplified_idx = field_names.index("Simplified")
+    raise "No 'Simplified' field in note model for deck #{DECK_NAME}" unless simplified_idx
 
     cards = db.execute(
       "SELECT id, nid, queue, due, ivl FROM cards WHERE did = ? OR odid = ?",
@@ -42,10 +45,14 @@ class AnkiImportService
     card_ids = cards.map { |c| c["id"] }
     note_ids = cards.map { |c| c["nid"] }.uniq
 
-    placeholders = note_ids.map { "?" }.join(",")
-    notes_by_id  = db.execute(
-      "SELECT id, flds FROM notes WHERE id IN (#{placeholders})", note_ids
-    ).index_by { |n| n["id"] }
+    notes_by_id = if note_ids.empty?
+      {}
+    else
+      note_ids.each_slice(900).flat_map do |batch|
+        placeholders = batch.map { "?" }.join(",")
+        db.execute("SELECT id, flds FROM notes WHERE id IN (#{placeholders})", batch)
+      end.index_by { |n| n["id"] }
+    end
 
     card_simplified = {}
     card_state      = {}
@@ -58,7 +65,9 @@ class AnkiImportService
       next if simplified.blank?
 
       card_simplified[card["id"]] = simplified
-      card_state[card["id"]]      = ALLOWED_STATES.fetch(card["queue"], "unknown")
+      card_state[card["id"]]      = ALLOWED_STATES.fetch(card["queue"]) {
+        raise "Unexpected Anki queue value: #{card["queue"]}"
+      }
     end
 
     chars        = card_simplified.values.uniq
@@ -90,12 +99,11 @@ class AnkiImportService
       .where(user: @user, dictionary_entry_id: found_entry_ids)
       .pluck(:dictionary_entry_id, :id).to_h
 
-    revlogs = []
-    if card_ids.any?
-      revlog_placeholders = card_ids.map { "?" }.join(",")
-      revlogs = db.execute(
-        "SELECT id, cid, ease, ivl, factor, time, type FROM revlog WHERE cid IN (#{revlog_placeholders})",
-        card_ids
+    revlogs = card_ids.each_slice(900).flat_map do |batch|
+      placeholders = batch.map { "?" }.join(",")
+      db.execute(
+        "SELECT id, cid, ease, ivl, factor, time, type FROM revlog WHERE cid IN (#{placeholders})",
+        batch
       )
     end
 
@@ -134,8 +142,8 @@ class AnkiImportService
   def anki_next_due(card, col_crt)
     case card["queue"]
     when 0      then nil
-    when 1, 3   then Time.at(card["due"].to_i)
-    when 2      then Time.at(col_crt + card["due"].to_i * 86_400)
+    when 1, 3   then Time.zone.at(card["due"].to_i)
+    when 2      then Time.zone.at(col_crt + card["due"].to_i * 86_400)
     else             nil
     end
   end
