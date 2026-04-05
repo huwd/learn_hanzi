@@ -14,7 +14,17 @@ class AnkiImportJob < ApplicationJob
       review_logs_imported: result[:review_logs_imported]
     )
   rescue => e
-    import&.update!(state: "failed", error_message: e.message)
+    Rails.logger.error(
+      [
+        "AnkiImportJob failed for import_id=#{import_id}",
+        "#{e.class}: #{e.message}",
+        *Array(e.backtrace)
+      ].join("\n")
+    )
+    import&.update!(
+      state: "failed",
+      error_message: "Import failed. Please verify the file is a valid Anki collection and try again."
+    )
     raise
   ensure
     FileUtils.rm_f(file_path)
