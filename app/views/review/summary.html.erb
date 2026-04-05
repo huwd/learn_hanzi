@@ -10,7 +10,7 @@
         <% { "Again" => 1, "Hard" => 2, "Good" => 3, "Easy" => 4 }.each do |label, ease| %>
           <div>
             <dt class="text-xs text-gray-400"><%= label %></dt>
-            <dd class="text-xl font-semibold"><%= @review_logs.count { |r| r.ease == ease } %></dd>
+            <dd class="text-xl font-semibold text-gray-800 dark:text-gray-200"><%= @review_logs.count { |r| r.ease == ease } %></dd>
           </div>
         <% end %>
       </dl>
