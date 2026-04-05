@@ -37,7 +37,7 @@ RSpec.describe "Dashboard", type: :request do
       context "when the user has no learning data" do
         it "shows the import prompt" do
           get root_path
-          expect(response.body).to include(new_anki_import_path)
+          expect(response.body).to include("No learning data yet")
         end
 
         it "names the supported deck" do

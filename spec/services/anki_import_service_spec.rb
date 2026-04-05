@@ -37,7 +37,7 @@ RSpec.describe AnkiImportService do
     end
 
     it "creates ReviewLog records for revlog entries" do
-      expect { result }.to change { ReviewLog.count }.by_at_least(0)
+      expect { result }.to change { ReviewLog.count }.by_at_least(1)
     end
 
     it "sets correct states from Anki queue values" do
