@@ -85,6 +85,48 @@ RSpec.describe "Tags", type: :request do
       end
     end
 
+    describe "GET /tags/:id — review overdue link" do
+      let(:entry) { create(:dictionary_entry).tap { |e| e.tags << mid_tag } }
+
+      context "when overdue cards exist within the tag subtree" do
+        before do
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "learning", next_due: 1.day.ago, last_interval: 1)
+        end
+
+        it "shows a review overdue link scoped to that tag" do
+          get tag_path(mid_tag)
+          expect(response.body).to include(review_path(tag_id: mid_tag.id))
+        end
+      end
+
+      context "when a descendant tag has overdue cards" do
+        let(:child_entry) { create(:dictionary_entry).tap { |e| e.tags << leaf_tag } }
+
+        before do
+          create(:user_learning, user: user, dictionary_entry: child_entry,
+                 state: "learning", next_due: 1.day.ago, last_interval: 1)
+        end
+
+        it "shows a review overdue link for the parent tag" do
+          get tag_path(mid_tag)
+          expect(response.body).to include(review_path(tag_id: mid_tag.id))
+        end
+      end
+
+      context "when no overdue cards exist in the subtree" do
+        before do
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "learning", next_due: 7.days.from_now, last_interval: 1)
+        end
+
+        it "does not show the review overdue link" do
+          get tag_path(mid_tag)
+          expect(response.body).not_to include(review_path(tag_id: mid_tag.id))
+        end
+      end
+    end
+
     describe "GET /tags/:id (nested tag)" do
       before { leaf_tag }
 

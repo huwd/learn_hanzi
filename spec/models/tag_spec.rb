@@ -61,6 +61,26 @@ RSpec.describe Tag, type: :model do
     end
   end
 
+  describe "#subtree_ids" do
+    let(:root)       { create(:tag, name: "HSK 4") }
+    let(:child)      { create(:tag, name: "Lesson 1", parent: root) }
+    let(:grandchild) { create(:tag, name: "Lesson 1a", parent: child) }
+
+    it "returns only itself when there are no children" do
+      expect(root.subtree_ids).to eq([ root.id ])
+    end
+
+    it "includes direct children" do
+      child
+      expect(root.subtree_ids).to include(child.id)
+    end
+
+    it "includes grandchildren" do
+      grandchild
+      expect(root.subtree_ids).to include(grandchild.id)
+    end
+  end
+
   describe "#add_child" do
     let(:parent_tag) { create(:tag) }
     let(:child_tag) { create(:tag) }
