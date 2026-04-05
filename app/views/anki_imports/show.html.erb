@@ -1,15 +1,48 @@
-<h1>Import #<%= @import.id %></h1>
+<div class="flex-grow max-w-2xl mx-auto w-full">
+  <h1 class="text-3xl font-bold text-gray-800 mb-8">Import #<%= @import.id %></h1>
 
-<p>Status: <strong><%= @import.state %></strong></p>
+  <div class="bg-white rounded-xl shadow-md p-8">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="text-sm font-medium text-gray-500">Status:</span>
+      <span class="font-semibold text-lg <%= @import.complete? ? 'text-green-600' : @import.failed? ? 'text-red-600' : 'text-amber-500' %>">
+        <%= @import.state.capitalize %>
+      </span>
+    </div>
 
-<% if @import.complete? %>
-  <p>Cards imported: <%= @import.cards_imported %></p>
-  <p>Review logs imported: <%= @import.review_logs_imported %></p>
-  <p>Completed: <%= @import.completed_at&.to_fs(:short) %></p>
-<% elsif @import.failed? %>
-  <p>Error: <%= @import.error_message %></p>
-<% elsif @import.running? %>
-  <p>Import is in progress&hellip;</p>
-<% end %>
+    <% if @import.complete? %>
+      <dl class="space-y-3 mb-6">
+        <div class="flex justify-between text-sm">
+          <dt class="text-gray-500">Cards imported</dt>
+          <dd class="font-semibold text-gray-800"><%= @import.cards_imported %></dd>
+        </div>
+        <div class="flex justify-between text-sm">
+          <dt class="text-gray-500">Review logs imported</dt>
+          <dd class="font-semibold text-gray-800"><%= @import.review_logs_imported %></dd>
+        </div>
+        <div class="flex justify-between text-sm">
+          <dt class="text-gray-500">Completed</dt>
+          <dd class="font-semibold text-gray-800"><%= @import.completed_at&.to_fs(:short) %></dd>
+        </div>
+      </dl>
+      <%= link_to "Go to dashboard", root_path,
+            class: "inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors" %>
+    <% elsif @import.failed? %>
+      <div class="bg-red-50 rounded-lg p-4 mb-6">
+        <p class="text-red-700 text-sm font-medium">Error</p>
+        <p class="text-red-600 text-sm mt-1"><%= @import.error_message %></p>
+      </div>
+      <%= link_to "Try again", new_anki_import_path,
+            class: "inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors" %>
+    <% elsif @import.running? %>
+      <p class="text-gray-500 text-sm mb-6">Import is in progress&hellip;</p>
+    <% else %>
+      <p class="text-gray-500 text-sm mb-6">Queued — waiting to start.</p>
+    <% end %>
 
-<%= link_to "New import", new_anki_import_path %>
+    <% unless @import.complete? %>
+      <div class="mt-4">
+        <%= link_to "New import", new_anki_import_path, class: "text-sm text-indigo-600 hover:underline" %>
+      </div>
+    <% end %>
+  </div>
+</div>
