@@ -58,9 +58,17 @@ RSpec.describe AnkiImportJob, type: :job do
         expect(import.reload.state).to eq("failed")
       end
 
-      it "records the error message" do
+      it "stores a generic user-safe error message" do
         expect { described_class.perform_now(import.id, file_path) }.to raise_error(StandardError)
-        expect(import.reload.error_message).to eq("connection failed")
+        expect(import.reload.error_message).to eq(
+          "Import failed. Please verify the file is a valid Anki collection and try again."
+        )
+      end
+
+      it "logs the full exception details" do
+        allow(Rails.logger).to receive(:error)
+        expect { described_class.perform_now(import.id, file_path) }.to raise_error(StandardError)
+        expect(Rails.logger).to have_received(:error).with(/connection failed/)
       end
 
       it "still deletes the uploaded file on failure" do
