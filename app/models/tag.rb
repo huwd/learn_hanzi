@@ -7,6 +7,10 @@ class Tag < ApplicationRecord
 
   validates :name, presence: true
 
+  def subtree_ids
+    [ id ] + children.flat_map(&:subtree_ids)
+  end
+
   def ancestors
     chain = []
     node = parent

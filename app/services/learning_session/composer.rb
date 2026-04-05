@@ -3,15 +3,16 @@ module LearningSession
     DEFAULT_SIZE = 20
     DEFAULT_NEW_CAP = 5
 
-    def self.call(user:, size: DEFAULT_SIZE, new_cap: DEFAULT_NEW_CAP, include_new: false)
-      new(user, size, new_cap, include_new).call
+    def self.call(user:, size: DEFAULT_SIZE, new_cap: DEFAULT_NEW_CAP, include_new: false, tag: nil)
+      new(user, size, new_cap, include_new, tag).call
     end
 
-    def initialize(user, size, new_cap, include_new)
+    def initialize(user, size, new_cap, include_new, tag = nil)
       @user = user
       @size = size
       @new_cap = new_cap
       @include_new = include_new
+      @tag = tag
     end
 
     def call
@@ -38,15 +39,23 @@ module LearningSession
     private
 
     def overdue_learning_cards
-      @user.user_learnings.overdue_learning.order(:next_due).to_a
+      scoped_learnings.overdue_learning.order(:next_due).to_a
     end
 
     def new_cards(limit)
-      @user.user_learnings.new_learnings.order(:created_at).limit(limit).to_a
+      scoped_learnings.new_learnings.order(:created_at).limit(limit).to_a
     end
 
     def due_mastered_cards
-      @user.user_learnings.due_mastered.order(:next_due)
+      scoped_learnings.due_mastered.order(:next_due)
+    end
+
+    def scoped_learnings
+      return @user.user_learnings unless @tag
+
+      @user.user_learnings
+           .joins(dictionary_entry: :dictionary_entry_tags)
+           .where(dictionary_entry_tags: { tag_id: @tag.subtree_ids })
     end
   end
 end
