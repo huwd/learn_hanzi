@@ -1,0 +1,15 @@
+<h1>Import #<%= @import.id %></h1>
+
+<p>Status: <strong><%= @import.state %></strong></p>
+
+<% if @import.complete? %>
+  <p>Cards imported: <%= @import.cards_imported %></p>
+  <p>Review logs imported: <%= @import.review_logs_imported %></p>
+  <p>Completed: <%= @import.completed_at&.to_fs(:short) %></p>
+<% elsif @import.failed? %>
+  <p>Error: <%= @import.error_message %></p>
+<% elsif @import.running? %>
+  <p>Import is in progress&hellip;</p>
+<% end %>
+
+<%= link_to "New import", new_admin_anki_import_path %>

@@ -2,6 +2,7 @@ class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
   has_many :user_learnings, dependent: :destroy
+  has_many :anki_imports, dependent: :destroy
 
   validates :email_address, presence: true
   validates :email_address, uniqueness: true
