@@ -191,6 +191,52 @@ RSpec.describe LearningSession::Composer do
         expect(queue).to eq([ in_child_tag, in_tag ])
       end
 
+      context "with include_new: true" do
+        subject(:queue) { described_class.call(user: user, tag: tag, include_new: true) }
+
+        let!(:new_in_tag) do
+          entry = create(:dictionary_entry).tap { |e| e.tags << tag }
+          create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+        end
+
+        let!(:new_outside_tag) do
+          other = create(:tag, name: "HSK 5")
+          entry = create(:dictionary_entry).tap { |e| e.tags << other }
+          create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+        end
+
+        it "includes new cards within the subtree" do
+          expect(queue).to include(new_in_tag)
+        end
+
+        it "excludes new cards outside the subtree" do
+          expect(queue).not_to include(new_outside_tag)
+        end
+      end
+
+      context "with due mastered cards" do
+        let!(:due_mastered_in_tag) do
+          entry = create(:dictionary_entry).tap { |e| e.tags << tag }
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "mastered", next_due: 1.day.ago, last_interval: 10)
+        end
+
+        let!(:due_mastered_outside_tag) do
+          other = create(:tag, name: "HSK 5")
+          entry = create(:dictionary_entry).tap { |e| e.tags << other }
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "mastered", next_due: 1.day.ago, last_interval: 10)
+        end
+
+        it "includes due mastered cards within the subtree" do
+          expect(queue).to include(due_mastered_in_tag)
+        end
+
+        it "excludes due mastered cards outside the subtree" do
+          expect(queue).not_to include(due_mastered_outside_tag)
+        end
+      end
+
       context "when an entry has multiple tags within the subtree" do
         let!(:multi_tagged) do
           entry = create(:dictionary_entry).tap { |e| e.tags << tag; e.tags << child_tag }
