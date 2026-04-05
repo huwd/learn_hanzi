@@ -45,6 +45,15 @@ RSpec.describe "AnkiImports", type: :request do
         end
       end
 
+      context "with a file that exceeds the size limit" do
+        it "redirects back with an alert" do
+          oversized = fixture_file_upload(AnkiHelper.test_db_path, "application/octet-stream")
+          allow(oversized).to receive(:size).and_return(AnkiImportsController::MAX_FILE_SIZE + 1)
+          post anki_imports_path, params: { file: oversized }
+          expect(response).to redirect_to(new_anki_import_path)
+        end
+      end
+
       context "with an unsupported file type" do
         let(:bad_file) do
           fixture_file_upload(
