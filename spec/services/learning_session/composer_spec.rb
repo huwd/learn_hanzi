@@ -150,6 +150,48 @@ RSpec.describe LearningSession::Composer do
       end
     end
 
+    context "with a tag filter" do
+      subject(:queue) { described_class.call(user: user, tag: tag) }
+
+      let(:tag)       { create(:tag, name: "HSK 4") }
+      let(:child_tag) { create(:tag, name: "Lesson 1", parent: tag) }
+
+      let!(:in_tag) do
+        entry = create(:dictionary_entry).tap { |e| e.tags << tag }
+        create(:user_learning, user: user, dictionary_entry: entry,
+               state: "learning", next_due: 1.day.ago, last_interval: 1)
+      end
+
+      let!(:in_child_tag) do
+        entry = create(:dictionary_entry).tap { |e| e.tags << child_tag }
+        create(:user_learning, user: user, dictionary_entry: entry,
+               state: "learning", next_due: 2.days.ago, last_interval: 1)
+      end
+
+      let!(:outside_tag) do
+        other = create(:tag, name: "HSK 2")
+        entry = create(:dictionary_entry).tap { |e| e.tags << other }
+        create(:user_learning, user: user, dictionary_entry: entry,
+               state: "learning", next_due: 1.day.ago, last_interval: 1)
+      end
+
+      it "includes cards tagged with the tag itself" do
+        expect(queue).to include(in_tag)
+      end
+
+      it "includes cards tagged with descendant tags" do
+        expect(queue).to include(in_child_tag)
+      end
+
+      it "excludes cards outside the tag subtree" do
+        expect(queue).not_to include(outside_tag)
+      end
+
+      it "orders by next_due ascending" do
+        expect(queue).to eq([ in_child_tag, in_tag ])
+      end
+    end
+
     context "not-yet-due learning and mastered cards" do
       before do
         create(:user_learning, user: user, state: "learning",
