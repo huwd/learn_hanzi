@@ -22,7 +22,8 @@ class AnkiImportJob < ApplicationJob
       ].join("\n")
     )
     import&.update!(
-      state: "failed",
+      state:         "failed",
+      completed_at:  Time.current,
       error_message: "Import failed. Please verify the file is a valid Anki collection and try again."
     )
     raise

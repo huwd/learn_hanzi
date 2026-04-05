@@ -55,12 +55,12 @@ RSpec.describe "AnkiImports", type: :request do
       end
 
       context "with an unsupported file type" do
-        let(:bad_file) do
-          t = Tempfile.new([ "not_an_anki_file", ".txt" ])
-          t.write("hello")
-          t.rewind
-          fixture_file_upload(t.path, "text/plain")
+        let(:bad_file_tempfile) do
+          Tempfile.new([ "not_an_anki_file", ".txt" ]).tap { |t| t.write("hello"); t.rewind }
         end
+        let(:bad_file) { fixture_file_upload(bad_file_tempfile.path, "text/plain") }
+
+        after { bad_file_tempfile.close! }
 
         it "redirects back with an alert" do
           post anki_imports_path, params: { file: bad_file }
@@ -69,12 +69,12 @@ RSpec.describe "AnkiImports", type: :request do
       end
 
       context "with a file that has the right content-type but wrong magic bytes" do
-        let(:fake_anki_file) do
-          t = Tempfile.new([ "fake", ".anki21" ])
-          t.write("not a sqlite file")
-          t.rewind
-          fixture_file_upload(t.path, "application/octet-stream")
+        let(:fake_anki_file_tempfile) do
+          Tempfile.new([ "fake", ".anki21" ]).tap { |t| t.write("not a sqlite file"); t.rewind }
         end
+        let(:fake_anki_file) { fixture_file_upload(fake_anki_file_tempfile.path, "application/octet-stream") }
+
+        after { fake_anki_file_tempfile.close! }
 
         it "redirects back with an alert" do
           post anki_imports_path, params: { file: fake_anki_file }
