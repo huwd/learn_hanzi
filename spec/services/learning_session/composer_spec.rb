@@ -190,6 +190,18 @@ RSpec.describe LearningSession::Composer do
       it "orders by next_due ascending" do
         expect(queue).to eq([ in_child_tag, in_tag ])
       end
+
+      context "when an entry has multiple tags within the subtree" do
+        let!(:multi_tagged) do
+          entry = create(:dictionary_entry).tap { |e| e.tags << tag; e.tags << child_tag }
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "learning", next_due: 3.days.ago, last_interval: 1)
+        end
+
+        it "does not include the card more than once" do
+          expect(queue.count { |ul| ul.id == multi_tagged.id }).to eq(1)
+        end
+      end
     end
 
     context "not-yet-due learning and mastered cards" do
