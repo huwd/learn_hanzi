@@ -12,57 +12,69 @@
   overflow = meanings.size - shown.size
 %>
 
+<%
+  char_size_class = case entry.text.length
+                    when 1, 2 then "text-9xl"
+                    when 3    then "text-8xl"
+                    else           "text-7xl"
+                    end
+%>
+
 <div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="card-flip">
 
   <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
 
-  <%# ---- CARD — character pinned to top, expands downward on reveal ---- %>
-  <div class="w-80 bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
+  <div class="w-fit min-w-72 max-w-xl flex flex-col items-stretch">
 
-    <span class="text-9xl font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+    <%# ---- CARD — character pinned to top, expands downward on reveal ---- %>
+    <div class="bg-white rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
 
-    <%# ---- BACK: answer content (hidden until revealed) ---- %>
+      <span class="<%= char_size_class %> font-hanzi text-gray-900 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+
+      <%# ---- BACK: answer content (hidden until revealed) ---- %>
+      <div data-card-flip-target="back" class="hidden">
+        <div class="mt-6 w-full border-t border-gray-100 pt-6">
+          <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
+          <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
+          <% if overflow > 0 %>
+            <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
+          <% end %>
+          <% if entry.tags.any? %>
+            <div class="mt-4 flex flex-wrap gap-1 justify-center">
+              <% entry.tags.each do |tag| %>
+                <span class="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">
+                  <%= tag.parent&.name %> · <%= tag.name %>
+                </span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+    </div>
+
+    <%# ---- FRONT: show answer button (hidden after reveal) ---- %>
+    <div data-card-flip-target="front">
+      <button data-action="click->card-flip#reveal"
+              class="mt-6 w-full py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
+        Show answer
+      </button>
+    </div>
+
+    <%# ---- BACK: rating buttons (hidden until revealed) ---- %>
     <div data-card-flip-target="back" class="hidden">
-      <div class="mt-6 w-full border-t border-gray-100 pt-6">
-        <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
-        <p class="text-xl font-medium text-gray-800"><%= shown.map(&:text).join(", ") %></p>
-        <% if overflow > 0 %>
-          <p class="mt-2 text-sm text-gray-400">and <%= overflow %> more</p>
-        <% end %>
-        <% if entry.tags.any? %>
-          <div class="mt-4 flex flex-wrap gap-1 justify-center">
-            <% entry.tags.each do |tag| %>
-              <span class="text-xs px-2 py-1 bg-gray-100 text-gray-500 rounded-full">
-                <%= tag.parent&.name %> · <%= tag.name %>
-              </span>
-            <% end %>
-          </div>
-        <% end %>
+      <div class="mt-6 grid grid-cols-4 gap-3">
+        <%= button_to "Again", review_card_path, params: { ease: 1 },
+              class: "py-3 px-4 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors" %>
+        <%= button_to "Hard",  review_card_path, params: { ease: 2 },
+              class: "py-3 px-4 bg-orange-50 text-orange-600 font-medium rounded-xl hover:bg-orange-100 transition-colors" %>
+        <%= button_to "Good",  review_card_path, params: { ease: 3 },
+              class: "py-3 px-4 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-colors" %>
+        <%= button_to "Easy",  review_card_path, params: { ease: 4 },
+              class: "py-3 px-4 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors" %>
       </div>
     </div>
 
-  </div>
-
-  <%# ---- FRONT: show answer button (hidden after reveal) ---- %>
-  <div data-card-flip-target="front">
-    <button data-action="click->card-flip#reveal"
-            class="mt-6 w-80 py-4 bg-white border border-gray-200 rounded-xl text-gray-500 font-medium hover:bg-gray-50 transition-colors">
-      Show answer
-    </button>
-  </div>
-
-  <%# ---- BACK: rating buttons (hidden until revealed) ---- %>
-  <div data-card-flip-target="back" class="hidden">
-    <div class="mt-6 grid grid-cols-4 gap-3 w-80">
-      <%= button_to "Again", review_card_path, params: { ease: 1 },
-            class: "py-3 px-4 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors" %>
-      <%= button_to "Hard",  review_card_path, params: { ease: 2 },
-            class: "py-3 px-4 bg-orange-50 text-orange-600 font-medium rounded-xl hover:bg-orange-100 transition-colors" %>
-      <%= button_to "Good",  review_card_path, params: { ease: 3 },
-            class: "py-3 px-4 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-colors" %>
-      <%= button_to "Easy",  review_card_path, params: { ease: 4 },
-            class: "py-3 px-4 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 transition-colors" %>
-    </div>
   </div>
 
 </div>
