@@ -51,11 +51,14 @@ module LearningSession
     end
 
     def scoped_learnings
-      return @user.user_learnings unless @tag
-
-      @user.user_learnings
-           .joins(dictionary_entry: :dictionary_entry_tags)
-           .where(dictionary_entry_tags: { tag_id: @tag.subtree_ids })
+      @scoped_learnings ||= if @tag
+        @user.user_learnings
+             .joins(dictionary_entry: :dictionary_entry_tags)
+             .where(dictionary_entry_tags: { tag_id: @tag.subtree_ids })
+             .distinct
+      else
+        @user.user_learnings
+      end
     end
   end
 end
