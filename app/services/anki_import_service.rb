@@ -6,8 +6,8 @@ class AnkiImportService
     1  => "learning",
     2  => "mastered",
     3  => "learning",
-    -1 => "suspended",
-    -2 => "suspended"
+    -1 => "suspended", # manually suspended by user
+    -2 => "suspended"  # buried (auto-hidden by Anki; resets next day) — treated the same
   }.freeze
 
   def self.call(user:, file_path:)
