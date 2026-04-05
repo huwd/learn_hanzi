@@ -4,7 +4,7 @@ class TagsController < ApplicationController
   end
 
   def show
-    @entry_tag = Tag.find(params[:id])
+    @entry_tag = Tag.includes(children: :children).find(params[:id])
     @child_tags = @entry_tag.children
     @dictionary_entries_grouped = TagEntriesGrouper.new(@entry_tag, Current.user).grouped_by_learning_state
     @states = {
