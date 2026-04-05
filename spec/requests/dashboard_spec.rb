@@ -29,6 +29,32 @@ RSpec.describe "Dashboard", type: :request do
         expect(response.body).to include(learn_path)
       end
 
+      it "includes a link to the import page in the nav" do
+        get root_path
+        expect(response.body).to include(new_anki_import_path)
+      end
+
+      context "when the user has no learning data" do
+        it "shows the import prompt" do
+          get root_path
+          expect(response.body).to include(new_anki_import_path)
+        end
+
+        it "names the supported deck" do
+          get root_path
+          expect(response.body).to include(AnkiImportService::DECK_NAME)
+        end
+      end
+
+      context "when the user has learning data" do
+        before { create(:user_learning, user: user) }
+
+        it "does not show the import prompt" do
+          get root_path
+          expect(response.body).not_to include("No learning data yet")
+        end
+      end
+
       context "with cards due" do
         before do
           create(:user_learning, user: user, state: "learning",
