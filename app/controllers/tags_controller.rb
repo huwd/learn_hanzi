@@ -22,10 +22,10 @@ class TagsController < ApplicationController
              .pluck(:dictionary_entry_id)
     )
 
-    @overdue_in_subtree = Current.user.user_learnings
-                                 .joins(dictionary_entry: :dictionary_entry_tags)
-                                 .where(dictionary_entry_tags: { tag_id: @entry_tag.subtree_ids })
-                                 .overdue_learning
-                                 .exists?
+    subtree_learnings = Current.user.user_learnings
+                                    .joins(dictionary_entry: :dictionary_entry_tags)
+                                    .where(dictionary_entry_tags: { tag_id: @entry_tag.subtree_ids })
+    @overdue_in_subtree = subtree_learnings.overdue_learning.exists? ||
+                          subtree_learnings.due_mastered.exists?
   end
 end
