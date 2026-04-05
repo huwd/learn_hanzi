@@ -3,8 +3,13 @@
 
   <div class="bg-white rounded-xl shadow-md p-8 mb-6">
     <p class="text-gray-500 text-sm mb-1">Supported deck:</p>
-    <p class="font-mono text-sm text-indigo-700 bg-indigo-50 rounded px-3 py-2 inline-block mb-6">
+    <p class="font-mono text-sm text-indigo-700 bg-indigo-50 rounded px-3 py-2 inline-block mb-2">
       <%= AnkiImportService::DECK_NAME %>
+    </p>
+    <p class="text-gray-500 text-sm mb-6">
+      Don't have it yet?
+      <%= link_to "Download from AnkiWeb", "https://ankiweb.net/shared/info/775653465",
+            class: "text-indigo-600 hover:underline" %>.
     </p>
 
     <%= form_with url: anki_imports_path, multipart: true do |f| %>
