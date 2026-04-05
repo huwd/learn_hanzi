@@ -114,6 +114,18 @@ RSpec.describe "Tags", type: :request do
         end
       end
 
+      context "when a mastered card is due for spot-check" do
+        before do
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "mastered", next_due: 1.day.ago, last_interval: 30)
+        end
+
+        it "shows the review overdue link" do
+          get tag_path(mid_tag)
+          expect(response.body).to include(review_path(tag_id: mid_tag.id))
+        end
+      end
+
       context "when no overdue cards exist in the subtree" do
         before do
           create(:user_learning, user: user, dictionary_entry: entry,
