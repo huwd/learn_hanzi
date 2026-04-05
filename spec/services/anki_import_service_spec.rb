@@ -11,7 +11,7 @@ RSpec.describe AnkiImportService do
   let!(:entry_hen)  { create(:dictionary_entry, text: "很") }
   let!(:entry_xue)  { create(:dictionary_entry, text: "学") }
   let!(:entry_xi)   { create(:dictionary_entry, text: "习") }
-  let!(:entry_zhong){ create(:dictionary_entry, text: "中") }
+  let!(:entry_zhong) { create(:dictionary_entry, text: "中") }
   let!(:entry_wen)  { create(:dictionary_entry, text: "文") }
   let!(:entry_guo)  { create(:dictionary_entry, text: "国") }
   let!(:entry_ai)   { create(:dictionary_entry, text: "爱") }

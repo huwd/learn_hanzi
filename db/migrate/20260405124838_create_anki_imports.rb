@@ -2,7 +2,7 @@ class CreateAnkiImports < ActiveRecord::Migration[8.0]
   def change
     create_table :anki_imports do |t|
       t.references :user, null: false, foreign_key: true
-      t.string  :state,                null: false, default: "pending"
+      t.string :state,                null: false, default: "pending"
       t.datetime :started_at
       t.datetime :completed_at
       t.integer  :cards_imported,       default: 0

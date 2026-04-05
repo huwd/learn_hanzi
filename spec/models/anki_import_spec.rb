@@ -19,7 +19,7 @@ RSpec.describe AnkiImport, type: :model do
       end
 
       it "returns false for ##{state}? when state is not #{state}" do
-        other_state = (%w[pending running complete failed] - [state]).first
+        other_state = (%w[pending running complete failed] - [ state ]).first
         import = build(:anki_import, user: user, state: other_state)
         expect(import.public_send(:"#{state}?")).to be false
       end
