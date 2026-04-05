@@ -1,6 +1,7 @@
 class AnkiImportsController < ApplicationController
   ALLOWED_CONTENT_TYPES = %w[application/octet-stream application/zip].freeze
   MAX_FILE_SIZE = 50 * 1024 * 1024 # 50 MB
+  SQLITE_MAGIC = "SQLite format 3\x00"
 
   def new
     @recent_imports = Current.user.anki_imports.recent.limit(10)
@@ -24,6 +25,11 @@ class AnkiImportsController < ApplicationController
       return
     end
 
+    unless sqlite_file?(file.tempfile)
+      redirect_to new_anki_import_path, alert: "File does not appear to be a valid Anki collection."
+      return
+    end
+
     dest = import_storage_path
     FileUtils.mkdir_p(File.dirname(dest))
     FileUtils.cp(file.tempfile.path, dest)
@@ -42,5 +48,12 @@ class AnkiImportsController < ApplicationController
 
   def import_storage_path
     Rails.root.join("tmp", "anki_imports", "#{SecureRandom.uuid}.anki21").to_s
+  end
+
+  def sqlite_file?(tempfile)
+    tempfile.rewind
+    tempfile.read(16) == SQLITE_MAGIC
+  ensure
+    tempfile.rewind
   end
 end
