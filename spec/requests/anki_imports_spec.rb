@@ -88,6 +88,24 @@ RSpec.describe "AnkiImports", type: :request do
         end
       end
 
+      context "when an import is already in progress" do
+        let(:anki_file) do
+          fixture_file_upload(AnkiHelper.test_db_path, "application/octet-stream")
+        end
+
+        it "redirects back with an alert for a pending import" do
+          create(:anki_import, user: user, state: "pending")
+          post anki_imports_path, params: { file: anki_file }
+          expect(response).to redirect_to(new_anki_import_path)
+        end
+
+        it "redirects back with an alert for a running import" do
+          create(:anki_import, user: user, state: "running")
+          post anki_imports_path, params: { file: anki_file }
+          expect(response).to redirect_to(new_anki_import_path)
+        end
+      end
+
       context "with a valid .anki21 file" do
         let(:anki_file) do
           fixture_file_upload(
