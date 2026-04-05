@@ -71,6 +71,11 @@ RSpec.describe AnkiImportJob, type: :job do
         expect(Rails.logger).to have_received(:error).with(/connection failed/)
       end
 
+      it "sets completed_at on failure" do
+        expect { described_class.perform_now(import.id, file_path) }.to raise_error(StandardError)
+        expect(import.reload.completed_at).to be_present
+      end
+
       it "still deletes the uploaded file on failure" do
         expect { described_class.perform_now(import.id, file_path) }.to raise_error(StandardError)
         expect(File.exist?(file_path)).to be false
