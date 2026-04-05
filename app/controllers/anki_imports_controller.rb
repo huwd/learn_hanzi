@@ -25,6 +25,11 @@ class AnkiImportsController < ApplicationController
       return
     end
 
+    if Current.user.anki_imports.in_progress.exists?
+      redirect_to new_anki_import_path, alert: "An import is already in progress. Please wait for it to finish."
+      return
+    end
+
     unless sqlite_file?(file.tempfile)
       redirect_to new_anki_import_path, alert: "File does not appear to be a valid Anki collection."
       return
