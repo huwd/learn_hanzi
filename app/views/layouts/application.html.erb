@@ -31,6 +31,7 @@
           <% if authenticated? %>
             <%= link_to "Learn", learn_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <%= link_to "Review", review_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
+            <%= link_to "Import", new_anki_import_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <div class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center">
               <%= Current.user.email_address[0].upcase %>
             </div>

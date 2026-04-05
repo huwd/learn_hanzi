@@ -79,6 +79,7 @@ RSpec.describe "Dashboard", type: :request do
         let!(:hsk_version) { create(:tag, name: "HSK 2.0", parent: hsk_root) }
         let!(:hsk_level)   { create(:tag, name: "HSK 1",   parent: hsk_version) }
         let!(:entry)       { create(:dictionary_entry).tap { |e| e.tags << hsk_level } }
+        let!(:learning)    { create(:user_learning, user: user, dictionary_entry: entry) }
 
         it "renders the version tag name" do
           get root_path
@@ -96,7 +97,7 @@ RSpec.describe "Dashboard", type: :request do
         end
 
         context "with a mastered entry" do
-          before { create(:user_learning, user: user, dictionary_entry: entry, state: "mastered") }
+          before { learning.update!(state: "mastered") }
 
           it "includes mastered count in the level stats" do
             get root_path
