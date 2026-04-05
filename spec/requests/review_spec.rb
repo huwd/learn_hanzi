@@ -43,6 +43,34 @@ RSpec.describe "Review", type: :request do
         end
       end
 
+      context "with a tag_id param" do
+        let(:tag)      { create(:tag, name: "HSK 4") }
+        let(:other)    { create(:tag, name: "HSK 2") }
+
+        let!(:in_tag_learning) do
+          entry = create(:dictionary_entry).tap { |e| e.tags << tag }
+          create(:user_learning, user: user, dictionary_entry: entry,
+                 state: "learning", next_due: 1.day.ago, last_interval: 1)
+        end
+
+        before { user_learning.dictionary_entry.tags << other }
+
+        it "only queues cards within that tag" do
+          get review_path, params: { tag_id: tag.id }
+          expect(session[:review_queue]).to eq([ in_tag_learning.id ])
+        end
+
+        it "excludes cards outside that tag" do
+          get review_path, params: { tag_id: tag.id }
+          expect(session[:review_queue]).not_to include(user_learning.id)
+        end
+
+        it "redirects to the card path" do
+          get review_path, params: { tag_id: tag.id }
+          expect(response).to redirect_to(review_card_path)
+        end
+      end
+
       context "when no cards are due" do
         before { user_learning.update!(next_due: 7.days.from_now) }
 
