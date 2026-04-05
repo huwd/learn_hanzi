@@ -1,5 +1,5 @@
 <div class="flex-grow max-w-4xl mx-auto w-full">
-  <h1 class="text-3xl font-bold text-gray-800 mb-8">Dashboard</h1>
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-8">Dashboard</h1>
 
   <% if @no_data %>
     <div class="bg-white rounded-xl shadow-md p-8 text-center">
@@ -24,10 +24,10 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
     <%# Learn panel %>
-    <div class="bg-white rounded-xl shadow-md p-6 flex flex-col">
-      <h2 class="text-xl font-semibold text-gray-700 mb-1">Learn</h2>
-      <p class="text-gray-500 text-sm mb-4">New characters to introduce</p>
-      <div class="text-6xl font-extrabold text-gray-900 mb-6"><%= @new_cards_count %></div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1">Learn</h2>
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">New characters to introduce</p>
+      <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6"><%= @new_cards_count %></div>
       <%= link_to learn_path,
             class: "mt-auto inline-block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>
         <%= @new_cards_count > 0 ? "Start learning" : "Nothing new today" %>
@@ -35,10 +35,10 @@
     </div>
 
     <%# Review panel %>
-    <div class="bg-white rounded-xl shadow-md p-6 flex flex-col">
-      <h2 class="text-xl font-semibold text-gray-700 mb-1">Review</h2>
-      <p class="text-gray-500 text-sm mb-4">Cards due for review today</p>
-      <div class="text-6xl font-extrabold text-gray-900 mb-6"><%= @cards_due %></div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1">Review</h2>
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">Cards due for review today</p>
+      <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6"><%= @cards_due %></div>
       <%= link_to review_path,
             class: "mt-auto inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>
         <%= @cards_due > 0 ? "Start review" : "No cards due" %>
@@ -46,20 +46,20 @@
     </div>
 
     <%# Progress panel %>
-    <div class="bg-white rounded-xl shadow-md p-6 flex flex-col">
-      <h2 class="text-xl font-semibold text-gray-700 mb-1">Progress</h2>
-      <p class="text-gray-500 text-sm mb-4">Your learning state breakdown</p>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1">Progress</h2>
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">Your learning state breakdown</p>
       <dl class="space-y-3 flex-grow">
         <div class="flex justify-between items-center">
-          <dt class="text-gray-600">Mastered</dt>
+          <dt class="text-gray-600 dark:text-gray-400">Mastered</dt>
           <dd class="font-bold text-green-600 text-lg"><%= @state_counts[:mastered] %></dd>
         </div>
         <div class="flex justify-between items-center">
-          <dt class="text-gray-600">Learning</dt>
+          <dt class="text-gray-600 dark:text-gray-400">Learning</dt>
           <dd class="font-bold text-amber-500 text-lg"><%= @state_counts[:learning] %></dd>
         </div>
         <div class="flex justify-between items-center">
-          <dt class="text-gray-600">New</dt>
+          <dt class="text-gray-600 dark:text-gray-400">New</dt>
           <dd class="font-bold text-gray-400 text-lg"><%= @state_counts[:new] %></dd>
         </div>
       </dl>
@@ -68,9 +68,9 @@
   </div>
 
   <%# Vocabulary progress section %>
-  <div class="bg-white rounded-xl shadow-md p-6">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
     <div class="mb-6">
-      <h2 class="text-xl font-semibold text-gray-700">Vocabulary</h2>
+      <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Vocabulary</h2>
     </div>
 
     <% if @vocabulary_sections.any? %>
@@ -86,29 +86,29 @@
                      viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M7.293 4.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414-1.414L11.586 10 7.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
-                <span class="text-sm font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors truncate">
+                <span class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide group-hover:text-blue-600 transition-colors truncate">
                   <%= section[:version].name %>
                 </span>
               </button>
               <div class="flex-grow">
                 <%= render "progress_bar", stats: section[:aggregate] %>
               </div>
-              <span class="text-xs text-gray-400 shrink-0 w-24 text-right">
+              <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 w-24 text-right">
                 <%= section[:aggregate][:mastered] %> / <%= section[:aggregate][:total] %> mastered
               </span>
             </div>
 
             <%# Level rows %>
-            <div data-collapsible-target="content" class="space-y-2 pl-4 border-l-2 border-gray-100">
+            <div data-collapsible-target="content" class="space-y-2 pl-4 border-l-2 border-gray-100 dark:border-gray-700">
               <% section[:levels].each do |level| %>
                 <% next if level[:stats][:total] == 0 %>
                 <div class="flex items-center gap-4">
                   <%= link_to level[:tag].name, tag_path(level[:tag]),
-                        class: "text-sm text-gray-700 hover:text-blue-600 transition-colors w-16 shrink-0" %>
+                        class: "text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors w-16 shrink-0" %>
                   <div class="flex-grow">
                     <%= render "progress_bar", stats: level[:stats] %>
                   </div>
-                  <span class="text-xs text-gray-400 shrink-0 w-24 text-right">
+                  <span class="text-xs text-gray-400 dark:text-gray-500 shrink-0 w-24 text-right">
                     <%= level[:stats][:mastered] %> / <%= level[:stats][:total] %>
                   </span>
                 </div>
@@ -118,7 +118,7 @@
         <% end %>
       </div>
     <% else %>
-      <p class="text-gray-400 text-sm">No vocabulary lists yet.</p>
+      <p class="text-gray-400 dark:text-gray-500 text-sm">No vocabulary lists yet.</p>
     <% end %>
   </div>
 

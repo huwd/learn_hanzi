@@ -1,19 +1,19 @@
 <div class="flex-grow">
 
   <% if @entry_tag.ancestors.any? %>
-    <nav aria-label="breadcrumb" class="mb-4 text-sm text-gray-500 flex flex-wrap items-center gap-1">
+    <nav aria-label="breadcrumb" class="mb-4 text-sm text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1">
       <%= link_to "Vocabulary", tags_path, class: "hover:underline text-blue-500" %>
       <% @entry_tag.ancestors.each do |ancestor| %>
         <span aria-hidden="true">/</span>
         <%= link_to ancestor.name, tag_path(ancestor), class: "hover:underline text-blue-500" %>
       <% end %>
       <span aria-hidden="true">/</span>
-      <span class="text-gray-700 font-medium"><%= @entry_tag.name %></span>
+      <span class="text-gray-700 dark:text-gray-300 font-medium"><%= @entry_tag.name %></span>
     </nav>
   <% end %>
 
   <div class="flex items-center gap-4 mb-6">
-    <h1 class="text-4xl font-extrabold text-gray-800"><%= @entry_tag.name %></h1>
+    <h1 class="text-4xl font-extrabold text-gray-800 dark:text-gray-200"><%= @entry_tag.name %></h1>
     <% if @overdue_in_subtree %>
       <%= link_to review_path(tag_id: @entry_tag.id),
             class: "text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors" do %>
@@ -38,7 +38,7 @@
     <% entries_in_state = @dictionary_entries_grouped[key] || [] %>
     <% unless entries_in_state.empty? %>
       <div class="flex items-baseline gap-4 mb-6">
-        <h2 class="text-4xl font-extrabold text-gray-800"><%= label %></h2>
+        <h2 class="text-4xl font-extrabold text-gray-800 dark:text-gray-200"><%= label %></h2>
         <% if key == :new_entries %>
           <%= link_to learn_path(tag_id: @entry_tag.id),
                 class: "text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors" do %>
@@ -48,12 +48,12 @@
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-7 mb-6">
         <% entries_in_state.each.with_index(1) do |entry, index| %>
-          <%= link_to dictionary_entry_path(entry.id), class: "relative bg-white shadow-md rounded-lg p-4 text-center" do %>
-            <span class="absolute top-0 left-0 text-xs text-gray-500 p-1"><%= index %></span>
+          <%= link_to dictionary_entry_path(entry.id), class: "relative bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 text-center" do %>
+            <span class="absolute top-0 left-0 text-xs text-gray-500 dark:text-gray-400 p-1"><%= index %></span>
             <% if @due_entry_ids.include?(entry.id) %>
               <span class="due-indicator absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             <% end %>
-            <p class="text-2xl font-bold text-gray-800"><%= entry.text %></p>
+            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200"><%= entry.text %></p>
           <% end %>
         <% end %>
       </div>
