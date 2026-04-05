@@ -25,7 +25,7 @@ RSpec.describe AnkiImportService do
     end
 
     it "returns a result with review_logs_imported count" do
-      expect(result[:review_logs_imported]).to be >= 0
+      expect(result[:review_logs_imported]).to be > 0
     end
 
     it "returns a skipped list" do
