@@ -71,6 +71,23 @@ RSpec.describe "AnkiImports", type: :request do
         end
       end
 
+      context "with a file that has the right content-type but wrong magic bytes" do
+        let(:fake_anki_file) do
+          fixture_file_upload(
+            Rails.root.join("spec/fixtures/files/fake.anki21"),
+            "application/octet-stream"
+          )
+        end
+
+        before { File.write(Rails.root.join("spec/fixtures/files/fake.anki21"), "not a sqlite file") }
+        after  { FileUtils.rm_f(Rails.root.join("spec/fixtures/files/fake.anki21")) }
+
+        it "redirects back with an alert" do
+          post anki_imports_path, params: { file: fake_anki_file }
+          expect(response).to redirect_to(new_anki_import_path)
+        end
+      end
+
       context "with a valid .anki21 file" do
         let(:anki_file) do
           fixture_file_upload(
