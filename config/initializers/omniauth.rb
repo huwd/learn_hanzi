@@ -1,7 +1,7 @@
-oidc_issuer        = Rails.env.production? ? ENV.fetch("OIDC_ISSUER")        : ENV.fetch("OIDC_ISSUER", "http://localhost:8080")
-oidc_client_id     = Rails.env.production? ? ENV.fetch("OIDC_CLIENT_ID")     : ENV.fetch("OIDC_CLIENT_ID", "dev-client-id")
-oidc_client_secret = Rails.env.production? ? ENV.fetch("OIDC_CLIENT_SECRET") : ENV.fetch("OIDC_CLIENT_SECRET", "dev-client-secret")
-oidc_redirect_uri  = Rails.env.production? ? ENV.fetch("OIDC_REDIRECT_URI")  : ENV.fetch("OIDC_REDIRECT_URI", "http://localhost:3000/auth/oidc/callback")
+oidc_issuer        = Rails.env.local? ? ENV.fetch("OIDC_ISSUER", "http://localhost:8080")                      : ENV.fetch("OIDC_ISSUER")
+oidc_client_id     = Rails.env.local? ? ENV.fetch("OIDC_CLIENT_ID", "dev-client-id")                          : ENV.fetch("OIDC_CLIENT_ID")
+oidc_client_secret = Rails.env.local? ? ENV.fetch("OIDC_CLIENT_SECRET", "dev-client-secret")                  : ENV.fetch("OIDC_CLIENT_SECRET")
+oidc_redirect_uri  = Rails.env.local? ? ENV.fetch("OIDC_REDIRECT_URI", "http://localhost:3000/auth/oidc/callback") : ENV.fetch("OIDC_REDIRECT_URI")
 
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :openid_connect, {
