@@ -56,7 +56,31 @@ RSpec.describe "Review", type: :request do
 
         it "limits the queue to the user's session_size" do
           get review_path
-          expect(session[:review_queue].size).to eq(2)
+          expect(LearningSession.last.card_count).to eq(2)
+        end
+      end
+
+      context "when there is already an in_progress session" do
+        let!(:existing_session) do
+          ls = create(:learning_session, user: user, state: "in_progress",
+                      started_at: 10.minutes.ago, card_count: 3)
+          create(:learning_session_card, learning_session: ls,
+                 user_learning: user_learning, position: 0)
+          ls
+        end
+
+        it "renders the resume prompt" do
+          get review_path
+          expect(response).to have_http_status(:ok)
+        end
+
+        it "does not create a new LearningSession" do
+          expect { get review_path }.not_to change(LearningSession, :count)
+        end
+
+        it "shows the number of cards remaining" do
+          get review_path
+          expect(response.body).to include("3")
         end
       end
 
@@ -144,6 +168,99 @@ RSpec.describe "Review", type: :request do
       it "shows position and total" do
         get review_card_path
         expect(response.body).to include("1")
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /review/resume — resume an in-progress session
+  # -------------------------------------------------------------------------
+  describe "GET /review/resume" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        get review_resume_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated with an in_progress session" do
+      let!(:ls) do
+        ls = create(:learning_session, user: user, state: "in_progress",
+                    started_at: 10.minutes.ago, card_count: 3)
+        create(:learning_session_card, learning_session: ls,
+               user_learning: user_learning, position: 0,
+               reviewed_at: 5.minutes.ago, ease: 3)
+        create(:learning_session_card, learning_session: ls,
+               user_learning: create(:user_learning, user: user), position: 1)
+        create(:learning_session_card, learning_session: ls,
+               user_learning: create(:user_learning, user: user), position: 2)
+        ls
+      end
+
+      before { sign_in user }
+
+      it "redirects to the card path" do
+        get review_resume_path
+        expect(response).to redirect_to(review_card_path)
+      end
+
+      it "sets the session cookie to the existing session" do
+        get review_resume_path
+        expect(session[:learning_session_id]).to eq(ls.id)
+      end
+
+      it "derives position from the number of already-reviewed cards" do
+        get review_resume_path
+        expect(session[:review_position]).to eq(1)
+      end
+    end
+
+    context "when authenticated with no in_progress session" do
+      before { sign_in user }
+
+      it "redirects to review start" do
+        get review_resume_path
+        expect(response).to redirect_to(review_path)
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # POST /review/abandon — abandon an in-progress session
+  # -------------------------------------------------------------------------
+  describe "POST /review/abandon" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        post review_abandon_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated with an in_progress session" do
+      let!(:ls) do
+        create(:learning_session, user: user, state: "in_progress",
+               started_at: 10.minutes.ago, card_count: 1)
+      end
+
+      before { sign_in user }
+
+      it "marks the session as abandoned" do
+        post review_abandon_path
+        expect(ls.reload.state).to eq("abandoned")
+      end
+
+      it "redirects to review start" do
+        post review_abandon_path
+        expect(response).to redirect_to(review_path)
+      end
+    end
+
+    context "when authenticated with no in_progress session" do
+      before { sign_in user }
+
+      it "redirects to review start" do
+        post review_abandon_path
+        expect(response).to redirect_to(review_path)
       end
     end
   end
