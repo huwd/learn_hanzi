@@ -11,10 +11,19 @@ services:
       SOLID_QUEUE_IN_PUMA: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
       HTTP_PORT: ${HTTP_PORT:-3000}
+      BUNDLE_USER_HOME: /tmp/bundler
     volumes:
       - ${STORAGE_PATH:?STORAGE_PATH is required}:/rails/storage
     healthcheck:
-      test: ["CMD", "curl", "-f", "-H", "X-Forwarded-Proto: https", "http://localhost:${HTTP_PORT:-3000}/up"]
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "-H",
+          "X-Forwarded-Proto: https",
+          "http://localhost:${HTTP_PORT:-3000}/up",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
