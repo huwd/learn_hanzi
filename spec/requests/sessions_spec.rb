@@ -1,61 +1,12 @@
-require 'rails_helper'
+require "rails_helper"
 
 RSpec.describe "Sessions", type: :request do
-  let(:user) { create(:user, email_address: "test@example.com", password: "password") }
+  let(:user) { create(:user) }
 
-  describe "GET /session/new" do
-    it "returns a successful response" do
-      get new_session_path
-      expect(response).to have_http_status(:success)
-    end
-
-    it "renders the new template" do
-      get new_session_path
-      expect(response.body).to include("Sign in</h1>")
-    end
-
-    it "renders the new session template with Sign up as a link" do
-      get new_session_path
-      expect(response.body).to include("Sign up</a>")
-    end
-
-    it "renders the new session template with Sign ip as a h1" do
-      get new_session_path
-      expect(response.body).to include("Sign in</h1>")
-    end
-  end
-
-  describe "POST /session" do
-    let(:valid_params) do
-      {
-        email_address: user.email_address,
-        password: user.password
-      }
-    end
-
-    let(:invalid_params) do
-      {
-        email_address: user.email_address,
-        password: "wrongpassword"
-      }
-    end
-
-    context "with valid parameters" do
-      it "signs in the user" do
-        post session_path, params: valid_params
-        expect(response).to redirect_to(root_path)
-        follow_redirect!
-        expect(response.body).to include("Dashboard")
-      end
-    end
-
-    context "with invalid parameters" do
-      it "does not sign in the user" do
-        post session_path, params: invalid_params
-        expect(response).to redirect_to(new_session_path)
-        follow_redirect!
-        expect(response.body).to include("Try another email address or password.")
-      end
+  describe "unauthenticated access" do
+    it "redirects to the OIDC provider" do
+      get root_path
+      expect(response).to redirect_to("/auth/pocket_id")
     end
   end
 
@@ -64,10 +15,13 @@ RSpec.describe "Sessions", type: :request do
       sign_in user
     end
 
-    it "signs out the user" do
+    it "signs out the user and redirects to root" do
       delete session_path
-      expect(response).to redirect_to(new_session_path)
-      follow_redirect!
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "destroys the session" do
+      expect { delete session_path }.to change(Session, :count).by(-1)
     end
   end
 end
