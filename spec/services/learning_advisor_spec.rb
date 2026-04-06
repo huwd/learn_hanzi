@@ -97,15 +97,29 @@ RSpec.describe LearningAdvisor do
     # -----------------------------------------------------------------------
     context "when the user is adding many new cards and has a backlog" do
       before do
-        # 182 cards each with a first review in the last 7 days → new_7day_avg ≈ 26/day (> 25 threshold)
-        # All are overdue, creating a backlog_ratio >> 1
-        entries = create_list(:dictionary_entry, 182)
-        entries.each_with_index do |entry, i|
-          ul = create(:user_learning, user: user, dictionary_entry: entry,
-                      state: "learning", next_due: 2.days.ago)
-          create(:review_log, user_learning: ul, ease: 3,
-                 created_at: (i % 7).days.ago + 1.hour)
-        end
+        # Keep a small real backlog so this remains grounded in persisted data.
+        3.times { learning(state: "learning", next_due: 2.days.ago) }
+
+        # Stub the expensive signal computation so this example focuses on
+        # classification rather than building hundreds of records to cross
+        # the new_7day_avg threshold.
+        allow_any_instance_of(described_class).to receive(:compute_signals).and_return(
+          total_count:     3,
+          active_count:    3,
+          mastered_count:  0,
+          overdue_count:   3,
+          total_logs:      3,
+          days_since:      1.0,
+          avg_daily:       1.5,
+          new_7day_avg:    26.0,
+          backlog_ratio:   2.0,
+          mastery_pct:     0.0,
+          active_days_14d: 3,
+          max_daily:       3,
+          cramming_ratio:  2.0,
+          leech_count:     0,
+          first_90_days:   true
+        )
       end
 
       it "returns :overloaded profile" do
@@ -124,7 +138,8 @@ RSpec.describe LearningAdvisor do
       before do
         ul = learning
         # 60 reviews on a single day, no other days in the last 14
-        60.times { log_for(ul, ease: 3, created_at: 5.days.ago + rand(0..3600).seconds) }
+        base_time = 5.days.ago + 1.hour
+        60.times { |i| log_for(ul, ease: 3, created_at: base_time + i.minutes) }
       end
 
       it "returns :cramming profile" do
@@ -181,7 +196,7 @@ RSpec.describe LearningAdvisor do
       context "when a card has been rated 1 or 2 four or more times" do
         before do
           ul = learning
-          4.times { log_for(ul, ease: 1, created_at: rand(1..30).days.ago) }
+          4.times { |i| log_for(ul, ease: 1, created_at: (i + 2).days.ago) }
           # Also add a recent review so user is not classified as lapsed
           log_for(ul, ease: 3, created_at: 1.day.ago)
         end
@@ -194,7 +209,7 @@ RSpec.describe LearningAdvisor do
       context "when no card has enough low-ease reviews" do
         before do
           ul = learning
-          3.times { log_for(ul, ease: 1, created_at: rand(1..10).days.ago) }
+          3.times { |i| log_for(ul, ease: 1, created_at: (i + 2).days.ago) }
           log_for(ul, ease: 3, created_at: 1.day.ago)
         end
 
