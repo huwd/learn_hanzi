@@ -24,8 +24,6 @@ Rails.application.routes.draw do
   post "review/card",     to: "review#submit"
   get  "review/summary",  to: "review#summary", as: :review_summary
   get  "review/history",  to: "review#history", as: :review_history
-  get  "review/resume",   to: "review#resume",  as: :review_resume
-  post "review/abandon",  to: "review#abandon", as: :review_abandon
 
   resources :anki_imports, only: %i[new create show]
 
