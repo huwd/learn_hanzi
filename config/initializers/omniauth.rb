@@ -5,12 +5,14 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     name: OIDC_PROVIDER_NAME,
     discovery: true,
     issuer: ENV.fetch("OIDC_ISSUER", "http://localhost:8080"),
-    client_id: ENV.fetch("OIDC_CLIENT_ID", "dev-client-id"),
-    client_secret: ENV.fetch("OIDC_CLIENT_SECRET", "dev-client-secret"),
     scope: %i[openid email profile],
     response_type: :code,
     pkce: true,
-    redirect_uri: ENV["OIDC_REDIRECT_URI"]
+    client_options: {
+      identifier: ENV.fetch("OIDC_CLIENT_ID", "dev-client-id"),
+      secret: ENV.fetch("OIDC_CLIENT_SECRET", "dev-client-secret"),
+      redirect_uri: ENV.fetch("OIDC_REDIRECT_URI", "http://localhost:3000/auth/oidc/callback")
+    }
   }
 end
 
