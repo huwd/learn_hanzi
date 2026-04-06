@@ -118,9 +118,9 @@ proxy or tunnel. No monthly hosting cost.
 3. The container host runs the stack via `docker-compose.yml`. Redeployment is
    triggered externally (e.g. via a webhook) after a new image is pushed.
 
-**Storage:** all SQLite databases live in a single named Docker volume mounted
-at `/rails/storage`. The volume persists across container restarts and image
-updates.
+**Storage:** all SQLite databases are bind-mounted from a host path configured
+via `STORAGE_PATH` in `.env`. The host path persists across container restarts
+and image updates, and can be backed up directly as a filesystem directory.
 
 **Backup:** Litestream (or equivalent) runs as a sidecar, replicating the
 SQLite WAL to any S3-compatible object store for off-host durability.
