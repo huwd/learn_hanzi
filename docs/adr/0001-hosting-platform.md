@@ -2,7 +2,7 @@
 
 ## Status
 
-Pending — decision deferred pending final target selection
+Accepted — self-hosted Docker Compose + GHCR
 
 ## Context
 
@@ -104,9 +104,30 @@ With 1-year reserved t3.small: ~**$11.32/month** (~$135.84/year).
 
 ---
 
-### Option C: Self-hosted
+### Option C: Self-hosted (selected)
 
-Under consideration. Not detailed here.
+A Docker Compose stack running on self-hosted hardware, fronted by a reverse
+proxy or tunnel. No monthly hosting cost.
+
+**Deployment pipeline:**
+
+1. CI builds the Docker image on merge to `main` and pushes to GHCR (GitHub
+   Container Registry) using the auto-injected `GITHUB_TOKEN` — no credentials
+   to manage.
+2. The image is tagged with both `latest` and the short commit SHA.
+3. The container host runs the stack via `docker-compose.yml`. Redeployment is
+   triggered externally (e.g. via a webhook) after a new image is pushed.
+
+**Storage:** all SQLite databases live in a single named Docker volume mounted
+at `/rails/storage`. The volume persists across container restarts and image
+updates.
+
+**Backup:** Litestream (or equivalent) runs as a sidecar, replicating the
+SQLite WAL to any S3-compatible object store for off-host durability.
+
+**Environment configuration:** a `.env` file on the host supplies secrets and
+tuning variables. `.env.example` in the repository documents every variable
+with descriptions and safe defaults.
 
 ---
 
@@ -156,4 +177,7 @@ none of which are blockers at this app's scale.
 
 ## Decision
 
-**Pending.** Final target to be confirmed before beginning #122 (Kamal config).
+**Option C: Self-hosted.** Docker Compose + GHCR. See the self-hosted section
+above for the full architecture. The Kamal config (`config/deploy.yml`) is
+retained in the repository for reference; a hosted VPS remains a viable
+fallback if circumstances change.
