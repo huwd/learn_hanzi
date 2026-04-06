@@ -1,4 +1,4 @@
-module LearningSession
+class LearningSession
   class Composer
     DEFAULT_SIZE = 20
     DEFAULT_NEW_CAP = 5
