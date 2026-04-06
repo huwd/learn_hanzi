@@ -100,8 +100,9 @@ Sources: Wozniak (supermemo.guru), Control-Alt-Backspace, MemoForge, Anki forums
 | New cards/day | 10–20 cards | The widely-cited sustainable rate |
 | New card multiplier | ~7–10× | Each new card generates ~7–10 reviews in the following month |
 
-At 20 new cards/day → 140–200 reviews/month minimum from those cards alone,
-before accounting for maturing older material.
+At a steady 20 new cards/day, that implies roughly 140–200 reviews/day from
+those cards alone once they are in circulation, before accounting for
+maturing older material.
 
 ### The Abandonment Spiral (Review Debt)
 
