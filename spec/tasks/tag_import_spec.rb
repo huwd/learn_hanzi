@@ -24,6 +24,8 @@ RSpec.describe "tag_import", type: :task do
       dir = Dir.mktmpdir("hsk_import")
       FileUtils.cp(Rails.root.join("spec", "fixtures", "hsk_sample.txt"),
                    File.join(dir, "HSK 1.txt"))
+      FileUtils.cp(Rails.root.join("spec", "fixtures", "hsk_sample.tsv"),
+                   File.join(dir, "HSK 1.tsv"))
       dir
     end
 
@@ -87,10 +89,32 @@ RSpec.describe "tag_import", type: :task do
       expect(entry_hao.tags.reload).to include(lesson_tag)
     end
 
-    it "skips words not in the dictionary and reports the count" do
+    it "creates a stub DictionaryEntry for words missing from CC-CEDICT when a TSV is present" do
+      silence_output { Rake::Task["tag_import:hsk_3"].invoke(fixture_dir) }
+
+      expect(DictionaryEntry.find_by(text: "不存在词")).to be_present
+    end
+
+    it "adds a meaning to the stub entry from the TSV data" do
+      silence_output { Rake::Task["tag_import:hsk_3"].invoke(fixture_dir) }
+
+      stub = DictionaryEntry.find_by(text: "不存在词")
+      expect(stub.meanings.first.text).to eq("missing word (stub)")
+      expect(stub.meanings.first.pinyin).to eq("bù cún zài cí")
+    end
+
+    it "associates the stub entry with the lesson tag" do
+      silence_output { Rake::Task["tag_import:hsk_3"].invoke(fixture_dir) }
+
+      stub = DictionaryEntry.find_by(text: "不存在词")
+      lesson_tag = Tag.find_by(name: "HSK 1")
+      expect(stub.tags).to include(lesson_tag)
+    end
+
+    it "reports stub count in the completion summary" do
       output = capture_output { Rake::Task["tag_import:hsk_3"].invoke(fixture_dir) }
 
-      expect(output).to match(/1 entr(?:y|ies) skipped/)
+      expect(output).to match(/1 stub entr/)
     end
 
     it "reports elapsed time on completion" do
