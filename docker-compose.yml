@@ -1,11 +1,11 @@
 services:
   app:
-    image: ghcr.io/${GHCR_OWNER}/learn_hanzi:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/learn_hanzi:${IMAGE_TAG:-latest}
     restart: unless-stopped
     ports:
       - "${PORT:-80}:80"
     environment:
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?RAILS_MASTER_KEY must be set}
       RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
       SOLID_QUEUE_IN_PUMA: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
