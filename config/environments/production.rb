@@ -54,6 +54,12 @@ Rails.application.configure do
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
 
+  # Action Mailer — host and from address for URL generation and outgoing mail.
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch("APP_HOST", "localhost"),
+    from: ENV.fetch("MAILER_FROM", "noreply@example.com")
+  }
+
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
