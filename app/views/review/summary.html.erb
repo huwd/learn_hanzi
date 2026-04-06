@@ -5,12 +5,12 @@
     <p class="text-5xl font-bold text-gray-800 dark:text-gray-200 mb-2"><%= @total %></p>
     <p class="text-gray-500 dark:text-gray-400">cards reviewed</p>
 
-    <% if @review_logs.any? %>
+    <% if @session_cards.any? %>
       <dl class="mt-6 grid grid-cols-4 gap-4 text-center">
         <% { "Again" => 1, "Hard" => 2, "Good" => 3, "Easy" => 4 }.each do |label, ease| %>
           <div>
             <dt class="text-xs text-gray-400"><%= label %></dt>
-            <dd class="text-xl font-semibold text-gray-800 dark:text-gray-200"><%= @review_logs.count { |r| r.ease == ease } %></dd>
+            <dd class="text-xl font-semibold text-gray-800 dark:text-gray-200"><%= @session_cards.count { |c| c.ease == ease } %></dd>
           </div>
         <% end %>
       </dl>

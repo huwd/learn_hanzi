@@ -1,6 +1,6 @@
 class ReviewController < ApplicationController
   before_action :require_active_session, only: [ :show, :submit ]
-  before_action :require_started_session, only: [ :summary ]
+  before_action :require_completed_session, only: [ :summary ]
 
   def start
     tag   = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
@@ -14,24 +14,30 @@ class ReviewController < ApplicationController
     if queue.empty?
       render :start
     else
-      session[:review_queue]      = queue.map(&:id)
-      session[:review_index]      = 0
-      session[:review_started_at] = Time.current.iso8601
+      ls = build_learning_session(queue)
+      session[:learning_session_id] = ls.id
+      session[:review_position]     = 0
       redirect_to review_card_path
     end
   end
 
   def show
-    @user_learning = current_card
-    @position      = session[:review_index] + 1
-    @total         = session[:review_queue].size
+    @learning_session = active_learning_session
+    @session_card     = @learning_session.current_card(current_position)
+    @user_learning    = UserLearning
+                          .includes(dictionary_entry: [ :meanings, { tags: :parent } ])
+                          .find(@session_card.user_learning_id)
+    @position         = current_position + 1
+    @total            = @learning_session.card_count
   end
 
   def submit
     ease = params[:ease].to_i
     return head :unprocessable_content unless (1..4).include?(ease)
 
-    user_learning = current_card
+    ls           = active_learning_session
+    session_card = ls.current_card(current_position)
+    user_learning = session_card.user_learning
     result = SpacedRepetition::SM2.call(user_learning: user_learning, ease: ease)
 
     ApplicationRecord.transaction do
@@ -49,41 +55,72 @@ class ReviewController < ApplicationController
         factor:        result.factor,
         log_type:      0
       )
+
+      session_card.update!(ease: ease, reviewed_at: Time.current)
     end
 
-    session[:review_index] += 1
+    next_position = current_position + 1
 
-    if session[:review_index] >= session[:review_queue].size
+    if next_position >= ls.card_count
+      ls.complete!
       redirect_to review_summary_path
     else
+      session[:review_position] = next_position
       redirect_to review_card_path
     end
   end
 
   def summary
-    started_at = Time.parse(session[:review_started_at])
+    @learning_session = completed_learning_session
+    @session_cards    = @learning_session.learning_session_cards.order(:position)
+    @total            = @learning_session.reviewed_count
+  end
 
-    @review_logs = ReviewLog.joins(:user_learning)
-                            .where(user_learnings: { user: Current.user })
-                            .where(created_at: started_at..)
-                            .order(:created_at)
-    @total = @review_logs.count
+  def history
+    @sessions = Current.user.learning_sessions
+                            .completed
+                            .order(started_at: :desc)
   end
 
   private
 
+  def build_learning_session(queue)
+    ApplicationRecord.transaction do
+      ls = Current.user.learning_sessions.create!(
+        state:      "in_progress",
+        started_at: Time.current,
+        card_count: queue.size
+      )
+      queue.each_with_index do |user_learning, i|
+        ls.learning_session_cards.create!(user_learning: user_learning, position: i)
+      end
+      ls
+    end
+  end
+
+  def active_learning_session
+    id = session[:learning_session_id]
+    Current.user.learning_sessions.in_progress.find(id)
+  end
+
+  def completed_learning_session
+    id = session[:learning_session_id]
+    Current.user.learning_sessions.completed.find(id)
+  end
+
+  def current_position
+    session[:review_position].to_i
+  end
+
   def require_active_session
-    redirect_to review_path unless session[:review_queue].present?
+    active_learning_session
+  rescue ActiveRecord::RecordNotFound
+    redirect_to review_path
   end
 
-  def require_started_session
-    redirect_to review_path unless session[:review_started_at].present?
-  end
-
-  def current_card
-    id = session[:review_queue][session[:review_index]]
-    Current.user.user_learnings
-           .includes(dictionary_entry: [ :meanings, { tags: :parent } ])
-           .find(id)
+  def require_completed_session
+    completed_learning_session
+  rescue ActiveRecord::RecordNotFound
+    redirect_to review_path
   end
 end

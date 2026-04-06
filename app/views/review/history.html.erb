@@ -1,0 +1,34 @@
+<div class="flex-grow max-w-4xl mx-auto w-full">
+  <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-8">Session history</h1>
+
+  <% if @sessions.any? %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700 text-left">
+            <th class="px-6 py-3 text-gray-500 dark:text-gray-400 font-medium">Date</th>
+            <th class="px-6 py-3 text-gray-500 dark:text-gray-400 font-medium text-right">Cards</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          <% @sessions.each do |ls| %>
+            <tr>
+              <td class="px-6 py-4 text-gray-700 dark:text-gray-300">
+                <%= ls.started_at.strftime("%e %b %Y, %H:%M").strip %>
+              </td>
+              <td class="px-6 py-4 text-gray-700 dark:text-gray-300 text-right font-semibold">
+                <%= ls.card_count %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 text-center">
+      <p class="text-gray-500 dark:text-gray-400">No completed sessions yet.</p>
+      <%= link_to "Start a review", review_path,
+            class: "mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors" %>
+    </div>
+  <% end %>
+</div>
