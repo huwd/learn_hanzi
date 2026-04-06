@@ -48,11 +48,11 @@ RSpec.describe LearningSession, type: :model do
     let(:ls) { create(:learning_session) }
 
     before do
-      create(:learning_session_card, learning_session: ls,
+      create(:learning_session_card, learning_session: ls, position: 0,
              user_learning: create(:user_learning, user: ls.user), reviewed_at: nil)
-      create(:learning_session_card, learning_session: ls,
+      create(:learning_session_card, learning_session: ls, position: 1,
              user_learning: create(:user_learning, user: ls.user), reviewed_at: 1.minute.ago)
-      create(:learning_session_card, learning_session: ls,
+      create(:learning_session_card, learning_session: ls, position: 2,
              user_learning: create(:user_learning, user: ls.user), reviewed_at: 2.minutes.ago)
     end
 
