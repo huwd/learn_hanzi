@@ -7,7 +7,7 @@ class LearnController < ApplicationController
 
   def start
     advice     = LearningAdvisor.classify(user: Current.user)
-    queue_size = advice.recommended_new_cap.positive? ? advice.recommended_new_cap : QUEUE_SIZE
+    queue_size = advice.recommended_new_cap
 
     queue = if params[:tag_id].present?
       tag = Tag.find_by(id: params[:tag_id])
