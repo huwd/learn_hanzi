@@ -44,6 +44,13 @@ RSpec.describe "Dashboard", type: :request do
           get root_path
           expect(response.body).to include(AnkiImportService::DECK_NAME)
         end
+
+        it "does not show the advisor narrative" do
+          get root_path
+          LearningAdvisor::NARRATIVES.each_value do |narrative|
+            expect(response.body).not_to include(narrative)
+          end
+        end
       end
 
       context "when the user has learning data" do
@@ -52,6 +59,11 @@ RSpec.describe "Dashboard", type: :request do
         it "does not show the import prompt" do
           get root_path
           expect(response.body).not_to include("No learning data yet")
+        end
+
+        it "shows the advisor narrative" do
+          get root_path
+          expect(response.body).to include(CGI.escapeHTML(LearningAdvisor::NARRATIVES[:lapsed]))
         end
       end
 
