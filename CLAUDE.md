@@ -114,6 +114,28 @@ of source.
 5. **Request re-review** — request a fresh review from every reviewer who left
    a comment. Merge only once that review comes back clean.
 
+### gh API commands for PR comment workflow
+
+```bash
+# List inline review comments with IDs
+gh api repos/huwd/learn_hanzi/pulls/<PR>/comments \
+  --jq '.[] | {id: .id, url: .html_url, body: .body[:80]}'
+
+# Reply to an inline comment (note: /pulls/<PR>/comments/<id>/replies — not /pulls/comments/)
+gh api repos/huwd/learn_hanzi/pulls/<PR>/comments/<comment-id>/replies \
+  --method POST \
+  --field body="Your reply here"
+
+# Resolve a review thread (requires the comment's node_id)
+node_id=$(gh api repos/huwd/learn_hanzi/pulls/comments/<comment-id> --jq '.node_id')
+gh api graphql -f query="mutation { resolveReviewThread(input: {threadId: \"$node_id\"}) { thread { isResolved } } }"
+
+# Request re-review
+gh api repos/huwd/learn_hanzi/pulls/<PR>/requested_reviewers \
+  --method POST \
+  --field "reviewers[]=<github-username>"
+```
+
 ### After a clean re-review
 
 Before merging, assess the fix commits produced during review:
