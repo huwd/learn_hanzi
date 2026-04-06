@@ -6,7 +6,7 @@ RSpec.describe "Sessions", type: :request do
   describe "unauthenticated access" do
     it "redirects to the OIDC provider" do
       get root_path
-      expect(response).to redirect_to("/auth/oidc")
+      expect(response).to redirect_to("/sign_in")
     end
   end
 
