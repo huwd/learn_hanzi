@@ -31,7 +31,7 @@ module Authentication
     end
 
     def oidc_login_path
-      "/auth/#{OIDC_PROVIDER_NAME}"
+      "/auth/oidc"
     end
 
     def request_authentication

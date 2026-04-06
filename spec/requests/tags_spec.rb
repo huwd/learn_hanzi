@@ -165,14 +165,14 @@ RSpec.describe "Tags", type: :request do
     describe "GET /tags" do
       it "redirects to the login page" do
         get tags_path
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
 
     describe "GET /tags/:id" do
       it "redirects to the login page" do
         get tag_path(root_tag)
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
   end

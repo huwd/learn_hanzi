@@ -24,7 +24,7 @@ RSpec.describe "DictionaryEntries", type: :request do
     describe "GET /dictionary_entries/:id" do
       it "redirects to the login page" do
         get dictionary_entry_path(dictionary_entry)
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
   end

@@ -11,7 +11,7 @@ RSpec.describe "Learn", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get learn_path
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
 
@@ -145,7 +145,7 @@ RSpec.describe "Learn", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get learn_card_path
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
 
