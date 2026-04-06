@@ -4,6 +4,7 @@ module Authentication
   included do
     before_action :require_authentication
     helper_method :authenticated?
+    helper_method :oidc_login_path
   end
 
   class_methods do
@@ -29,9 +30,13 @@ module Authentication
       Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
     end
 
+    def oidc_login_path
+      "/auth/#{OIDC_PROVIDER_NAME}"
+    end
+
     def request_authentication
       session[:return_to_after_authenticating] = request.url
-      redirect_to "/auth/#{OIDC_PROVIDER_NAME}"
+      redirect_to oidc_login_path
     end
 
     def after_authentication_url
