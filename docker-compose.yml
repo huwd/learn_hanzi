@@ -4,16 +4,17 @@ services:
     user: "${CONTAINER_UID:-1000}:${CONTAINER_GID:-1000}"
     restart: unless-stopped
     ports:
-      - "${PORT:-80}:80"
+      - "${PORT:-80}:3000"
     environment:
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?RAILS_MASTER_KEY must be set}
       RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
       SOLID_QUEUE_IN_PUMA: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+      HTTP_PORT: "3000"
     volumes:
       - ${STORAGE_PATH:?STORAGE_PATH is required}:/rails/storage
     healthcheck:
-      test: ["CMD", "curl", "-f", "-H", "X-Forwarded-Proto: https", "http://localhost:80/up"]
+      test: ["CMD", "curl", "-f", "-H", "X-Forwarded-Proto: https", "http://localhost:3000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
