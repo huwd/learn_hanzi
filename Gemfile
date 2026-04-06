@@ -19,7 +19,7 @@ gem "tailwindcss-rails"
 
 # OIDC authentication via PocketID
 gem "omniauth_openid_connect"
-gem "omniauth-rails_csrf_protection"
+gem "omniauth-rails_csrf_protection", "~> 1.0"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]

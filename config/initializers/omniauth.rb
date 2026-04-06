@@ -23,4 +23,7 @@ unless ENV["SECRET_KEY_BASE_DUMMY"]
   end
 
   OmniAuth.config.allowed_request_methods = %i[get post]
+  # GET is intentionally allowed — see PR #190 Deliberate decisions for rationale.
+  # PocketID is invite-gated so the CSRF risk of GET-initiated flows is negligible.
+  OmniAuth.config.silence_get_warning = true
 end
