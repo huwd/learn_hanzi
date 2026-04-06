@@ -50,6 +50,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_06_095227) do
     t.datetime "reviewed_at"
     t.datetime "updated_at", null: false
     t.integer "user_learning_id", null: false
+    t.index ["learning_session_id", "position"], name: "index_learning_session_cards_on_session_and_position", unique: true
+    t.index ["learning_session_id", "user_learning_id"], name: "index_learning_session_cards_on_session_and_user_learning", unique: true
     t.index ["learning_session_id"], name: "index_learning_session_cards_on_learning_session_id"
     t.index ["user_learning_id"], name: "index_learning_session_cards_on_user_learning_id"
   end
