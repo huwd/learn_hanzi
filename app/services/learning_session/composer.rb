@@ -1,5 +1,4 @@
-class LearningSession
-  class Composer
+class LearningSession::Composer
     DEFAULT_SIZE = 20
     DEFAULT_NEW_CAP = 5
 
@@ -60,5 +59,4 @@ class LearningSession
         @user.user_learnings
       end
     end
-  end
 end
