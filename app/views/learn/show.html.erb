@@ -35,6 +35,7 @@
             data-action="click->learn-card#revealPinyin"
             class="mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       Reveal pronunciation
+      <span class="ml-2 text-xs text-gray-300 dark:text-gray-600">Space</span>
     </button>
 
     <%# Phase 2: reveal meaning %>
@@ -42,16 +43,19 @@
             data-action="click->learn-card#revealMeaning"
             class="hidden mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
       Reveal meaning
+      <span class="ml-2 text-xs text-gray-300 dark:text-gray-600">Space</span>
     </button>
 
     <%# Phase 3: binary buttons %>
     <div data-learn-card-target="binaryButtons" class="hidden mt-6 flex gap-3">
       <%= button_to learn_card_path, params: { know_it: "true" },
-            class: "flex-1 py-3 bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400 font-semibold rounded-xl hover:bg-green-100 dark:hover:bg-green-900/60 transition-colors" do %>
+            class: "relative flex-1 py-3 px-4 bg-green-50 dark:bg-green-900/40 text-green-700 dark:text-green-400 font-semibold rounded-xl hover:bg-green-100 dark:hover:bg-green-900/60 transition-colors" do %>
+        <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">1</span>
         I know this
       <% end %>
       <button data-action="click->learn-card#needToLearn"
-              class="flex-1 py-3 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-semibold rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors">
+              class="relative flex-1 py-3 px-4 bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-semibold rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors">
+        <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">2</span>
         I need to learn this
       </button>
     </div>
@@ -86,8 +90,11 @@
         <p class="text-xs text-gray-400">Radical breakdown coming soon</p>
       </div>
 
-      <%= button_to "Got it, next character", learn_card_path, params: { know_it: "false" },
-            class: "w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" %>
+      <%= button_to learn_card_path, params: { know_it: "false" },
+            class: "w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" do %>
+        Got it, next character
+        <span class="ml-2 text-xs opacity-50">Space</span>
+      <% end %>
 
     </div>
 
