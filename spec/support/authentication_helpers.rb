@@ -1,5 +1,12 @@
 module AuthenticationHelpers
   def sign_in(user)
-    post session_path, params: { email_address: user.email_address, password: user.password }
+    OmniAuth.config.test_mode = true
+    Rails.application.env_config["omniauth.auth"] = OmniAuth::AuthHash.new(
+      provider: user.provider,
+      uid: user.uid,
+      info: { email: user.email_address }
+    )
+    get "/auth/pocket_id/callback"
+    Rails.application.env_config.delete("omniauth.auth")
   end
 end
