@@ -11,7 +11,7 @@ RSpec.describe "Learn", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get learn_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -145,7 +145,7 @@ RSpec.describe "Learn", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get learn_card_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -279,7 +279,7 @@ RSpec.describe "Learn", type: :request do
     context "with an invalid ease rating" do
       it "returns unprocessable content" do
         post learn_review_path, params: { ease: 5 }
-        expect(response).to have_http_status(:unprocessable_content)
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end

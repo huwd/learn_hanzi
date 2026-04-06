@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_06_095227) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_06_163224) do
   create_table "anki_imports", force: :cascade do |t|
     t.integer "cards_imported", default: 0
     t.datetime "completed_at"
@@ -141,10 +141,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_06_095227) do
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.integer "new_cards_per_session", default: 5, null: false
-    t.string "password_digest", null: false
+    t.string "provider", default: "", null: false
     t.integer "session_size", default: 20, null: false
+    t.string "uid", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
 
   add_foreign_key "anki_imports", "users"

@@ -10,7 +10,7 @@ RSpec.describe "Settings", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get settings_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -31,7 +31,7 @@ RSpec.describe "Settings", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         patch settings_path, params: { user: { session_size: 30 } }
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 

@@ -65,8 +65,7 @@
               </div>
             </div>
           <% else %>
-            <%= link_to "Login", new_session_path, class: "text-white hover:underline" %>
-            <%= link_to "Sign Up", signup_path, class: "text-white hover:underline" %>
+            <%= link_to "Login", "/auth/#{OIDC_PROVIDER_NAME}", class: "text-white hover:underline" %>
           <% end %>
         </nav>
       </div>

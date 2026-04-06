@@ -7,7 +7,7 @@ RSpec.describe "AnkiImports", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get new_anki_import_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -31,7 +31,7 @@ RSpec.describe "AnkiImports", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         post anki_imports_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -136,7 +136,7 @@ RSpec.describe "AnkiImports", type: :request do
       it "redirects to login" do
         import = create(:anki_import, user: create(:user))
         get anki_import_path(import)
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
