@@ -71,7 +71,9 @@ end
 
 def texts_from_file(file)
   if File.extname(file) == ".txt"
-    File.readlines(file, chomp: true).reject(&:empty?)
+    File.readlines(file, chomp: true)
+        .map { |line| line.sub(/\A\uFEFF/, "").strip }
+        .reject(&:empty?)
   else
     JSON.parse(File.read(file)).map { |entry| entry["s"] }
   end
