@@ -7,7 +7,7 @@ RSpec.describe "Dashboard", type: :request do
     context "when unauthenticated" do
       it "redirects to the login page" do
         get root_path
-        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
+        expect(response).to redirect_to("/auth/oidc")
       end
     end
 

@@ -29,7 +29,7 @@ Rails.application.routes.draw do
 
   resources :anki_imports, only: %i[new create show]
 
-  get  "auth/#{OIDC_PROVIDER_NAME}/callback", to: "omniauth_callbacks#create", as: :omniauth_callback
+  get  "auth/oidc/callback", to: "omniauth_callbacks#create", as: :omniauth_callback
   get  "auth/failure",                        to: "omniauth_callbacks#failure"
 
   resource :settings, only: %i[show update]

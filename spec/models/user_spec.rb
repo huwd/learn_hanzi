@@ -49,7 +49,7 @@ RSpec.describe User, type: :model do
   describe ".find_or_create_by_omniauth" do
     let(:auth) do
       OmniAuth::AuthHash.new(
-        provider: OIDC_PROVIDER_NAME,
+        provider: "oidc",
         uid: "uid-123",
         info: { email: "user@example.com" }
       )
@@ -60,7 +60,7 @@ RSpec.describe User, type: :model do
     end
 
     it "finds an existing user by provider and uid" do
-      existing = create(:user, provider: OIDC_PROVIDER_NAME, uid: "uid-123")
+      existing = create(:user, provider: "oidc", uid: "uid-123")
       found = User.find_or_create_by_omniauth(auth)
       expect(found).to eq(existing)
     end
@@ -71,7 +71,7 @@ RSpec.describe User, type: :model do
     end
 
     it "syncs the email when it has changed in the OIDC provider" do
-      create(:user, provider: OIDC_PROVIDER_NAME, uid: "uid-123", email_address: "old@example.com")
+      create(:user, provider: "oidc", uid: "uid-123", email_address: "old@example.com")
       user = User.find_or_create_by_omniauth(auth)
       expect(user.email_address).to eq("user@example.com")
     end
