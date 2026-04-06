@@ -167,7 +167,7 @@ RSpec.describe "Review", type: :request do
 
       it "shows position and total" do
         get review_card_path
-        expect(response.body).to include("1")
+        expect(response.body).to include("1 / 1")
       end
     end
   end
@@ -446,10 +446,13 @@ RSpec.describe "Review", type: :request do
       end
 
       it "does not show in_progress sessions" do
+        create(:learning_session, user: user, state: "completed",
+               started_at: 2.hours.ago, completed_at: 90.minutes.ago, card_count: 77)
         create(:learning_session, user: user, state: "in_progress",
-               started_at: 1.hour.ago, card_count: 3)
+               started_at: 1.hour.ago, card_count: 83)
         get review_history_path
-        expect(response.body).not_to include("in_progress")
+        expect(response.body).to include("77")
+        expect(response.body).not_to include("83")
       end
     end
   end
