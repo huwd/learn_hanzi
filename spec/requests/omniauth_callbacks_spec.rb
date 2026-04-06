@@ -68,9 +68,9 @@ RSpec.describe "OmniauthCallbacks", type: :request do
   end
 
   describe "GET /auth/failure" do
-    it "redirects to root with an alert" do
+    it "renders the failure page with 401" do
       get "/auth/failure?message=access_denied"
-      expect(response).to redirect_to(root_path)
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 end
