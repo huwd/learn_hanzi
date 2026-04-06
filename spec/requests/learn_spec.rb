@@ -4,6 +4,23 @@ RSpec.describe "Learn", type: :request do
   let(:user) { create(:user) }
   let!(:new_card) { create(:user_learning, user: user, state: "new") }
 
+  # Stub the advisor so these tests remain focused on the learn flow rather
+  # than advisor classification. Without this, new users are classified as
+  # :lapsed (recommended_new_cap: 0) and every queue is empty.
+  before do
+    allow(LearningAdvisor).to receive(:classify).and_return(
+      LearningAdvisor::Result.new(
+        profile:             :healthy,
+        narrative:           "",
+        recommended_size:    20,
+        recommended_new_cap: 5,
+        leech_warning:       false,
+        first_90_days:       false,
+        signals:             {}
+      )
+    )
+  end
+
   # -------------------------------------------------------------------------
   # GET /learn — start session
   # -------------------------------------------------------------------------
