@@ -29,11 +29,11 @@ Rails.application.routes.draw do
 
   resources :anki_imports, only: %i[new create show]
 
+  get  "auth/:provider/callback", to: "omniauth_callbacks#create",  as: :omniauth_callback
+  get  "auth/failure",            to: "omniauth_callbacks#failure"
+
   resource :settings, only: %i[show update]
-  resource :session
-  resources :passwords, param: :token
+  resource :session, only: %i[destroy]
   resources :tags, only: [ :index, :show ]
   resources :dictionary_entries, only: [ :show ]
-  get "signup", to: "registrations#new"
-  post "signup", to: "registrations#create"
 end

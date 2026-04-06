@@ -14,7 +14,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get review_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -141,7 +141,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get review_card_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -179,7 +179,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get review_resume_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -232,7 +232,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         post review_abandon_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -272,7 +272,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         post review_card_path, params: { ease: 3 }
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -361,7 +361,7 @@ RSpec.describe "Review", type: :request do
       context "with an invalid ease rating" do
         it "returns unprocessable content" do
           post review_card_path, params: { ease: 99 }
-          expect(response).to have_http_status(:unprocessable_content)
+          expect(response).to have_http_status(:unprocessable_entity)
         end
       end
     end
@@ -383,7 +383,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get review_summary_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 
@@ -426,7 +426,7 @@ RSpec.describe "Review", type: :request do
     context "when unauthenticated" do
       it "redirects to login" do
         get review_history_path
-        expect(response).to redirect_to(new_session_path)
+        expect(response).to redirect_to("/auth/#{OIDC_PROVIDER_NAME}")
       end
     end
 

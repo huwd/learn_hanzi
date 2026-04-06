@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe UserLearning, type: :model do
-  let(:user) { User.create(email_address: "e@mail.com", password: "password") }
+  let(:user) { create(:user) }
 
   describe 'associations' do
     it { should belong_to(:user) }

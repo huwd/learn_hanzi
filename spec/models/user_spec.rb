@@ -2,21 +2,13 @@ require 'rails_helper'
 
 RSpec.describe User, type: :model do
   describe "validations" do
-    it "validates presence of email_address" do
-      user = User.new(password: "password")
-      expect(user).to validate_presence_of(:email_address)
-    end
+    subject(:user) { build(:user) }
 
-    it "validates presence of password" do
-      user = User.new(email_address: "test@example.com")
-      expect(user).to validate_presence_of(:password)
-    end
-
-    it "validates uniqueness of email_address" do
-      User.create!(email_address: "test@example.com", password: "password")
-      user = User.new(email_address: "test@example.com", password: "password")
-      expect(user).to validate_uniqueness_of(:email_address).case_insensitive
-    end
+    it { is_expected.to validate_presence_of(:email_address) }
+    it { is_expected.to validate_uniqueness_of(:email_address).case_insensitive }
+    it { is_expected.to validate_presence_of(:provider) }
+    it { is_expected.to validate_presence_of(:uid) }
+    it { is_expected.to validate_uniqueness_of(:uid).scoped_to(:provider) }
   end
 
   describe "session preferences" do
@@ -54,15 +46,28 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "authentication" do
-    it "authenticates with a valid password" do
-      user = User.create(email_address: "test@example.com", password: "password")
-      expect(user.authenticate("password")).to be_truthy
+  describe ".find_or_create_by_omniauth" do
+    let(:auth) do
+      OmniAuth::AuthHash.new(
+        provider: OIDC_PROVIDER_NAME,
+        uid: "uid-123",
+        info: { email: "user@example.com" }
+      )
     end
 
-    it "does not authenticate with an invalid password" do
-      user = User.create(email_address: "test@example.com", password: "password")
-      expect(user.authenticate("wrong_password")).to be_falsey
+    it "creates a new user when none exists" do
+      expect { User.find_or_create_by_omniauth(auth) }.to change(User, :count).by(1)
+    end
+
+    it "finds an existing user by provider and uid" do
+      existing = create(:user, provider: OIDC_PROVIDER_NAME, uid: "uid-123")
+      found = User.find_or_create_by_omniauth(auth)
+      expect(found).to eq(existing)
+    end
+
+    it "sets the email from the auth info" do
+      user = User.find_or_create_by_omniauth(auth)
+      expect(user.email_address).to eq("user@example.com")
     end
   end
 end
