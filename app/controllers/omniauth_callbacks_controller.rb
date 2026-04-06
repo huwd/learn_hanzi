@@ -3,7 +3,7 @@ class OmniauthCallbacksController < ApplicationController
 
   def create
     auth = request.env["omniauth.auth"]
-    return redirect_to failure_path if auth.blank?
+    return redirect_to auth_failure_path if auth.blank?
 
     user = User.find_or_create_by_omniauth(auth)
     start_new_session_for(user)
