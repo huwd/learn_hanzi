@@ -20,6 +20,18 @@
     </div>
   <% else %>
 
+  <%# Advisor narrative %>
+  <div class="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-xl px-5 py-4 mb-6">
+    <p class="text-sm text-indigo-800 dark:text-indigo-200 leading-relaxed">
+      <%= @advice.narrative %>
+    </p>
+    <% if @advice.leech_warning %>
+      <p class="mt-2 text-xs text-amber-700 dark:text-amber-400">
+        Some cards keep slipping back — they may benefit from a mnemonic or a fresh look rather than more repetition.
+      </p>
+    <% end %>
+  </div>
+
   <%# Top panels: Learn / Review / Progress %>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
