@@ -9,6 +9,17 @@ class LearningAdvisor
     :signals
   )
 
+  LAPSED_DAYS_THRESHOLD                  = 7
+  OVERLOADED_NEW_7DAY_AVG_THRESHOLD      = 25
+  BACKLOG_RATIO_PRESENT_THRESHOLD        = 1
+  CRAMMING_RATIO_THRESHOLD               = 3
+  CRAMMING_ACTIVE_DAYS_14D_THRESHOLD     = 5
+  CRAMMING_MAX_DAILY_THRESHOLD           = 20
+  MAINTENANCE_MASTERY_PCT_THRESHOLD      = 0.8
+  MAINTENANCE_NEW_7DAY_AVG_THRESHOLD     = 5
+  MAINTENANCE_BACKLOG_RATIO_THRESHOLD    = 0.5
+  MAINTENANCE_DAYS_SINCE_THRESHOLD       = 3
+
   LIMITS = {
     empty:       { size: 20, new_cap: 5  },
     healthy:     { size: 20, new_cap: 5  },
@@ -150,19 +161,22 @@ class LearningAdvisor
 
   def classify_profile(s)
     return :empty       if s[:total_count] == 0
-    return :lapsed      if s[:total_logs] == 0 || s[:days_since].nil? || s[:days_since] > 7
+    return :lapsed      if s[:total_logs] == 0 || s[:days_since].nil? || s[:days_since] > LAPSED_DAYS_THRESHOLD
     return :maintenance if maintenance?(s)
-    return :overloaded  if s[:new_7day_avg] > 25 && s[:backlog_ratio] > 1
-    return :cramming    if s[:cramming_ratio] > 3 && s[:active_days_14d] < 5 && s[:max_daily] >= 20
-    return :catching_up if s[:backlog_ratio] > 1
+    return :overloaded  if s[:new_7day_avg] > OVERLOADED_NEW_7DAY_AVG_THRESHOLD &&
+                            s[:backlog_ratio] > BACKLOG_RATIO_PRESENT_THRESHOLD
+    return :cramming    if s[:cramming_ratio] > CRAMMING_RATIO_THRESHOLD &&
+                            s[:active_days_14d] < CRAMMING_ACTIVE_DAYS_14D_THRESHOLD &&
+                            s[:max_daily] >= CRAMMING_MAX_DAILY_THRESHOLD
+    return :catching_up if s[:backlog_ratio] > BACKLOG_RATIO_PRESENT_THRESHOLD
     :healthy
   end
 
   def maintenance?(s)
-    s[:mastery_pct] > 0.8 &&
-      s[:new_7day_avg] < 5 &&
-      s[:backlog_ratio] < 0.5 &&
-      s[:days_since] && s[:days_since] <= 3
+    s[:mastery_pct] > MAINTENANCE_MASTERY_PCT_THRESHOLD &&
+      s[:new_7day_avg] < MAINTENANCE_NEW_7DAY_AVG_THRESHOLD &&
+      s[:backlog_ratio] < MAINTENANCE_BACKLOG_RATIO_THRESHOLD &&
+      s[:days_since] && s[:days_since] <= MAINTENANCE_DAYS_SINCE_THRESHOLD
   end
 
   # ---------------------------------------------------------------------------
