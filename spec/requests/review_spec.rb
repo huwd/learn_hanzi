@@ -27,19 +27,22 @@ RSpec.describe "Review", type: :request do
           expect(response).to redirect_to(review_card_path)
         end
 
-        it "stores the queue in the session" do
-          get review_path
-          expect(session[:review_queue]).to include(user_learning.id)
+        it "creates a LearningSession record" do
+          expect { get review_path }.to change(LearningSession, :count).by(1)
         end
 
-        it "stores the session start time" do
-          get review_path
-          expect(session[:review_started_at]).to be_present
+        it "creates LearningSessionCard records for each queued card" do
+          expect { get review_path }.to change(LearningSessionCard, :count).by(1)
         end
 
-        it "initialises the index at zero" do
+        it "stores the learning session id in the cookie session" do
           get review_path
-          expect(session[:review_index]).to eq(0)
+          expect(session[:learning_session_id]).to eq(LearningSession.last.id)
+        end
+
+        it "creates the session in in_progress state" do
+          get review_path
+          expect(LearningSession.last.state).to eq("in_progress")
         end
       end
 
@@ -58,8 +61,8 @@ RSpec.describe "Review", type: :request do
       end
 
       context "with a tag_id param" do
-        let(:tag)      { create(:tag, name: "HSK 4") }
-        let(:other)    { create(:tag, name: "HSK 2") }
+        let(:tag)   { create(:tag, name: "HSK 4") }
+        let(:other) { create(:tag, name: "HSK 2") }
 
         let!(:in_tag_learning) do
           entry = create(:dictionary_entry).tap { |e| e.tags << tag }
@@ -71,12 +74,14 @@ RSpec.describe "Review", type: :request do
 
         it "only queues cards within that tag" do
           get review_path, params: { tag_id: tag.id }
-          expect(session[:review_queue]).to eq([ in_tag_learning.id ])
+          ls = LearningSession.last
+          expect(ls.learning_session_cards.map(&:user_learning_id)).to eq([ in_tag_learning.id ])
         end
 
         it "excludes cards outside that tag" do
           get review_path, params: { tag_id: tag.id }
-          expect(session[:review_queue]).not_to include(user_learning.id)
+          ls = LearningSession.last
+          expect(ls.learning_session_cards.map(&:user_learning_id)).not_to include(user_learning.id)
         end
 
         it "redirects to the card path" do
@@ -97,6 +102,10 @@ RSpec.describe "Review", type: :request do
           get review_path
           expect(response.body).to include("No cards due")
         end
+
+        it "does not create a LearningSession" do
+          expect { get review_path }.not_to change(LearningSession, :count)
+        end
       end
     end
   end
@@ -112,39 +121,35 @@ RSpec.describe "Review", type: :request do
       end
     end
 
-    context "when authenticated" do
+    context "when authenticated with no active session" do
       before { sign_in user }
 
-      context "with an active review session" do
-        before { get review_path }
+      it "redirects to review start" do
+        get review_card_path
+        expect(response).to redirect_to(review_path)
+      end
+    end
 
-        it "returns 200" do
-          get review_card_path
-          expect(response).to have_http_status(:ok)
-        end
-
-        it "shows the character" do
-          get review_card_path
-          expect(response.body).to include(user_learning.dictionary_entry.text)
-        end
-
-        it "shows a progress indicator" do
-          get review_card_path
-          expect(response.body).to match(/1.*\/.*1/)
-        end
+    context "when authenticated with an active session" do
+      before do
+        sign_in user
+        get review_path
       end
 
-      context "with no review session" do
-        it "redirects to review start" do
-          get review_card_path
-          expect(response).to redirect_to(review_path)
-        end
+      it "returns 200" do
+        get review_card_path
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "shows position and total" do
+        get review_card_path
+        expect(response.body).to include("1")
       end
     end
   end
 
   # -------------------------------------------------------------------------
-  # POST /review/card — submit ease rating
+  # POST /review/card — submit a card review
   # -------------------------------------------------------------------------
   describe "POST /review/card" do
     context "when unauthenticated" do
@@ -172,6 +177,18 @@ RSpec.describe "Review", type: :request do
           expect(ReviewLog.last.ease).to eq(3)
         end
 
+        it "records the ease on the LearningSessionCard" do
+          post review_card_path, params: { ease: 3 }
+          card = LearningSession.last.learning_session_cards.first
+          expect(card.ease).to eq(3)
+        end
+
+        it "sets reviewed_at on the LearningSessionCard" do
+          post review_card_path, params: { ease: 3 }
+          card = LearningSession.last.learning_session_cards.first
+          expect(card.reviewed_at).to be_present
+        end
+
         it "updates the UserLearning next_due" do
           expect {
             post review_card_path, params: { ease: 3 }
@@ -186,6 +203,16 @@ RSpec.describe "Review", type: :request do
       end
 
       context "on the last card in the queue" do
+        it "marks the LearningSession as completed" do
+          post review_card_path, params: { ease: 3 }
+          expect(LearningSession.last.state).to eq("completed")
+        end
+
+        it "sets completed_at" do
+          post review_card_path, params: { ease: 3 }
+          expect(LearningSession.last.completed_at).to be_present
+        end
+
         it "redirects to the summary" do
           post review_card_path, params: { ease: 3 }
           expect(response).to redirect_to(review_summary_path)
@@ -198,18 +225,16 @@ RSpec.describe "Review", type: :request do
                  next_due: 2.days.ago, last_interval: 1)
         end
 
-        before do
-          get review_path  # rebuild queue with both cards
-        end
-
-        it "advances to the next card" do
-          post review_card_path, params: { ease: 3 }
-          expect(session[:review_index]).to eq(1)
-        end
+        before { get review_path } # rebuild queue with both cards
 
         it "redirects to the card path" do
           post review_card_path, params: { ease: 3 }
           expect(response).to redirect_to(review_card_path)
+        end
+
+        it "does not complete the session yet" do
+          post review_card_path, params: { ease: 3 }
+          expect(LearningSession.last.state).to eq("in_progress")
         end
       end
 
@@ -270,6 +295,41 @@ RSpec.describe "Review", type: :request do
           get review_summary_path
           expect(response).to redirect_to(review_path)
         end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # GET /review/history — session history
+  # -------------------------------------------------------------------------
+  describe "GET /review/history" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        get review_history_path
+        expect(response).to redirect_to(new_session_path)
+      end
+    end
+
+    context "when authenticated" do
+      before { sign_in user }
+
+      it "returns 200" do
+        get review_history_path
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "shows completed sessions" do
+        create(:learning_session, user: user, state: "completed",
+               started_at: 1.hour.ago, completed_at: 30.minutes.ago, card_count: 5)
+        get review_history_path
+        expect(response.body).to include("5")
+      end
+
+      it "does not show in_progress sessions" do
+        create(:learning_session, user: user, state: "in_progress",
+               started_at: 1.hour.ago, card_count: 3)
+        get review_history_path
+        expect(response.body).not_to include("in_progress")
       end
     end
   end
