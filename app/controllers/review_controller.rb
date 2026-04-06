@@ -9,8 +9,8 @@ class ReviewController < ApplicationController
     advice = LearningAdvisor.classify(user: Current.user)
     queue  = LearningSession::Composer.call(
       user:    Current.user,
-      size:    advice.recommended_size,
-      new_cap: advice.recommended_new_cap,
+      size:    [ Current.user.session_size, advice.recommended_size ].min,
+      new_cap: [ Current.user.new_cards_per_session, advice.recommended_new_cap ].min,
       tag:     tag
     )
 
