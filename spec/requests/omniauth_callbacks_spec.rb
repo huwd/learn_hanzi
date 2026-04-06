@@ -20,7 +20,7 @@ RSpec.describe "OmniauthCallbacks", type: :request do
   end
 
   def trigger_oidc_callback
-    get "/auth/oidc"
+    post "/auth/oidc"
     follow_redirect!
   end
 

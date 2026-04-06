@@ -6,7 +6,7 @@ module AuthenticationHelpers
       uid: user.uid,
       info: { email: user.email_address }
     )
-    get "/auth/oidc"
+    post "/auth/oidc"
     follow_redirect!
   ensure
     OmniAuth.config.mock_auth.delete(:oidc)
