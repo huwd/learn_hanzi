@@ -8,9 +8,12 @@ class OmniauthCallbacksController < ApplicationController
     user = User.find_or_create_by_omniauth(auth)
     start_new_session_for(user)
     redirect_to after_authentication_url
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
+    Rails.logger.warn("OmniAuth callback error: #{e.class}: #{e.message}")
+    redirect_to auth_failure_path
   end
 
   def failure
-    redirect_to root_path, alert: "Authentication failed. Please try again."
+    render :failure, status: :unauthorized
   end
 end

@@ -35,7 +35,7 @@ module Authentication
     end
 
     def request_authentication
-      session[:return_to_after_authenticating] = request.url
+      session[:return_to_after_authenticating] = request.url if request.get?
       redirect_to oidc_login_path
     end
 
