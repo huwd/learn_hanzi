@@ -90,7 +90,7 @@ RSpec.describe "tag_import", type: :task do
     it "skips words not in the dictionary and reports the count" do
       output = capture_output { Rake::Task["tag_import:hsk_3"].invoke(fixture_dir) }
 
-      expect(output).to match(/1 entries skipped/)
+      expect(output).to match(/1 entr(?:y|ies) skipped/)
     end
 
     it "reports elapsed time on completion" do
