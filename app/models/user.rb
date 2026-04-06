@@ -8,7 +8,7 @@ class User < ApplicationRecord
   validates :email_address, uniqueness: true
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
-  validates :session_size, numericality: { only_integer: true, in: 1..100 }
+  validates :session_size, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 100 }
   validates :new_cards_per_session, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :new_cards_per_session_within_session_size
 
