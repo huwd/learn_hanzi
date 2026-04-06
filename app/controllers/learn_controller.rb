@@ -6,11 +6,14 @@ class LearnController < ApplicationController
   before_action :require_started_session, only: [ :summary ]
 
   def start
+    advice     = LearningAdvisor.classify(user: Current.user)
+    queue_size = advice.recommended_new_cap.positive? ? advice.recommended_new_cap : QUEUE_SIZE
+
     queue = if params[:tag_id].present?
       tag = Tag.find_by(id: params[:tag_id])
-      tag ? build_tagged_queue(tag) : build_global_queue
+      tag ? build_tagged_queue(tag, queue_size) : build_global_queue(queue_size)
     else
-      build_global_queue
+      build_global_queue(queue_size)
     end
 
     if queue.empty?
@@ -114,7 +117,7 @@ class LearnController < ApplicationController
   # Priority 1: entries with no UserLearning yet ("Not Learned Yet") — create records on demand.
   # Priority 2: existing UserLearnings with state "new" for this tag.
   # Both groups are sorted by HSK level within their priority band.
-  def build_tagged_queue(tag)
+  def build_tagged_queue(tag, size = QUEUE_SIZE)
     learned_entry_ids = Current.user.user_learnings
                                .joins(:dictionary_entry)
                                .where(dictionary_entries: { id: tag.dictionary_entries.select(:id) })
@@ -132,20 +135,20 @@ class LearnController < ApplicationController
                           .includes(dictionary_entry: { tags: { parent: :parent } })
                           .sort_by { |ul| hsk_sort_key(ul) }
 
-    newly_created = unlearned_entries.first(QUEUE_SIZE).map do |entry|
+    newly_created = unlearned_entries.first(size).map do |entry|
       Current.user.user_learnings.create!(dictionary_entry: entry, state: "new")
     end
 
-    remaining = QUEUE_SIZE - newly_created.size
+    remaining = size - newly_created.size
     (newly_created + existing_new.first(remaining))
   end
 
-  def build_global_queue
+  def build_global_queue(size = QUEUE_SIZE)
     Current.user.user_learnings
            .new_learnings
            .includes(dictionary_entry: { tags: { parent: :parent } })
            .sort_by { |ul| hsk_sort_key(ul) }
-           .first(QUEUE_SIZE)
+           .first(size)
   end
 
   def hsk_sort_key(user_learning)
