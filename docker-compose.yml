@@ -12,7 +12,7 @@ services:
     volumes:
       - app_storage:/rails/storage
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/up"]
+      test: ["CMD", "curl", "-f", "-H", "X-Forwarded-Proto: https", "http://localhost:80/up"]
       interval: 30s
       timeout: 10s
       retries: 3
