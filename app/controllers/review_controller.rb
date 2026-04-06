@@ -3,6 +3,11 @@ class ReviewController < ApplicationController
   before_action :require_completed_session, only: [ :summary ]
 
   def start
+    if (@learning_session = existing_in_progress_session)
+      render :resume
+      return
+    end
+
     tag   = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
     queue = LearningSession::Composer.call(
       user:    Current.user,
@@ -19,6 +24,22 @@ class ReviewController < ApplicationController
       session[:review_position]     = 0
       redirect_to review_card_path
     end
+  end
+
+  def resume
+    ls = existing_in_progress_session
+    return redirect_to review_path unless ls
+
+    position = ls.learning_session_cards.where.not(reviewed_at: nil).count
+    session[:learning_session_id] = ls.id
+    session[:review_position]     = position
+    redirect_to review_card_path
+  end
+
+  def abandon
+    ls = existing_in_progress_session
+    ls&.update!(state: "abandoned")
+    redirect_to review_path
   end
 
   def show
@@ -96,6 +117,10 @@ class ReviewController < ApplicationController
       end
       ls
     end
+  end
+
+  def existing_in_progress_session
+    Current.user.learning_sessions.in_progress.order(started_at: :desc).first
   end
 
   def active_learning_session

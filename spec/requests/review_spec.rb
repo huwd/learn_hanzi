@@ -342,7 +342,10 @@ RSpec.describe "Review", type: :request do
                  next_due: 2.days.ago, last_interval: 1)
         end
 
-        before { get review_path } # rebuild queue with both cards
+        before do
+          post review_abandon_path  # discard the single-card session
+          get review_path           # build a fresh 2-card session
+        end
 
         it "redirects to the card path" do
           post review_card_path, params: { ease: 3 }

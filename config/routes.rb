@@ -19,11 +19,13 @@ Rails.application.routes.draw do
   post "learn/review",   to: "learn#review_submit"
   get  "learn/summary",  to: "learn#summary",      as: :learn_summary
 
-  get  "review",         to: "review#start",   as: :review
-  get  "review/card",    to: "review#show",    as: :review_card
-  post "review/card",    to: "review#submit"
-  get  "review/summary", to: "review#summary", as: :review_summary
-  get  "review/history", to: "review#history", as: :review_history
+  get  "review",          to: "review#start",   as: :review
+  get  "review/card",     to: "review#show",    as: :review_card
+  post "review/card",     to: "review#submit"
+  get  "review/summary",  to: "review#summary", as: :review_summary
+  get  "review/history",  to: "review#history", as: :review_history
+  get  "review/resume",   to: "review#resume",  as: :review_resume
+  post "review/abandon",  to: "review#abandon", as: :review_abandon
 
   resources :anki_imports, only: %i[new create show]
 
