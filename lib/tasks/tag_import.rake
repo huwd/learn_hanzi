@@ -49,12 +49,11 @@ def import_hsk_file(hsk_level_files, parent_tag)
 
     File.open(logfile_path, "a") do |logfile|
       hsk_level_files.each.with_index do |file, file_index|
-        tag_name = "HSK #{file.split("/").last.split(".").first}"
+        tag_name = tag_name_from_file(file)
         tag = find_or_create_tag(tag_name, "HSK", parent_tag.id)
         parent_tag.add_child(tag)
 
-        file_content = JSON.parse(File.read(file))
-        texts = file_content.map { |entry| entry["s"] }
+        texts = texts_from_file(file)
         puts "\nProcessing file #{file_index + 1} of #{file_count} with #{texts.count} entries"
 
         skipped = TagImportHelper.batch_associate_entries_to_tag(texts, tag)
@@ -68,4 +67,20 @@ def import_hsk_file(hsk_level_files, parent_tag)
 
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
     puts "\nCompleted in #{elapsed.round(2)}s (#{total_skipped} entries skipped — not in dictionary)"
+end
+
+def texts_from_file(file)
+  if File.extname(file) == ".txt"
+    File.readlines(file, chomp: true).reject(&:empty?)
+  else
+    JSON.parse(File.read(file)).map { |entry| entry["s"] }
+  end
+end
+
+def tag_name_from_file(file)
+  if File.extname(file) == ".txt"
+    File.basename(file, ".txt")
+  else
+    "HSK #{File.basename(file).split(".").first}"
+  end
 end
