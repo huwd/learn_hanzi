@@ -9,6 +9,8 @@ module AuthenticationHelpers
     )
     get "/auth/#{OIDC_PROVIDER_NAME}"
     follow_redirect!
+  ensure
     OmniAuth.config.mock_auth.delete(provider)
+    OmniAuth.config.test_mode = false
   end
 end

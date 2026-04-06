@@ -10,13 +10,13 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
   def self.find_or_create_by_omniauth(auth)
-    user = find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
+    user = find_or_create_by!(provider: auth.provider, uid: auth.uid) do |u|
       u.email_address = auth.info.email
     end
-    user.update_column(:email_address, auth.info.email) if user.email_address != auth.info.email
+    user.update!(email_address: auth.info.email) if user.email_address != auth.info.email.to_s.strip.downcase
     user
   rescue ActiveRecord::RecordNotUnique
-    retry
+    find_by!(provider: auth.provider, uid: auth.uid)
   end
 
   validates :session_size, numericality: { only_integer: true, greater_than_or_equal_to: 1, less_than_or_equal_to: 100 }
