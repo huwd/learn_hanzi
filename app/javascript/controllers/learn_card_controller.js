@@ -30,7 +30,7 @@ export default class extends Controller {
   }
 
   handleKey(event) {
-    if (event.target.closest("button, input, textarea, select, a")) return
+    if (event.target instanceof Element && event.target.closest("button, input, textarea, select, a")) return
 
     const pinyinHidden   = this.revealPinyinBtnTarget.classList.contains("hidden")
     const meaningHidden  = this.revealMeaningBtnTarget.classList.contains("hidden")

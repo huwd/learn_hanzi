@@ -19,7 +19,7 @@ export default class extends Controller {
 
   handleKey(event) {
     // Ignore if focus is on an interactive element (e.g. a button mid-submit)
-    if (event.target.closest("button, input, textarea, select, a")) return
+    if (event.target instanceof Element && event.target.closest("button, input, textarea, select, a")) return
 
     const revealed = this.backTargets.some(el => !el.classList.contains("hidden"))
 
@@ -30,8 +30,8 @@ export default class extends Controller {
     }
 
     if (revealed && ["1", "2", "3", "4"].includes(event.key)) {
-      const form = this.element.querySelector(`form[data-ease="${event.key}"]`)
-      form?.requestSubmit()
+      const btn = this.element.querySelector(`button[data-ease="${event.key}"]`)
+      btn?.closest("form")?.requestSubmit()
     }
   }
 }
