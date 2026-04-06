@@ -48,9 +48,9 @@
     <%# ---- FRONT: show answer button (hidden after reveal) ---- %>
     <div data-card-flip-target="front">
       <button data-action="click->card-flip#reveal"
-              class="mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              class="relative mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">Space</span>
         Show answer
-        <span class="ml-2 text-xs text-gray-300 dark:text-gray-600">Space</span>
       </button>
     </div>
 

@@ -33,17 +33,17 @@
     <%# Phase 1: reveal pronunciation %>
     <button data-learn-card-target="revealPinyinBtn"
             data-action="click->learn-card#revealPinyin"
-            class="mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            class="relative mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">Space</span>
       Reveal pronunciation
-      <span class="ml-2 text-xs text-gray-300 dark:text-gray-600">Space</span>
     </button>
 
     <%# Phase 2: reveal meaning %>
     <button data-learn-card-target="revealMeaningBtn"
             data-action="click->learn-card#revealMeaning"
-            class="hidden mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            class="hidden relative mt-6 w-full py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">Space</span>
       Reveal meaning
-      <span class="ml-2 text-xs text-gray-300 dark:text-gray-600">Space</span>
     </button>
 
     <%# Phase 3: binary buttons %>
@@ -91,9 +91,9 @@
       </div>
 
       <%= button_to learn_card_path, params: { know_it: "false" },
-            class: "w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" do %>
+            class: "relative w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" do %>
+        <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">Space</span>
         Got it, next character
-        <span class="ml-2 text-xs opacity-50">Space</span>
       <% end %>
 
     </div>
