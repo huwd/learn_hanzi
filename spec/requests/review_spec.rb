@@ -43,6 +43,20 @@ RSpec.describe "Review", type: :request do
         end
       end
 
+      context "when the user has custom session preferences" do
+        before do
+          user.update!(session_size: 2, new_cards_per_session: 0)
+          # Create extra overdue cards beyond the user's custom session_size
+          create_list(:user_learning, 5, user: user, state: "learning",
+                      next_due: 1.day.ago, last_interval: 1)
+        end
+
+        it "limits the queue to the user's session_size" do
+          get review_path
+          expect(session[:review_queue].size).to eq(2)
+        end
+      end
+
       context "with a tag_id param" do
         let(:tag)      { create(:tag, name: "HSK 4") }
         let(:other)    { create(:tag, name: "HSK 2") }

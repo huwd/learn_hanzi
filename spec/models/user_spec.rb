@@ -19,6 +19,41 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "session preferences" do
+    subject(:user) { build(:user, session_size: 20, new_cards_per_session: 5) }
+
+    it "is valid with defaults" do
+      expect(user).to be_valid
+    end
+
+    it "requires session_size to be at least 1" do
+      user.session_size = 0
+      expect(user).not_to be_valid
+    end
+
+    it "requires session_size to be at most 100" do
+      user.session_size = 101
+      expect(user).not_to be_valid
+    end
+
+    it "requires new_cards_per_session to be at least 0" do
+      user.new_cards_per_session = -1
+      expect(user).not_to be_valid
+    end
+
+    it "requires new_cards_per_session not to exceed session_size" do
+      user.session_size = 10
+      user.new_cards_per_session = 11
+      expect(user).not_to be_valid
+    end
+
+    it "allows new_cards_per_session equal to session_size" do
+      user.session_size = 10
+      user.new_cards_per_session = 10
+      expect(user).to be_valid
+    end
+  end
+
   describe "authentication" do
     it "authenticates with a valid password" do
       user = User.create(email_address: "test@example.com", password: "password")
