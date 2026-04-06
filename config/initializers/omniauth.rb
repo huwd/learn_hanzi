@@ -1,3 +1,7 @@
+# During asset precompilation (Docker build) Rails boots without OIDC env vars.
+# OmniAuth middleware is not needed at that stage so we skip it entirely.
+return if ENV["SECRET_KEY_BASE_DUMMY"]
+
 oidc_issuer        = Rails.env.local? ? ENV.fetch("OIDC_ISSUER", "http://localhost:8080")                      : ENV.fetch("OIDC_ISSUER")
 oidc_client_id     = Rails.env.local? ? ENV.fetch("OIDC_CLIENT_ID", "dev-client-id")                          : ENV.fetch("OIDC_CLIENT_ID")
 oidc_client_secret = Rails.env.local? ? ENV.fetch("OIDC_CLIENT_SECRET", "dev-client-secret")                  : ENV.fetch("OIDC_CLIENT_SECRET")
