@@ -86,6 +86,48 @@ New feature development follows a test-driven cycle with commits between stages:
 
 **Note**: Feature branch history can be soft-reset and re-committed before PR submission to align with commit standards.
 
+## Pull Request Reviews
+
+Reviews may come from a human, another Claude instance, or a different AI model
+(e.g. GitHub Copilot). Treat all reviewer comments with equal rigour regardless
+of source.
+
+### Handling comments
+
+1. **Read all comments first** — evaluate every comment together before acting.
+   Use the full context of the PR and codebase to judge relevance; don't apply
+   suggestions mechanically.
+
+2. **Where you agree** — make the change as an individual, self-contained commit.
+   Reply to the comment citing the commit SHA and briefly explaining what was
+   done.
+
+3. **Where you disagree** — do two things:
+   - Reply on the comment explaining the reasoning for not changing it.
+   - Add a **Deliberate decisions** section to the PR description listing the
+     choice and the rationale. This prevents the same point being raised again
+     in subsequent review rounds.
+
+4. **Resolve all threads** — once every comment has been replied to, resolve
+   all threads (including ones where no change was made).
+
+5. **Request re-review** — request a fresh review from every reviewer who left
+   a comment. Merge only once that review comes back clean.
+
+### After a clean re-review
+
+Before merging, assess the fix commits produced during review:
+
+- If a fix commit corrects something in an earlier commit on the same branch,
+  consider using `git rebase -i` to fixup the fix into the original commit.
+  This keeps the branch history clean and linear.
+- If the fix is substantive enough to stand on its own (e.g. a genuine bug
+  caught in review), leave it as a separate commit so the history explains
+  what happened.
+
+Use judgement — the goal is a history that tells a coherent story, not one
+that hides real corrections.
+
 ## Architecture
 
 This is a Rails 8 app for learning Chinese Hanzi (characters). The core purpose is to display a user's HSK vocabulary progress by combining a Chinese dictionary with their Anki flashcard review history.
