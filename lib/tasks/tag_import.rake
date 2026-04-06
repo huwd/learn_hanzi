@@ -66,7 +66,7 @@ def import_hsk_file(hsk_level_files, parent_tag)
     end
 
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
-    puts "\nCompleted in #{elapsed.round(2)}s (#{total_skipped} entries skipped — not in dictionary)"
+    puts "\nCompleted in #{elapsed.round(2)}s (#{total_skipped} #{total_skipped == 1 ? "entry" : "entries"} skipped — not in dictionary)"
 end
 
 def texts_from_file(file)
