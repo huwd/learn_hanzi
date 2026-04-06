@@ -2,8 +2,8 @@ class DashboardController < ApplicationController
   def index
     user_learnings = Current.user.user_learnings
 
-    @advice  = LearningAdvisor.classify(user: Current.user)
     @no_data = user_learnings.none?
+    @advice  = @no_data ? nil : LearningAdvisor.classify(user: Current.user)
 
     @cards_due = user_learnings.overdue_learning.count +
                  user_learnings.due_mastered.count
