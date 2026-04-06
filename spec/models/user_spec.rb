@@ -69,5 +69,11 @@ RSpec.describe User, type: :model do
       user = User.find_or_create_by_omniauth(auth)
       expect(user.email_address).to eq("user@example.com")
     end
+
+    it "syncs the email when it has changed in the OIDC provider" do
+      create(:user, provider: OIDC_PROVIDER_NAME, uid: "uid-123", email_address: "old@example.com")
+      user = User.find_or_create_by_omniauth(auth)
+      expect(user.email_address).to eq("user@example.com")
+    end
   end
 end
