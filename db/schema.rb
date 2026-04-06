@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_06_091944) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_06_095227) do
   create_table "anki_imports", force: :cascade do |t|
     t.integer "cards_imported", default: 0
     t.datetime "completed_at"
@@ -40,6 +40,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_06_091944) do
     t.index ["dictionary_entry_id", "tag_id"], name: "index_unique_tag_on_entry", unique: true
     t.index ["dictionary_entry_id"], name: "index_dictionary_entry_tags_on_dictionary_entry_id"
     t.index ["tag_id"], name: "index_dictionary_entry_tags_on_tag_id"
+  end
+
+  create_table "learning_session_cards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "ease"
+    t.integer "learning_session_id", null: false
+    t.integer "position", null: false
+    t.datetime "reviewed_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_learning_id", null: false
+    t.index ["learning_session_id"], name: "index_learning_session_cards_on_learning_session_id"
+    t.index ["user_learning_id"], name: "index_learning_session_cards_on_user_learning_id"
+  end
+
+  create_table "learning_sessions", force: :cascade do |t|
+    t.integer "card_count", default: 0, null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "started_at", null: false
+    t.string "state", default: "in_progress", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_learning_sessions_on_user_id"
   end
 
   create_table "meanings", force: :cascade do |t|
@@ -125,6 +148,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_06_091944) do
   add_foreign_key "anki_imports", "users"
   add_foreign_key "dictionary_entry_tags", "dictionary_entries"
   add_foreign_key "dictionary_entry_tags", "tags"
+  add_foreign_key "learning_session_cards", "learning_sessions"
+  add_foreign_key "learning_session_cards", "user_learnings"
+  add_foreign_key "learning_sessions", "users"
   add_foreign_key "meanings", "dictionary_entries"
   add_foreign_key "meanings", "sources"
   add_foreign_key "review_logs", "user_learnings"

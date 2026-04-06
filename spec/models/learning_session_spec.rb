@@ -48,9 +48,12 @@ RSpec.describe LearningSession, type: :model do
     let(:ls) { create(:learning_session) }
 
     before do
-      create(:learning_session_card, learning_session: ls, reviewed_at: nil)
-      create(:learning_session_card, learning_session: ls, reviewed_at: 1.minute.ago)
-      create(:learning_session_card, learning_session: ls, reviewed_at: 2.minutes.ago)
+      create(:learning_session_card, learning_session: ls,
+             user_learning: create(:user_learning, user: ls.user), reviewed_at: nil)
+      create(:learning_session_card, learning_session: ls,
+             user_learning: create(:user_learning, user: ls.user), reviewed_at: 1.minute.ago)
+      create(:learning_session_card, learning_session: ls,
+             user_learning: create(:user_learning, user: ls.user), reviewed_at: 2.minutes.ago)
     end
 
     it "counts only cards that have been reviewed" do
