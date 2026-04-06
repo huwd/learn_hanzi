@@ -26,6 +26,7 @@ Rails.application.routes.draw do
 
   resources :anki_imports, only: %i[new create show]
 
+  resource :settings, only: %i[show update]
   resource :session
   resources :passwords, param: :token
   resources :tags, only: [ :index, :show ]

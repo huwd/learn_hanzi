@@ -4,7 +4,12 @@ class ReviewController < ApplicationController
 
   def start
     tag   = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
-    queue = LearningSession::Composer.call(user: Current.user, tag: tag)
+    queue = LearningSession::Composer.call(
+      user:    Current.user,
+      size:    Current.user.session_size,
+      new_cap: Current.user.new_cards_per_session,
+      tag:     tag
+    )
 
     if queue.empty?
       render :start
