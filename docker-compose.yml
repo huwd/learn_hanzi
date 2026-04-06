@@ -10,14 +10,10 @@ services:
       SOLID_QUEUE_IN_PUMA: "true"
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
     volumes:
-      - app_storage:/rails/storage
+      - ${STORAGE_PATH:?STORAGE_PATH is required}:/rails/storage
     healthcheck:
       test: ["CMD", "curl", "-f", "-H", "X-Forwarded-Proto: https", "http://localhost:80/up"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-
-volumes:
-  app_storage:
-    driver: local
