@@ -26,6 +26,8 @@ Rails.application.routes.draw do
   get  "review/history",  to: "review#history", as: :review_history
 
   resources :anki_imports, only: %i[new create show]
+  resource  :data_export,  only: %i[show]
+  resources :data_imports, only: %i[new create]
 
   get  "auth/oidc/callback", to: "omniauth_callbacks#create", as: :omniauth_callback
   get  "auth/failure",       to: "omniauth_callbacks#failure",                as: :auth_failure
