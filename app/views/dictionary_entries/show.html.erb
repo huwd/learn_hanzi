@@ -37,7 +37,21 @@
 
   <%# ── Back nav ──────────────────────────────────────────── %>
   <div class="mb-6">
-    <%= link_to "← back", :back,
+    <% back_url = begin
+       referer = request.referer
+       if referer.present?
+         referer_uri = URI.parse(referer)
+         request_scheme = request.protocol.delete_suffix("://")
+         if referer_uri.scheme == request_scheme &&
+            referer_uri.host == request.host &&
+            referer_uri.port == request.port
+           referer
+         end
+       end
+     rescue URI::InvalidURIError
+       nil
+     end || root_path %>
+  <%= link_to "← back", back_url,
           class: "de-mono text-[11px] text-gray-600 hover:text-red-400 transition-colors tracking-[0.18em] uppercase" %>
   </div>
 
@@ -76,10 +90,13 @@
 
     </div>
 
+    <% source_names = @meanings.map { |m| m.source&.name }.compact.uniq %>
     <div class="mt-5 pt-4 border-t border-gray-700/40">
       <p class="de-mono text-[10px] text-gray-700 tracking-[0.15em] uppercase">
-        Source: CC-CEDICT
-        &ensp;·&ensp;
+        <% if source_names.any? %>
+          Source: <%= source_names.join(", ") %>
+          &ensp;·&ensp;
+        <% end %>
         Entry #<%= @dictionary_entry.id %>
       </p>
     </div>
@@ -170,20 +187,21 @@
             <div>
               <p class="de-mono text-[10px] text-gray-600 uppercase tracking-wider mb-2">
                 Review history
-                <span class="text-gray-700 normal-case tracking-normal">(<%= @review_logs.count %> total)</span>
+                <span class="text-gray-700 normal-case tracking-normal">(last <%= @review_logs.size %>)</span>
               </p>
-              <%# Ease legend %>
+              <%# Ease legend — coloured dots are decorative, text labels carry the meaning %>
               <div class="de-mono text-[9px] text-gray-700 flex gap-3 mb-2">
-                <span><span class="inline-block w-2 h-2 rounded-full de-ease-1 mr-0.5"></span>again</span>
-                <span><span class="inline-block w-2 h-2 rounded-full de-ease-2 mr-0.5"></span>hard</span>
-                <span><span class="inline-block w-2 h-2 rounded-full de-ease-3 mr-0.5"></span>good</span>
-                <span><span class="inline-block w-2 h-2 rounded-full de-ease-4 mr-0.5"></span>easy</span>
+                <span><span aria-hidden="true" class="inline-block w-2 h-2 rounded-full de-ease-1 mr-0.5"></span>again</span>
+                <span><span aria-hidden="true" class="inline-block w-2 h-2 rounded-full de-ease-2 mr-0.5"></span>hard</span>
+                <span><span aria-hidden="true" class="inline-block w-2 h-2 rounded-full de-ease-3 mr-0.5"></span>good</span>
+                <span><span aria-hidden="true" class="inline-block w-2 h-2 rounded-full de-ease-4 mr-0.5"></span>easy</span>
               </div>
               <%# Dot timeline — newest first, left to right %>
               <div class="flex flex-wrap gap-1.5">
-                <% @review_logs.first(30).each do |log| %>
-                  <span class="w-2.5 h-2.5 rounded-full de-ease-<%= log.ease %>"
-                        title="<%= %w[_ Again Hard Good Easy][log.ease] %> — <%= log.created_at.strftime('%-d %b %Y') %>">
+                <% @review_logs.each do |log| %>
+                  <span role="img"
+                        aria-label="<%= %w[_ Again Hard Good Easy][log.ease] %>, <%= log.created_at.strftime('%-d %b %Y') %>"
+                        class="w-2.5 h-2.5 rounded-full de-ease-<%= log.ease %>">
                   </span>
                 <% end %>
               </div>
