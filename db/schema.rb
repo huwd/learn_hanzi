@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_06_163224) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_07_163647) do
   create_table "anki_imports", force: :cascade do |t|
     t.integer "cards_imported", default: 0
     t.datetime "completed_at"
@@ -87,11 +87,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_06_163224) do
     t.integer "factor"
     t.integer "interval"
     t.integer "log_type"
+    t.integer "source_export_id"
     t.integer "time"
     t.integer "time_spent"
     t.datetime "updated_at", null: false
     t.integer "user_learning_id", null: false
     t.index ["anki_id"], name: "index_review_logs_on_anki_id", unique: true
+    t.index ["user_learning_id", "source_export_id"], name: "index_review_logs_on_ul_and_source_export_id", unique: true, where: "source_export_id IS NOT NULL"
     t.index ["user_learning_id"], name: "index_review_logs_on_user_learning_id"
   end
 

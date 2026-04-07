@@ -51,4 +51,20 @@
       </div>
     <% end %>
   </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-8">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Your data</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+      Export all your learning progress as a JSON file, or restore from a previous export.
+    </p>
+    <div class="flex flex-wrap gap-4">
+      <%= link_to "Export data", data_export_path,
+            class: "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-2.5
+                    transition-colors text-sm" %>
+      <%= link_to "Import data", new_data_import_path,
+            class: "bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600
+                    text-gray-700 dark:text-gray-300 font-semibold rounded-lg px-5 py-2.5
+                    border border-gray-300 dark:border-gray-600 transition-colors text-sm" %>
+    </div>
+  </div>
 </div>
