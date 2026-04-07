@@ -119,6 +119,21 @@ RSpec.describe "Admin::Tasks", type: :request do
         end
       end
 
+      context "when another task of the same type becomes active before retry" do
+        let!(:failed_task) { create(:admin_task, task_type: "hsk_tags", state: "failed") }
+
+        before do
+          allow(Admin::ProvisioningJob).to receive(:perform_later)
+          create(:admin_task, task_type: "hsk_tags", state: "pending")
+        end
+
+        it "redirects with an alert" do
+          post retry_admin_task_path(failed_task)
+          follow_redirect!
+          expect(response.body).to include("already running or pending")
+        end
+      end
+
       context "when the task is not failed" do
         let!(:running_task) { create(:admin_task, task_type: "cc_cedict", state: "running") }
 
