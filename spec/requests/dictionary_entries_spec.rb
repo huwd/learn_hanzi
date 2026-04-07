@@ -17,6 +17,43 @@ RSpec.describe "DictionaryEntries", type: :request do
         get dictionary_entry_path(dictionary_entry)
         expect(response.body).to include(dictionary_entry.text)
       end
+
+      context "when the user has no learning record" do
+        it "shows the not-started state" do
+          get dictionary_entry_path(dictionary_entry)
+          expect(response.body).to include("NOT STARTED")
+        end
+
+        it "does not render the review history section" do
+          get dictionary_entry_path(dictionary_entry)
+          expect(response.body).not_to include("Review history")
+        end
+      end
+
+      context "when the user has a learning record" do
+        let!(:user_learning) do
+          create(:user_learning, user: user, dictionary_entry: dictionary_entry, state: "learning")
+        end
+
+        it "shows the learning state badge" do
+          get dictionary_entry_path(dictionary_entry)
+          expect(response.body).to include("learning")
+        end
+
+        it "does not render the review history section when there are no logs" do
+          get dictionary_entry_path(dictionary_entry)
+          expect(response.body).not_to include("Review history")
+        end
+
+        context "with review logs" do
+          before { create_list(:review_log, 3, user_learning: user_learning, ease: 3) }
+
+          it "renders the review history section" do
+            get dictionary_entry_path(dictionary_entry)
+            expect(response.body).to include("Review history")
+          end
+        end
+      end
     end
   end
 
