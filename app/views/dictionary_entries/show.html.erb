@@ -67,16 +67,6 @@
           <span class="de-mono inline-block px-3 py-1 rounded-full border text-xs tracking-widest de-state-<%= @user_learning.state %>">
             <%= @user_learning.state.upcase %>
           </span>
-          <% if @user_learning.next_due %>
-            <%
-              days = (@user_learning.next_due.to_date - Date.today).to_i
-              urgency_class = days < 0 ? "text-red-400" : days == 0 ? "text-amber-400" : "text-gray-500"
-              urgency_label = days < 0 ? "#{days.abs}d overdue" : days == 0 ? "due today" : "in #{days}d"
-            %>
-            <p class="de-mono text-[11px] text-gray-500 mt-2">next review</p>
-            <p class="de-mono text-xs text-gray-400 mt-0.5"><%= @user_learning.next_due.strftime("%-d %b %Y") %></p>
-            <p class="de-mono text-[11px] mt-0.5 <%= urgency_class %>"><%= urgency_label %></p>
-          <% end %>
         <% else %>
           <span class="de-mono inline-block px-3 py-1 rounded-full border text-xs tracking-widest de-state-unstarted">
             NOT STARTED
@@ -130,6 +120,42 @@
               <%= @user_learning.state %>
             </span>
           </div>
+
+          <%# Struggling indicator — derived from last 5 reviews %>
+          <% recent_ease = @review_logs.first(5).map(&:ease) %>
+          <% if recent_ease.any? %>
+            <% avg_ease = recent_ease.sum.to_f / recent_ease.size %>
+            <% if avg_ease < 2.0 %>
+              <div class="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/25">
+                <span class="text-red-400 mt-0.5 text-xs leading-none select-none">▲</span>
+                <div>
+                  <p class="de-mono text-[11px] text-red-400 tracking-wide">Struggling</p>
+                  <p class="de-mono text-[10px] text-red-400/60 mt-0.5">Mostly Again / Hard in recent reviews</p>
+                </div>
+              </div>
+            <% elsif avg_ease < 2.5 %>
+              <div class="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                <span class="text-amber-400 mt-0.5 text-xs leading-none select-none">▲</span>
+                <div>
+                  <p class="de-mono text-[11px] text-amber-400 tracking-wide">Needs practice</p>
+                  <p class="de-mono text-[10px] text-amber-400/60 mt-0.5">More Hard ratings than Good recently</p>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+
+          <% if @user_learning.next_due %>
+            <%
+              days = (@user_learning.next_due.to_date - Date.today).to_i
+              urgency_class = days < 0 ? "text-red-400" : days == 0 ? "text-amber-400" : "text-gray-500"
+              urgency_label = days < 0 ? "#{days.abs}d overdue" : days == 0 ? "due today" : "in #{days}d"
+            %>
+            <div>
+              <p class="de-mono text-[10px] text-gray-600 uppercase tracking-wider mb-1">Next Review</p>
+              <p class="de-mono text-sm text-gray-300"><%= @user_learning.next_due.strftime("%-d %b %Y") %></p>
+              <p class="de-mono text-[11px] mt-0.5 <%= urgency_class %>"><%= urgency_label %></p>
+            </div>
+          <% end %>
 
           <% if @user_learning.last_interval %>
             <div>
