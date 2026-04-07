@@ -37,7 +37,7 @@ RSpec.describe "DictionaryEntries", type: :request do
 
         it "shows the learning state badge" do
           get dictionary_entry_path(dictionary_entry)
-          expect(response.body).to include("learning")
+          expect(response.body).to include("LEARNING")
         end
 
         it "does not render the review history section when there are no logs" do

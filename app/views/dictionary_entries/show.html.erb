@@ -138,6 +138,8 @@
             </span>
           </div>
 
+          <%# Load once so first(5), any?, size, each all reuse cached records %>
+          <% @review_logs.load %>
           <%# Struggling indicator — derived from last 5 reviews %>
           <% recent_ease = @review_logs.first(5).map(&:ease) %>
           <% if recent_ease.any? %>
@@ -201,7 +203,7 @@
                 <% @review_logs.each do |log| %>
                   <span role="img"
                         aria-label="<%= %w[_ Again Hard Good Easy][log.ease] %>, <%= log.created_at.strftime('%-d %b %Y') %>"
-                        class="w-2.5 h-2.5 rounded-full de-ease-<%= log.ease %>">
+                        class="inline-block w-2.5 h-2.5 rounded-full de-ease-<%= log.ease %>">
                   </span>
                 <% end %>
               </div>
