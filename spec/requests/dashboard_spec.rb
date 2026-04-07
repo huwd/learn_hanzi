@@ -45,6 +45,16 @@ RSpec.describe "Dashboard", type: :request do
           expect(response.body).to include(AnkiImportService::DECK_NAME)
         end
 
+        it "links to the Anki import page" do
+          get root_path
+          expect(response.body).to include(new_anki_import_path)
+        end
+
+        it "links to the data import page" do
+          get root_path
+          expect(response.body).to include(new_data_import_path)
+        end
+
         it "does not show the advisor narrative" do
           get root_path
           LearningAdvisor::NARRATIVES.each_value do |narrative|
