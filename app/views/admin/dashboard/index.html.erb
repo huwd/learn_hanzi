@@ -29,8 +29,8 @@
           label:     "Custom dictionary entries",
           task_type: "custom_dictionary",
           task:      @tasks_by_type["custom_dictionary"],
-          db_count:  @db_stats[:custom_sources] ? "loaded" : nil,
-          unit:      "" %>
+          db_count:  @db_stats[:custom_entries],
+          unit:      "entries" %>
 
     <%= render "task_card",
           label:     "HSK tags",

@@ -23,7 +23,7 @@ module Admin
         is_new = de.new_record?
 
         entry_data["meanings"].each do |m|
-          next if de.meanings.exists?(text: m["text"], language: "en", source: source)
+          next if de.meanings.exists?(text: m["text"], pinyin: m["pinyin"], language: "en", source: source)
           de.meanings.build(text: m["text"], pinyin: m["pinyin"], language: "en", source: source)
         end
 
