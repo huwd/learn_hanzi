@@ -78,8 +78,7 @@
                   <% if task.failed? %>
                     <span class="text-red-600 dark:text-red-400 text-xs"><%= task.error_message %></span>
                   <% elsif task.summary.present? %>
-                    <% summary = JSON.parse(task.summary) rescue {} %>
-                    <span class="text-xs"><%= summary.map { |k, v| "#{k}: #{v}" }.join(", ") %></span>
+                    <span class="text-xs"><%= task.summary_hash.map { |k, v| "#{k}: #{v}" }.join(", ") %></span>
                   <% end %>
                 </td>
               </tr>

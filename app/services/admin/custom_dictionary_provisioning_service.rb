@@ -9,8 +9,11 @@ module Admin
     end
 
     def call
-      data    = YAML.load_file(YAML_FILE)
+      data = YAML.safe_load_file(YAML_FILE, permitted_classes: [], aliases: false)
+      raise ArgumentError, "Invalid custom dictionary format: expected a Hash" unless data.is_a?(Hash)
+
       entries = data["entries"]
+      raise ArgumentError, "Invalid custom dictionary format: missing 'entries' array" unless entries.is_a?(Array)
       source  = Source.find_or_create_by!(name: "learn_hanzi")
       created = 0
       updated = 0

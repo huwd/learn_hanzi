@@ -67,8 +67,8 @@ RSpec.describe AdminTask, type: :model do
     let(:task_type) { "hsk_tags" }
 
     it "returns the most recently created task of the given type" do
-      older = create(:admin_task, task_type: task_type, created_at: 1.hour.ago)
-      newer = create(:admin_task, task_type: task_type, created_at: 1.minute.ago)
+      older = create(:admin_task, task_type: task_type, state: "complete", created_at: 1.hour.ago)
+      newer = create(:admin_task, task_type: task_type, state: "failed",   created_at: 1.minute.ago)
       expect(AdminTask.latest_for(task_type)).to eq(newer)
     end
 
@@ -79,10 +79,10 @@ RSpec.describe AdminTask, type: :model do
 
   describe ".in_progress" do
     it "returns pending and running tasks" do
-      pending_task = create(:admin_task, state: "pending")
-      running_task = create(:admin_task, state: "running")
-      create(:admin_task, state: "complete")
-      create(:admin_task, state: "failed")
+      pending_task = create(:admin_task, task_type: "cc_cedict",         state: "pending")
+      running_task = create(:admin_task, task_type: "hsk_tags",          state: "running")
+      create(:admin_task,                task_type: "custom_dictionary",  state: "complete")
+      create(:admin_task,                task_type: "cc_cedict",          state: "failed")
 
       expect(AdminTask.in_progress).to contain_exactly(pending_task, running_task)
     end
