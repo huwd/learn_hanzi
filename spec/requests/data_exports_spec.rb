@@ -30,9 +30,13 @@ RSpec.describe "DataExports", type: :request do
       end
 
       it "names the file with today's date" do
+        today = Date.new(2026, 4, 7)
+        allow(Time.zone).to receive(:today).and_return(today)
+
         get data_export_path
+
         expect(response.headers["Content-Disposition"])
-          .to include("learn_hanzi_export_#{Date.today.iso8601}.json")
+          .to include("learn_hanzi_export_#{today.iso8601}.json")
       end
 
       it "returns valid JSON with the correct version" do
