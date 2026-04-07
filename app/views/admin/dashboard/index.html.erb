@@ -1,0 +1,93 @@
+<% content_for :title, "Admin — Provisioning" %>
+<% content_for :head do %>
+  <% if @any_in_progress %>
+    <meta http-equiv="refresh" content="3">
+  <% end %>
+<% end %>
+
+<div class="w-full max-w-4xl mx-auto space-y-8">
+
+  <div class="flex items-center justify-between">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Provisioning</h2>
+    <%= button_to admin_provision_all_path, method: :post,
+          class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors" do %>
+      Provision all
+    <% end %>
+  </div>
+
+  <%# Task cards %>
+  <div class="grid gap-4 sm:grid-cols-3">
+
+    <%= render "task_card",
+          label:     "CC-CEDICT dictionary",
+          task_type: "cc_cedict",
+          task:      @tasks_by_type["cc_cedict"],
+          db_count:  @db_stats[:dictionary_entries],
+          unit:      "entries" %>
+
+    <%= render "task_card",
+          label:     "Custom dictionary entries",
+          task_type: "custom_dictionary",
+          task:      @tasks_by_type["custom_dictionary"],
+          db_count:  @db_stats[:custom_sources] ? "loaded" : nil,
+          unit:      "" %>
+
+    <%= render "task_card",
+          label:     "HSK tags",
+          task_type: "hsk_tags",
+          task:      @tasks_by_type["hsk_tags"],
+          db_count:  @db_stats[:hsk_tags],
+          unit:      "tags",
+          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+
+  </div>
+
+  <%# History log %>
+  <div>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">History</h3>
+    <% if @history.empty? %>
+      <p class="text-sm text-gray-500 dark:text-gray-400">No tasks run yet.</p>
+    <% else %>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+        <table class="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+          <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            <tr>
+              <th class="px-4 py-3">Task</th>
+              <th class="px-4 py-3">State</th>
+              <th class="px-4 py-3">Started</th>
+              <th class="px-4 py-3">Duration</th>
+              <th class="px-4 py-3">Summary</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <% @history.each do |task| %>
+              <tr class="bg-white dark:bg-gray-900">
+                <td class="px-4 py-3 font-medium"><%= task.task_type %></td>
+                <td class="px-4 py-3"><%= render "state_badge", state: task.state %></td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  <%= task.started_at&.strftime("%d %b %Y %H:%M") || "—" %>
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  <% if task.started_at && task.completed_at %>
+                    <%= distance_of_time_in_words(task.started_at, task.completed_at) %>
+                  <% else %>
+                    —
+                  <% end %>
+                </td>
+                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+                  <% if task.failed? %>
+                    <span class="text-red-600 dark:text-red-400 text-xs"><%= task.error_message %></span>
+                  <% elsif task.summary.present? %>
+                    <% summary = JSON.parse(task.summary) rescue {} %>
+                    <span class="text-xs"><%= summary.map { |k, v| "#{k}: #{v}" }.join(", ") %></span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+
+</div>

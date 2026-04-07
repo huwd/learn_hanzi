@@ -37,4 +37,12 @@ Rails.application.routes.draw do
   resource :session, only: %i[destroy]
   resources :tags, only: [ :index, :show ]
   resources :dictionary_entries, only: [ :show ]
+
+  namespace :admin do
+    root to: "dashboard#index"
+    post "provision_all", to: "dashboard#provision_all", as: :provision_all
+    resources :tasks, only: [ :create ] do
+      member { post :retry }
+    end
+  end
 end
