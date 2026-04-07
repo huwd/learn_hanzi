@@ -18,9 +18,11 @@ class DataImportService
     learnings_upserted    = 0
     review_logs_inserted  = 0
 
-    ul_list = Array(@data["user_learnings"])
+    ul_list    = Array(@data["user_learnings"])
     characters = ul_list.map { |ul_data| ul_data["character"] }.uniq
-    entry_map  = DictionaryEntry.where(text: characters).index_by(&:text)
+    entry_map  = characters.each_slice(900).flat_map do |batch|
+      DictionaryEntry.where(text: batch).to_a
+    end.index_by(&:text)
 
     ul_list.each do |ul_data|
       entry = entry_map[ul_data["character"]]
