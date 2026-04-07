@@ -3,9 +3,9 @@
 <% content_for :head do %>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Ma+Shan+Zheng&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    .de-char    { font-family: 'Noto Serif SC', 'Source Han Serif CN', 'STSong', 'SimSun', serif; line-height: 1; text-rendering: optimizeLegibility; }
+    .de-char    { line-height: 1; text-rendering: optimizeLegibility; }
     .de-lora    { font-family: 'Lora', Georgia, 'Times New Roman', serif; }
     .de-mono    { font-family: 'Space Mono', 'Courier New', monospace; }
 
@@ -45,7 +45,7 @@
   <div class="de-hero rounded-2xl p-8 mb-4 border border-gray-700/40 relative overflow-hidden">
 
     <%# Ghost character in background %>
-    <div class="de-char absolute -right-6 -top-4 text-[11rem] leading-none text-white/[0.04] select-none pointer-events-none" aria-hidden="true">
+    <div class="de-char font-hanzi absolute -right-6 -top-4 text-[11rem] leading-none text-white/[0.04] select-none pointer-events-none" aria-hidden="true">
       <%= @dictionary_entry.text %>
     </div>
 
@@ -53,7 +53,7 @@
 
       <%# Left: character + pinyin %>
       <div>
-        <h1 class="de-char text-[6.5rem] text-gray-50 mb-3" lang="zh">
+        <h1 class="de-char font-hanzi text-[6.5rem] text-gray-50 mb-3" lang="zh">
           <%= @dictionary_entry.text %>
         </h1>
         <% @meanings.map(&:pinyin).uniq.each do |pinyin| %>
