@@ -18,6 +18,7 @@ module Admin
       tags_created    = 0
       entries_tagged  = 0
       skipped         = 0
+      stubs_created   = 0
 
       download_hsk_2
       download_hsk_3
@@ -27,36 +28,38 @@ module Admin
       # Import HSK 2
       hsk2_parent = find_or_create_tag("HSK 2.0", "HSK", top_tag.id)
       top_tag.add_child(hsk2_parent)
-      tags_created += 1
+      tags_created += 1 if hsk2_parent.previously_new_record?
       hsk_2_files.each do |file|
         tag_name = "HSK #{File.basename(file, ".min.json")}"
         tag = find_or_create_tag(tag_name, "HSK", hsk2_parent.id)
         hsk2_parent.add_child(tag)
-        tags_created += 1
+        tags_created += 1 if tag.previously_new_record?
         texts = JSON.parse(File.read(file)).map { |entry| entry["s"] }
-        skipped += batch_associate_entries_to_tag(texts, tag)
-        entries_tagged += texts.count - skipped
+        skipped_count = batch_associate_entries_to_tag(texts, tag)
+        skipped += skipped_count
+        entries_tagged += texts.count - skipped_count
       end
 
       # Import HSK 3
       hsk3_parent = find_or_create_tag("HSK 3.0", "HSK", top_tag.id)
       top_tag.add_child(hsk3_parent)
-      tags_created += 1
+      tags_created += 1 if hsk3_parent.previously_new_record?
       hsk_3_files.each do |file|
         next unless File.extname(file) == ".txt"
 
         tag_name = File.basename(file, ".txt")
         tag = find_or_create_tag(tag_name, "HSK", hsk3_parent.id)
         hsk3_parent.add_child(tag)
-        tags_created += 1
+        tags_created += 1 if tag.previously_new_record?
         texts = hsk3_texts_from_file(file)
-        stub_count = create_hsk3_stubs(texts, file)
+        stubs_created += create_hsk3_stubs(texts, file)
         skipped_count = batch_associate_entries_to_tag(texts, tag)
         skipped += skipped_count
         entries_tagged += texts.count - skipped_count
       end
 
-      { tags_created: tags_created, entries_tagged: entries_tagged, skipped: skipped }
+      { tags_created: tags_created, entries_tagged: entries_tagged,
+        skipped: skipped, stubs_created: stubs_created }
     end
 
     private
