@@ -35,7 +35,7 @@ module Admin
       {
         dictionary_entries: DictionaryEntry.count,
         hsk_tags:           Tag.where(category: "HSK").count,
-        custom_sources:     Source.where(name: "learn_hanzi").exists?
+        custom_entries:     Meaning.joins(:source).where(sources: { name: "learn_hanzi" }).select(:dictionary_entry_id).distinct.count
       }
     end
   end
