@@ -266,6 +266,39 @@ RSpec.describe DataImportService do
         expect(result[:review_logs_inserted]).to eq(1)
       end
 
+      context "when a review_log has an invalid ease value" do
+        let(:export_with_bad_ease) do
+          base_export.merge("user_learnings" => [
+            {
+              "character" => "你",
+              "state" => "mastered",
+              "next_due" => nil,
+              "last_interval" => 30,
+              "factor" => 2500,
+              "created_at" => ul.created_at.iso8601,
+              "updated_at" => ul.updated_at.iso8601,
+              "review_logs" => [
+                {
+                  "id" => 200,
+                  "ease" => 99,
+                  "interval" => 10,
+                  "time_spent" => 5000,
+                  "factor" => 2500,
+                  "log_type" => 2,
+                  "time" => nil,
+                  "created_at" => "2026-01-15T10:00:00Z"
+                }
+              ]
+            }
+          ])
+        end
+
+        it "skips the invalid row without raising" do
+          expect { described_class.call(user:, data: export_with_bad_ease) }
+            .not_to change { ul.review_logs.count }
+        end
+      end
+
       context "when run twice with the same data (idempotency)" do
         it "does not create duplicate review_logs" do
           described_class.call(user:, data: export_data)
