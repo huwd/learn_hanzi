@@ -97,6 +97,20 @@ RSpec.describe DataExportService do
         expect(ids).to contain_exactly(rl1.id, rl2.id)
       end
 
+      context "when a review_log was originally imported (has source_export_id)" do
+        let!(:rl_imported) do
+          create(:review_log, user_learning: ul, ease: 2, interval: 1,
+                 time_spent: 1000, factor: 2500, log_type: 1, time: nil,
+                 source_export_id: 999)
+        end
+
+        it "uses source_export_id as the exported id to preserve stable identifiers across re-export cycles" do
+          ni_data = result[:user_learnings].find { |u| u[:character] == "你" }
+          imported_rl_data = ni_data[:review_logs].find { |r| r[:id] == 999 }
+          expect(imported_rl_data).not_to be_nil
+        end
+      end
+
       it "handles nil time in review_logs" do
         ni_data = result[:user_learnings].find { |u| u[:character] == "你" }
         rl_data = ni_data[:review_logs].find { |r| r[:id] == rl2.id }
