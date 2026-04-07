@@ -2,6 +2,7 @@ class DataImportService
   SUPPORTED_VERSIONS = [ 1 ].freeze
 
   class UnsupportedVersionError < StandardError; end
+  class InvalidExportError < StandardError; end
 
   def self.call(user:, data:)
     new(user:, data:).call
@@ -18,16 +19,26 @@ class DataImportService
     learnings_upserted    = 0
     review_logs_inserted  = 0
 
-    @data["user_learnings"].each do |ul_data|
-      entry = DictionaryEntry.find_by(text: ul_data["character"])
+    ul_list = Array(@data["user_learnings"])
+    characters = ul_list.map { |ul_data| ul_data["character"] }.uniq
+    entry_map  = DictionaryEntry.where(text: characters).index_by(&:text)
+
+    ul_list.each do |ul_data|
+      entry = entry_map[ul_data["character"]]
       next unless entry
 
       ul, updated = upsert_user_learning(entry, ul_data)
       learnings_upserted += 1 if updated
 
-      rl_rows = build_review_log_rows(ul, ul_data["review_logs"])
-      ReviewLog.insert_all(rl_rows, unique_by: [ :user_learning_id, :source_export_id ]) if rl_rows.any?
-      review_logs_inserted += rl_rows.size
+      rl_rows = build_review_log_rows(ul, Array(ul_data["review_logs"]))
+      next if rl_rows.empty?
+
+      result = ReviewLog.insert_all(
+        rl_rows,
+        unique_by: [ :user_learning_id, :source_export_id ],
+        returning: [ :id ]
+      )
+      review_logs_inserted += result.length
     end
 
     { learnings_upserted:, review_logs_inserted: }
@@ -48,13 +59,19 @@ class DataImportService
     should_update = ul.new_record? || ul.updated_at < export_updated_at
 
     if should_update
-      ul.assign_attributes(
+      attrs = {
         state:         ul_data["state"],
         next_due:      ul_data["next_due"] ? Time.zone.parse(ul_data["next_due"]) : nil,
         last_interval: ul_data["last_interval"],
         factor:        ul_data["factor"]
-      )
-      ul.save!
+      }
+      if ul.new_record?
+        ul.assign_attributes(attrs)
+        ul.save!
+      end
+      # Persist export timestamps so subsequent imports compare against the
+      # export's updated_at rather than the wall-clock time of this import.
+      ul.update_columns(**attrs, updated_at: export_updated_at)
     end
 
     [ ul, should_update ]

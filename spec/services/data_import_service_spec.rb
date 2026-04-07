@@ -33,6 +33,14 @@ RSpec.describe DataImportService do
       end
     end
 
+    context "when user_learnings key is missing from the export" do
+      let(:export_data) { { "version" => 1, "exported_at" => "2026-04-07T12:00:00Z" } }
+
+      it "returns zero counts without raising" do
+        expect(result[:learnings_upserted]).to eq(0)
+      end
+    end
+
     context "when importing new user_learnings" do
       let(:export_data) do
         base_export.merge("user_learnings" => [
@@ -62,6 +70,12 @@ RSpec.describe DataImportService do
         expect(ul.last_interval).to eq(30)
         expect(ul.factor).to eq(2500)
         expect(ul.next_due).to be_within(1.second).of(Time.zone.parse("2026-04-10T00:00:00Z"))
+      end
+
+      it "preserves the export updated_at so subsequent imports compare correctly" do
+        result
+        ul = user.user_learnings.find_by(dictionary_entry: entry_ni)
+        expect(ul.updated_at).to be_within(1.second).of(Time.zone.parse("2026-04-01T00:00:00Z"))
       end
 
       it "returns learnings_upserted count of 1" do
@@ -117,6 +131,12 @@ RSpec.describe DataImportService do
         expect(existing_ul.reload.state).to eq("mastered")
         expect(existing_ul.reload.factor).to eq(2500)
       end
+
+      it "persists the export updated_at on the record" do
+        result
+        expect(existing_ul.reload.updated_at)
+          .to be_within(1.second).of(Time.zone.parse("2026-04-01T00:00:00Z"))
+      end
     end
 
     context "when a user_learning already exists and the local record is newer" do
@@ -145,6 +165,39 @@ RSpec.describe DataImportService do
         result
         expect(existing_ul.reload.state).to eq("mastered")
         expect(existing_ul.reload.factor).to eq(2700)
+      end
+    end
+
+    context "when imported twice with advancing export timestamps" do
+      let!(:existing_ul) do
+        create(:user_learning, user:, dictionary_entry: entry_ni,
+               state: "new", factor: 2500,
+               updated_at: Time.zone.parse("2026-01-01T00:00:00Z"))
+      end
+
+      it "applies both updates in order, even though import time > export updated_at" do
+        first_export = base_export.merge("user_learnings" => [
+          {
+            "character" => "你", "state" => "learning", "next_due" => nil,
+            "last_interval" => 5, "factor" => 2100,
+            "created_at" => "2026-01-01T00:00:00Z", "updated_at" => "2026-03-01T00:00:00Z",
+            "review_logs" => []
+          }
+        ])
+        second_export = base_export.merge("user_learnings" => [
+          {
+            "character" => "你", "state" => "mastered", "next_due" => "2026-06-01T00:00:00Z",
+            "last_interval" => 30, "factor" => 2500,
+            "created_at" => "2026-01-01T00:00:00Z", "updated_at" => "2026-05-01T00:00:00Z",
+            "review_logs" => []
+          }
+        ])
+
+        described_class.call(user:, data: first_export)
+        described_class.call(user:, data: second_export)
+
+        expect(existing_ul.reload.state).to eq("mastered")
+        expect(existing_ul.reload.factor).to eq(2500)
       end
     end
 
@@ -195,7 +248,7 @@ RSpec.describe DataImportService do
         expect(rl.source_export_id).to eq(101)
       end
 
-      it "returns the review_logs_inserted count" do
+      it "returns the accurate review_logs_inserted count" do
         expect(result[:review_logs_inserted]).to eq(1)
       end
 
@@ -204,6 +257,12 @@ RSpec.describe DataImportService do
           described_class.call(user:, data: export_data)
           expect { described_class.call(user:, data: export_data) }
             .not_to change { ul.review_logs.count }
+        end
+
+        it "reports zero review_logs_inserted on the second run" do
+          described_class.call(user:, data: export_data)
+          second_result = described_class.call(user:, data: export_data)
+          expect(second_result[:review_logs_inserted]).to eq(0)
         end
       end
     end

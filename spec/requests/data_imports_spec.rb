@@ -40,6 +40,21 @@ RSpec.describe "DataImports", type: :request do
         end
       end
 
+      context "when a non-JSON content type is uploaded" do
+        let(:txt_tempfile) do
+          Tempfile.new([ "data", ".txt" ]).tap { |f| f.write("hello"); f.rewind }
+        end
+
+        after { txt_tempfile.close! }
+
+        it "redirects back with an alert" do
+          file = fixture_file_upload(txt_tempfile.path, "text/csv")
+          post data_imports_path, params: { file: file }
+          expect(response).to redirect_to(new_data_import_path)
+          expect(flash[:alert]).to include("Unsupported file type")
+        end
+      end
+
       context "when an invalid JSON file is uploaded" do
         it "redirects back with an alert" do
           file = fixture_file_upload(
