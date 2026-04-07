@@ -40,7 +40,7 @@ class DataExportService
 
   def export_review_log(rl)
     {
-      id:          rl.id,
+      id:          rl.source_export_id || rl.id,
       ease:        rl.ease,
       interval:    rl.interval,
       time_spent:  rl.time_spent,
