@@ -13,7 +13,7 @@ RSpec.describe Admin::CustomDictionaryProvisioningService do
     end
 
     before do
-      allow(YAML).to receive(:load_file).and_return(yaml_content)
+      allow(YAML).to receive(:safe_load_file).and_return(yaml_content)
     end
 
     it "returns a hash with created and updated counts" do
@@ -21,7 +21,7 @@ RSpec.describe Admin::CustomDictionaryProvisioningService do
     end
 
     it "creates a new dictionary entry for a new text" do
-      source = create(:source, name: "learn_hanzi")
+      create(:source, name: "learn_hanzi")
       expect { result }.to change { DictionaryEntry.count }.by(1)
     end
 
@@ -32,7 +32,7 @@ RSpec.describe Admin::CustomDictionaryProvisioningService do
     end
 
     it "returns updated count of 1 for an existing entry" do
-      source = create(:source, name: "learn_hanzi")
+      create(:source, name: "learn_hanzi")
       create(:dictionary_entry, text: "打篮球")
       expect(result[:updated]).to eq(1)
       expect(result[:created]).to eq(0)

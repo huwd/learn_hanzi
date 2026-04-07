@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_175146) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_07_182048) do
   create_table "admin_tasks", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -20,6 +20,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_175146) do
     t.text "summary"
     t.string "task_type", null: false
     t.datetime "updated_at", null: false
+    t.index ["task_type", "created_at"], name: "index_admin_tasks_on_task_type_and_created_at"
+    t.index ["task_type"], name: "index_admin_tasks_one_active_per_type", unique: true, where: "state IN ('pending', 'running')"
   end
 
   create_table "anki_imports", force: :cascade do |t|

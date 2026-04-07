@@ -12,6 +12,14 @@ class AdminTask < ApplicationRecord
     define_method(:"#{s}?") { state == s }
   end
 
+  def summary_hash
+    return {} if summary.blank?
+
+    JSON.parse(summary)
+  rescue JSON::ParserError
+    {}
+  end
+
   def self.locked_for?(task_type)
     in_progress.exists?(task_type: task_type)
   end
