@@ -49,6 +49,17 @@ RSpec.describe DataExportService do
         expect(characters).to contain_exactly("你", "好")
       end
 
+      it "orders user_learnings by character text for stable output" do
+        characters = result[:user_learnings].map { |ul| ul[:character] }
+        expect(characters).to eq(characters.sort)
+      end
+
+      it "orders review_logs by created_at for stable output" do
+        ni_data = result[:user_learnings].find { |u| u[:character] == "你" }
+        ids = ni_data[:review_logs].map { |r| r[:id] }
+        expect(ids).to eq([ rl1.id, rl2.id ])
+      end
+
       it "includes learning state fields" do
         ni_data = result[:user_learnings].find { |u| u[:character] == "你" }
         expect(ni_data[:state]).to eq("mastered")

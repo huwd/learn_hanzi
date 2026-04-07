@@ -20,7 +20,11 @@ class DataExportService
   private
 
   def export_user_learnings
-    @user.user_learnings.includes(:dictionary_entry, :review_logs).map do |ul|
+    @user.user_learnings
+         .includes(:dictionary_entry, :review_logs)
+         .joins(:dictionary_entry)
+         .order("dictionary_entries.text ASC")
+         .map do |ul|
       {
         character:     ul.dictionary_entry.text,
         state:         ul.state,
@@ -29,7 +33,7 @@ class DataExportService
         factor:        ul.factor,
         created_at:    ul.created_at.iso8601,
         updated_at:    ul.updated_at.iso8601,
-        review_logs:   ul.review_logs.map { |rl| export_review_log(rl) }
+        review_logs:   ul.review_logs.order(:created_at, :id).map { |rl| export_review_log(rl) }
       }
     end
   end

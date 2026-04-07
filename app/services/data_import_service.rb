@@ -2,7 +2,6 @@ class DataImportService
   SUPPORTED_VERSIONS = [ 1 ].freeze
 
   class UnsupportedVersionError < StandardError; end
-  class InvalidExportError < StandardError; end
 
   def self.call(user:, data:)
     new(user:, data:).call
@@ -35,7 +34,7 @@ class DataImportService
 
       result = ReviewLog.insert_all(
         rl_rows,
-        unique_by: [ :user_learning_id, :source_export_id ],
+        unique_by: :index_review_logs_on_ul_and_source_export_id,
         returning: [ :id ]
       )
       review_logs_inserted += result.length
@@ -70,8 +69,10 @@ class DataImportService
         ul.save!
       end
       # Persist export timestamps so subsequent imports compare against the
-      # export's updated_at rather than the wall-clock time of this import.
-      ul.update_columns(**attrs, updated_at: export_updated_at)
+      # export's timestamps rather than the wall-clock time of this import.
+      timestamp_attrs = { updated_at: export_updated_at }
+      timestamp_attrs[:created_at] = Time.zone.parse(ul_data["created_at"]) if ul_data["created_at"]
+      ul.update_columns(**attrs, **timestamp_attrs)
     end
 
     [ ul, should_update ]
