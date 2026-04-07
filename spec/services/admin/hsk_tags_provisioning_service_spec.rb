@@ -16,14 +16,15 @@ RSpec.describe Admin::HskTagsProvisioningService do
       result
     end
 
-    it "returns a hash with tags_created, entries_tagged, and skipped counts" do
-      expect(result).to include(:tags_created, :entries_tagged, :skipped)
+    it "returns a hash with tags_created, entries_tagged, skipped, and stubs_created counts" do
+      expect(result).to include(:tags_created, :entries_tagged, :skipped, :stubs_created)
     end
 
     it "returns integer counts" do
       expect(result[:tags_created]).to be_a(Integer)
       expect(result[:entries_tagged]).to be_a(Integer)
       expect(result[:skipped]).to be_a(Integer)
+      expect(result[:stubs_created]).to be_a(Integer)
     end
 
     context "when HSK 2 files are present" do
@@ -42,6 +43,19 @@ RSpec.describe Admin::HskTagsProvisioningService do
 
       it "increments tags_created" do
         expect(result[:tags_created]).to be > 0
+      end
+
+      it "does not double-count tags_created on re-run" do
+        described_class.call
+        second = described_class.call
+        expect(second[:tags_created]).to eq(0)
+      end
+
+      it "counts entries_tagged per file, not cumulatively" do
+        # All texts are unknown to the dictionary, so all are skipped.
+        # entries_tagged should be 0, not a negative number.
+        expect(result[:entries_tagged]).to eq(0)
+        expect(result[:skipped]).to eq(2)
       end
     end
 
