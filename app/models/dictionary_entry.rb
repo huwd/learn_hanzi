@@ -19,7 +19,7 @@ class DictionaryEntry < ApplicationRecord
 
   def self.find_with_associations(id, user)
     entry = includes(tags: :parent).find(id)
-    meanings = entry.meanings.includes(:source)
+    meanings = entry.meanings
     user_learning = entry.user_learning_for(user)
     { entry: entry, meanings: meanings, user_learning: user_learning }
   end
