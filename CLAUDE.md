@@ -150,6 +150,20 @@ Before merging, assess the fix commits produced during review:
 Use judgement — the goal is a history that tells a coherent story, not one
 that hides real corrections.
 
+## Rails Conventions
+
+**Time zones** — always use `Time.zone.today` or `Time.current` instead of `Date.today` or `Time.now`. `Date.today` and `Time.now` use the system clock and ignore the app's configured time zone, causing off-by-one errors around midnight and in non-UTC environments.
+
+```ruby
+# Bad
+Date.today
+Time.now
+
+# Good
+Time.zone.today
+Time.current
+```
+
 ## Architecture
 
 This is a Rails 8 app for learning Chinese Hanzi (characters). The core purpose is to display a user's HSK vocabulary progress by combining a Chinese dictionary with their Anki flashcard review history.

@@ -165,7 +165,7 @@
 
           <% if @user_learning.next_due %>
             <%
-              days = (@user_learning.next_due.to_date - Date.today).to_i
+              days = (@user_learning.next_due.to_date - Time.zone.today).to_i
               urgency_class = days < 0 ? "text-red-400" : days == 0 ? "text-amber-400" : "text-gray-500"
               urgency_label = days < 0 ? "#{days.abs}d overdue" : days == 0 ? "due today" : "in #{days}d"
             %>
