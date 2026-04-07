@@ -10,7 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_163647) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_07_175146) do
+  create_table "admin_tasks", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "started_at"
+    t.string "state", default: "pending", null: false
+    t.text "summary"
+    t.string "task_type", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "anki_imports", force: :cascade do |t|
     t.integer "cards_imported", default: 0
     t.datetime "completed_at"
@@ -140,6 +151,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_163647) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.integer "new_cards_per_session", default: 5, null: false
