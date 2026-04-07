@@ -43,6 +43,20 @@ RSpec.describe "Admin::Tasks", type: :request do
         expect(response).to redirect_to(admin_root_path)
       end
 
+      context "when task_type is not in the allowlist" do
+        it "does not create a task" do
+          expect {
+            post admin_tasks_path, params: { task_type: "drop_database" }
+          }.not_to change { AdminTask.count }
+        end
+
+        it "redirects with an alert" do
+          post admin_tasks_path, params: { task_type: "drop_database" }
+          follow_redirect!
+          expect(response.body).to include("Unknown task type")
+        end
+      end
+
       context "when the task type is already locked" do
         before { create(:admin_task, task_type: "cc_cedict", state: "running") }
 
@@ -75,11 +89,23 @@ RSpec.describe "Admin::Tasks", type: :request do
       end
 
       context "when the task is failed" do
-        let!(:failed_task) { create(:admin_task, task_type: "cc_cedict", state: "failed") }
+        let!(:failed_task) do
+          create(:admin_task, task_type: "cc_cedict", state: "failed",
+                 error_message: "something went wrong", summary: '{"entries_before":0}')
+        end
 
         it "resets the task to pending" do
           post retry_admin_task_path(failed_task)
           expect(failed_task.reload.state).to eq("pending")
+        end
+
+        it "clears error_message, summary, and timestamps" do
+          post retry_admin_task_path(failed_task)
+          task = failed_task.reload
+          expect(task.error_message).to be_nil
+          expect(task.summary).to be_nil
+          expect(task.started_at).to be_nil
+          expect(task.completed_at).to be_nil
         end
 
         it "enqueues the provisioning job" do
