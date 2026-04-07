@@ -67,25 +67,28 @@ class DataImportService
         last_interval: ul_data["last_interval"],
         factor:        ul_data["factor"]
       }
-      if is_new
-        ul.assign_attributes(attrs)
-        ul.save!
-      end
+      ul.assign_attributes(attrs)
+      ul.save!
       # Persist export timestamps so subsequent imports compare against the
       # export's timestamps rather than the wall-clock time of this import.
       # Only restore created_at from the export for new records; leave existing
       # records' created_at untouched to preserve the local creation timestamp.
       timestamp_attrs = { updated_at: export_updated_at }
       timestamp_attrs[:created_at] = Time.zone.parse(ul_data["created_at"]) if is_new && ul_data["created_at"]
-      ul.update_columns(**attrs, **timestamp_attrs)
+      ul.update_columns(**timestamp_attrs)
     end
 
     [ ul, should_update ]
   end
 
+  VALID_EASE_VALUES = (1..4).freeze
+
   def build_review_log_rows(ul, review_logs_data)
     now = Time.current
-    review_logs_data.map do |rl_data|
+    review_logs_data.filter_map do |rl_data|
+      next unless VALID_EASE_VALUES.include?(rl_data["ease"])
+      next if rl_data["created_at"].blank?
+
       {
         user_learning_id: ul.id,
         ease:             rl_data["ease"],
