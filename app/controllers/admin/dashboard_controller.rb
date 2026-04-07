@@ -14,11 +14,12 @@ module Admin
     def provision_all
       enqueued = 0
       TASK_TYPES_IN_ORDER.each do |type|
-        next if AdminTask.locked_for?(type)
-
         task = AdminTask.create!(task_type: type, state: "pending")
         Admin::ProvisioningJob.perform_later(task.id)
         enqueued += 1
+      rescue ActiveRecord::RecordNotUnique
+        # Task already active for this type — skip it silently.
+        next
       end
 
       if enqueued > 0
