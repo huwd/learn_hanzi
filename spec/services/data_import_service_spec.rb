@@ -111,9 +111,11 @@ RSpec.describe DataImportService do
     end
 
     context "when a user_learning already exists and the export is newer" do
+      let(:original_created_at) { Time.zone.parse("2025-06-01T00:00:00Z") }
       let!(:existing_ul) do
         create(:user_learning, user:, dictionary_entry: entry_ni,
                state: "learning", factor: 2000,
+               created_at: original_created_at,
                updated_at: Time.zone.parse("2026-03-01T00:00:00Z"))
       end
 
@@ -142,6 +144,12 @@ RSpec.describe DataImportService do
         result
         expect(existing_ul.reload.updated_at)
           .to be_within(1.second).of(Time.zone.parse("2026-04-01T00:00:00Z"))
+      end
+
+      it "does not overwrite the local created_at" do
+        result
+        expect(existing_ul.reload.created_at)
+          .to be_within(1.second).of(original_created_at)
       end
     end
 
