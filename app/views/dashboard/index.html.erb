@@ -15,8 +15,12 @@
         <%= link_to "Download it from AnkiWeb", "https://ankiweb.net/shared/info/775653465",
               class: "text-indigo-600 hover:underline" %>.
       </p>
-      <%= link_to "Import Anki collection", new_anki_import_path,
-            class: "inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors" %>
+      <div class="flex flex-wrap justify-center gap-4">
+        <%= link_to "Import Anki collection", new_anki_import_path,
+              class: "inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition-colors" %>
+        <%= link_to "Restore from export", new_data_import_path,
+              class: "inline-block bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-lg px-6 py-3 border border-gray-300 transition-colors" %>
+      </div>
     </div>
   <% else %>
 
