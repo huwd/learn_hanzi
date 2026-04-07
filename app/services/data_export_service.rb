@@ -33,7 +33,7 @@ class DataExportService
         factor:        ul.factor,
         created_at:    ul.created_at.iso8601,
         updated_at:    ul.updated_at.iso8601,
-        review_logs:   ul.review_logs.order(:created_at, :id).map { |rl| export_review_log(rl) }
+        review_logs:   ul.review_logs.sort_by { |rl| [ rl.created_at, rl.id ] }.map { |rl| export_review_log(rl) }
       }
     end
   end

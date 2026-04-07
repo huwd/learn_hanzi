@@ -32,7 +32,12 @@ class DataImportsController < ApplicationController
     redirect_to new_data_import_path, alert: "Invalid JSON file. Please upload a valid export."
   rescue DataImportService::UnsupportedVersionError => e
     redirect_to new_data_import_path, alert: "Unsupported export format. #{e.message}"
-  rescue StandardError
+  rescue StandardError => e
+    Rails.logger.error(
+      "[DataImportsController#create] Unexpected import failure: #{e.class}: #{e.message}\n" \
+      "#{Array(e.backtrace).join("\n")}"
+    )
+    raise if Rails.env.local?
     redirect_to new_data_import_path,
                 alert: "Import failed. The file may be corrupt or not a valid export."
   end
