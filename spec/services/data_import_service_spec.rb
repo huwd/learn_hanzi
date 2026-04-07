@@ -78,6 +78,12 @@ RSpec.describe DataImportService do
         expect(ul.updated_at).to be_within(1.second).of(Time.zone.parse("2026-04-01T00:00:00Z"))
       end
 
+      it "preserves the export created_at" do
+        result
+        ul = user.user_learnings.find_by(dictionary_entry: entry_ni)
+        expect(ul.created_at).to be_within(1.second).of(Time.zone.parse("2026-01-01T00:00:00Z"))
+      end
+
       it "returns learnings_upserted count of 1" do
         expect(result[:learnings_upserted]).to eq(1)
       end
