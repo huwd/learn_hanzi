@@ -46,6 +46,16 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "admin flag" do
+    it "defaults to false" do
+      expect(create(:user).admin).to be false
+    end
+
+    it "can be set to true" do
+      expect(create(:user, admin: true).admin).to be true
+    end
+  end
+
   describe ".find_or_create_by_omniauth" do
     let(:auth) do
       OmniAuth::AuthHash.new(
