@@ -27,6 +27,9 @@ module Admin
                    started_at: nil, completed_at: nil)
       Admin::ProvisioningJob.perform_later(task.id)
       redirect_to admin_root_path, notice: "#{task.task_type} task re-queued."
+    rescue ActiveRecord::RecordNotUnique
+      redirect_to admin_root_path,
+                  alert: "A #{task.task_type} task is already running or pending."
     end
   end
 end
