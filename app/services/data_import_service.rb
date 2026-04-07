@@ -57,7 +57,8 @@ class DataImportService
   def upsert_user_learning(entry, ul_data)
     export_updated_at = Time.zone.parse(ul_data["updated_at"])
     ul = @user.user_learnings.find_or_initialize_by(dictionary_entry: entry)
-    should_update = ul.new_record? || ul.updated_at < export_updated_at
+    is_new = ul.new_record?
+    should_update = is_new || ul.updated_at < export_updated_at
 
     if should_update
       attrs = {
@@ -66,14 +67,16 @@ class DataImportService
         last_interval: ul_data["last_interval"],
         factor:        ul_data["factor"]
       }
-      if ul.new_record?
+      if is_new
         ul.assign_attributes(attrs)
         ul.save!
       end
       # Persist export timestamps so subsequent imports compare against the
       # export's timestamps rather than the wall-clock time of this import.
+      # Only restore created_at from the export for new records; leave existing
+      # records' created_at untouched to preserve the local creation timestamp.
       timestamp_attrs = { updated_at: export_updated_at }
-      timestamp_attrs[:created_at] = Time.zone.parse(ul_data["created_at"]) if ul_data["created_at"]
+      timestamp_attrs[:created_at] = Time.zone.parse(ul_data["created_at"]) if is_new && ul_data["created_at"]
       ul.update_columns(**attrs, **timestamp_attrs)
     end
 
