@@ -1,0 +1,63 @@
+<% locked = task&.pending? || task&.running? %>
+<% requires_dictionary ||= false %>
+
+<div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 flex flex-col gap-3">
+  <div class="flex items-start justify-between gap-2">
+    <h4 class="font-semibold text-gray-900 dark:text-white text-sm"><%= label %></h4>
+    <% if task %>
+      <%= render "state_badge", state: task.state %>
+    <% end %>
+  </div>
+
+  <%# DB state %>
+  <p class="text-xs text-gray-500 dark:text-gray-400">
+    <% if db_count.present? && db_count != 0 %>
+      <%= db_count %> <%= unit %> in database
+    <% else %>
+      No <%= unit.presence || "data" %> imported yet
+    <% end %>
+  </p>
+
+  <% if task&.started_at %>
+    <p class="text-xs text-gray-400 dark:text-gray-500">
+      Last run: <%= task.started_at.strftime("%d %b %Y %H:%M") %>
+    </p>
+  <% end %>
+
+  <% if task&.failed? && task.error_message.present? %>
+    <p class="text-xs text-red-500 dark:text-red-400 truncate" title="<%= task.error_message %>">
+      Error: <%= task.error_message.truncate(80) %>
+    </p>
+  <% end %>
+
+  <div class="flex gap-2 mt-auto">
+    <%# Primary action %>
+    <% if locked %>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed">
+        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Running…
+      </span>
+    <% elsif requires_dictionary %>
+      <span class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-700">
+        Import dictionary first
+      </span>
+    <% else %>
+      <%= button_to admin_tasks_path, method: :post,
+            params: { task_type: task_type },
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors" do %>
+        <%= task&.complete? ? "Update" : "Run import" %>
+      <% end %>
+    <% end %>
+
+    <%# Retry button for failed tasks %>
+    <% if task&.failed? %>
+      <%= button_to retry_admin_task_path(task), method: :post,
+            class: "px-3 py-1.5 text-xs font-medium rounded-md bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-700 transition-colors" do %>
+        Clear &amp; retry
+      <% end %>
+    <% end %>
+  </div>
+</div>
