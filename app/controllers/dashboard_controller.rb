@@ -5,8 +5,8 @@ class DashboardController < ApplicationController
     @no_data = user_learnings.none?
     @advice  = @no_data ? nil : LearningAdvisor.classify(user: Current.user)
 
-    @cards_due = user_learnings.overdue_learning.count +
-                 user_learnings.due_mastered.count
+    @learning_due = user_learnings.overdue_learning.count
+    @review_due   = user_learnings.due_mastered.count
 
     @state_counts = {
       new:      user_learnings.new_learnings.count,
@@ -14,7 +14,7 @@ class DashboardController < ApplicationController
       mastered: user_learnings.mastered.count
     }
 
-    @new_cards_count = user_learnings.new_learnings.count
+    @new_cards_count = @state_counts[:new]
 
     @vocabulary_sections = build_vocabulary_sections
   end

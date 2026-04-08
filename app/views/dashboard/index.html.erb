@@ -54,10 +54,20 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
       <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1">Review</h2>
       <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">Cards due for review today</p>
-      <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6"><%= @cards_due %></div>
+      <dl class="space-y-3 flex-grow mb-6">
+        <div class="flex justify-between items-center">
+          <dt class="text-gray-600 dark:text-gray-400">In progress</dt>
+          <dd class="font-bold text-amber-500 text-lg"><%= @learning_due %></dd>
+        </div>
+        <div class="flex justify-between items-center">
+          <dt class="text-gray-600 dark:text-gray-400">To review</dt>
+          <dd class="font-bold text-blue-600 dark:text-blue-400 text-lg"><%= @review_due %></dd>
+        </div>
+      </dl>
+      <% total_due = @learning_due + @review_due %>
       <%= link_to review_path,
             class: "mt-auto inline-block text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>
-        <%= @cards_due > 0 ? "Start review" : "No cards due" %>
+        <%= total_due > 0 ? "Start review" : "No cards due" %>
       <% end %>
     </div>
 

@@ -85,18 +85,23 @@ RSpec.describe "Tags", type: :request do
       end
     end
 
-    describe "GET /tags/:id — review overdue link" do
+    describe "GET /tags/:id — due summary" do
       let(:entry) { create(:dictionary_entry).tap { |e| e.tags << mid_tag } }
 
-      context "when overdue cards exist within the tag subtree" do
+      context "when overdue learning cards exist within the tag subtree" do
         before do
           create(:user_learning, user: user, dictionary_entry: entry,
                  state: "learning", next_due: 1.day.ago, last_interval: 1)
         end
 
-        it "shows a review overdue link scoped to that tag" do
+        it "shows the review link scoped to that tag" do
           get tag_path(mid_tag)
           expect(response.body).to include(review_path(tag_id: mid_tag.id))
+        end
+
+        it "shows the in-progress count" do
+          get tag_path(mid_tag)
+          expect(response.body).to include("1 in progress")
         end
       end
 
@@ -108,7 +113,7 @@ RSpec.describe "Tags", type: :request do
                  state: "learning", next_due: 1.day.ago, last_interval: 1)
         end
 
-        it "shows a review overdue link for the parent tag" do
+        it "shows the review link for the parent tag" do
           get tag_path(mid_tag)
           expect(response.body).to include(review_path(tag_id: mid_tag.id))
         end
@@ -120,9 +125,14 @@ RSpec.describe "Tags", type: :request do
                  state: "mastered", next_due: 1.day.ago, last_interval: 30)
         end
 
-        it "shows the review overdue link" do
+        it "shows the review link" do
           get tag_path(mid_tag)
           expect(response.body).to include(review_path(tag_id: mid_tag.id))
+        end
+
+        it "shows the to-review count" do
+          get tag_path(mid_tag)
+          expect(response.body).to include("1 to review")
         end
       end
 
@@ -132,7 +142,7 @@ RSpec.describe "Tags", type: :request do
                  state: "learning", next_due: 7.days.from_now, last_interval: 1)
         end
 
-        it "does not show the review overdue link" do
+        it "does not show the review link" do
           get tag_path(mid_tag)
           expect(response.body).not_to include(review_path(tag_id: mid_tag.id))
         end
