@@ -83,9 +83,14 @@ RSpec.describe "Dashboard", type: :request do
                  next_due: 1.day.ago, last_interval: 3)
         end
 
-        it "shows 1 in the in-progress due count" do
+        it "shows 1 in the in-progress due row" do
           get root_path
-          expect(response.body).to include("1")
+          expect(response.body).to match(%r{In progress</dt>\s*<dd[^>]*>1</dd>})
+        end
+
+        it "shows 0 in the to-review due row" do
+          get root_path
+          expect(response.body).to match(%r{To review</dt>\s*<dd[^>]*>0</dd>})
         end
       end
 
@@ -95,16 +100,27 @@ RSpec.describe "Dashboard", type: :request do
                  next_due: 1.day.ago, last_interval: 30)
         end
 
-        it "shows 1 in the to-review count" do
+        it "shows 0 in the in-progress due row" do
           get root_path
-          expect(response.body).to include("1")
+          expect(response.body).to match(%r{In progress</dt>\s*<dd[^>]*>0</dd>})
+        end
+
+        it "shows 1 in the to-review due row" do
+          get root_path
+          expect(response.body).to match(%r{To review</dt>\s*<dd[^>]*>1</dd>})
         end
       end
 
       context "with no cards due" do
+        before do
+          create(:user_learning, user: user, state: "learning",
+                 next_due: 7.days.from_now, last_interval: 1)
+        end
+
         it "shows zero for both due counts" do
           get root_path
-          expect(response.body).to include("0")
+          expect(response.body).to match(%r{In progress</dt>\s*<dd[^>]*>0</dd>})
+          expect(response.body).to match(%r{To review</dt>\s*<dd[^>]*>0</dd>})
         end
       end
 
