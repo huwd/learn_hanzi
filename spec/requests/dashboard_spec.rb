@@ -77,20 +77,32 @@ RSpec.describe "Dashboard", type: :request do
         end
       end
 
-      context "with cards due" do
+      context "with an overdue learning card" do
         before do
           create(:user_learning, user: user, state: "learning",
                  next_due: 1.day.ago, last_interval: 3)
         end
 
-        it "shows the number of cards due" do
+        it "shows 1 in the in-progress due count" do
+          get root_path
+          expect(response.body).to include("1")
+        end
+      end
+
+      context "with a mastered card due for review" do
+        before do
+          create(:user_learning, user: user, state: "mastered",
+                 next_due: 1.day.ago, last_interval: 30)
+        end
+
+        it "shows 1 in the to-review count" do
           get root_path
           expect(response.body).to include("1")
         end
       end
 
       context "with no cards due" do
-        it "shows zero cards due" do
+        it "shows zero for both due counts" do
           get root_path
           expect(response.body).to include("0")
         end
