@@ -23,6 +23,7 @@ class TagsController < ApplicationController
     )
 
     subtree_learnings = Current.user.user_learnings
+                                    .distinct
                                     .joins(dictionary_entry: :dictionary_entry_tags)
                                     .where(dictionary_entry_tags: { tag_id: @entry_tag.subtree_ids })
     @learning_due_count = subtree_learnings.overdue_learning.count
