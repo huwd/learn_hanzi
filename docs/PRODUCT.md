@@ -33,14 +33,29 @@ Over time: other self-learners who want a clear, data-backed view of what they k
 
 ## Current Capabilities
 
-Based on the current codebase, the app already supports:
+As of April 2026, the app supports:
 
-- Dictionary entries with meanings and sources
-- Hierarchical tags (e.g., HSK level → lesson)
-- Import pipelines for dictionary + HSK tagging
-- Import/migration of Anki review history into app models (so the app can reason over review events)
+**Data layer**
+- Dictionary entries with meanings, sources, and pinyin
+- Hierarchical tags (HSK level → lesson) with full import pipeline
+- Import/migration of Anki review history into `UserLearning` and `ReviewLog`
+- SUBTLEX-CH frequency data (in progress — #206)
 
-In other words: there’s already enough data to bootstrap a meaningful “learning log” even before adding in-app exercises.
+**Learning loop**
+- User authentication (Rails 8 built-in)
+- HSK-tagged vocabulary browsing
+- In-app learn flow (`/learn`) and review loop (`/review`) with SM-2 scheduling
+- `UserLearning` states: new → learning → mastered → suspended
+- Data export (async — #209)
+
+**Infrastructure**
+- Dual SQLite database setup (primary + read-only Anki connection)
+- Solid Queue for background jobs
+- Anki collection import via file upload
+
+In other words: there’s a working learning log and SRS review loop. The next
+phase disaggregates the single ease signal into independently trackable skill
+axes (#222) and builds practice modes that generate richer signals.
 
 ## Feature Ideas
 
@@ -217,6 +232,46 @@ This likely requires in-app testing (not only Anki imports) so each axis can be 
 - Confusion drills: distinguish a target character from commonly confused peers
 - Mnemonic/decomposition review: explain or reconstruct why a character differs from a similar one
 
+## Issue Map
+
+Feature ideas above are tracked as GitHub issues. Key issues by layer:
+
+**Layer 1 — Data enrichment**
+- #206 — SUBTLEX-CH word frequency import
+- #224 — Pronunciation audio playback
+- #225 — Stroke order diagrams (makemeahanzi)
+- #226 — Multi-source dictionary hierarchy (Wiktionary, Unihan, CC-CEDICT reordering)
+- #146 — Radical breakdown in learn panel
+- #142 — Example sentences (Tatoeba) — may be superseded by #223
+
+**Layer 2 — Precision skill tracking**
+- #222 — Multi-axis skill architecture (the foundational dependency for all below)
+
+**Layer 3 — Practice modes**
+- #219 — Stable fixed-height flashcard UI
+- #223 — Graded reading with click-to-reveal
+- #227 — Remedial learning for struggling characters
+- #228 — Voice input and pronunciation assessment
+- #229 — HSK grammar point assessment
+
+**Layer 4 — AI-powered contextual practice**
+- #220 — MCP server exposing learning state
+- #230 — Voice-to-voice dialogue conversations
+- #231 — Branching interactive narrative mode
+
+**Layer 5 — Social and institutional**
+- #232 — Teacher mode with student progress visibility
+
+**Infrastructure**
+- #221 — Playwright MCP for Claude frontend debugging
+- #122/#123 — Kamal deployment and preview environments
+- #128 — Error tracking and structured logging
+
+See `docs/product-review-2026-04.md` for a full coherence assessment,
+sequencing recommendations, and identified gaps.
+
+---
+
 ## What We're Not Building
 
 - A general-purpose “everything app” for Chinese (keep scope anchored to Hanzi/vocab learning)
@@ -228,11 +283,26 @@ This likely requires in-app testing (not only Anki imports) so each axis can be 
 
 - What is the canonical definition of “mastered” per entry, and how should it decay over time?
 - How should multiple axes roll up into a single overall state (if at all)?
-- Which axes matter most for the first version (keep it small)?
-- What exercise types are highest leverage and simplest to implement?
+- How does SM-2 scheduling adapt when knowledge is tracked per axis rather than
+  per word? Does each axis maintain an independent SRS schedule? (Tracked in
+  #222; warrants a new ADR superseding `docs/adr/0002-review-modalities.md`.)
 - How should we handle polysemy and multiple readings (multiple meanings/pinyin)?
-- Privacy: do we want any sharing by default, and what is opt-in?
-- LLM integrations (later): what inputs/outputs are acceptable, and how do we evaluate usefulness?
+- Privacy: do we want any sharing by default, and what is opt-in? (Teacher mode
+  in #232 establishes the student-controls-consent model as default.)
+- LLM integrations: which provider, how are prompts managed, what are the cost
+  guardrails? (Unresolved — a prerequisite infrastructure issue for #227, #229,
+  #230, #231.)
+- Content quality: what is the review/approval workflow for AI-generated grammar
+  exercises (#229) and narrative stories (#231)?
+
+**Resolved:**
+- Which axes matter for the first version — answered by #222: character
+  recognition, meaning, pronunciation, context production, grammar recognition,
+  grammar production, listening comprehension.
+- What exercise types are highest leverage — answered by #223 (reading), #228
+  (voice), #229 (grammar), #230 (dialogue), #231 (narrative).
+- Sharing model — answered by #232: student-initiated consent, granular
+  permissions, revocable at any time.
 
 ### Long-term “knowledge as data” ideas
 
