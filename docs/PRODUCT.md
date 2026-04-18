@@ -242,7 +242,7 @@ Feature ideas above are tracked as GitHub issues. Key issues by layer:
 - #225 — Stroke order diagrams (makemeahanzi)
 - #226 — Multi-source dictionary hierarchy (Wiktionary, Unihan, CC-CEDICT reordering)
 - #146 — Radical breakdown in learn panel
-- #142 — Example sentences (Tatoeba) — may be superseded by #223
+- #142 — Example sentences (Tatoeba) — **closed, superseded by #223**
 
 **Layer 2 — Precision skill tracking**
 - #222 — Multi-axis skill architecture (the foundational dependency for all below)
@@ -275,6 +275,109 @@ Feature ideas above are tracked as GitHub issues. Key issues by layer:
 
 See `docs/product-review-2026-04.md` for a full coherence assessment,
 sequencing recommendations, and identified gaps.
+
+---
+
+## Delivery Priorities
+
+Issues are sequenced by dependency and risk, not by desirability. The core
+principle: **don't build consumers before foundations**. The gating rules that
+determine the order:
+
+- **#222 must ship before any Layer 3+ feature** — `skill_masteries` and
+  `skill_review_events` are prerequisites for all contextual practice and skill
+  tracking. Building without them produces orphaned data.
+- **#235 (LLM) must ship before #227, #229, #230, #231** — shared prompt
+  management, cost controls, and error handling must exist before individual
+  features call the API independently.
+- **#236 (audio) must ship before #228, #230, #231** — shared Azure integration
+  and graceful degradation patterns must exist before individual audio features.
+- **#223 + #229 must ship and produce data before #230 + #231** — voice
+  dialogue and narrative rest on an unvalidated assumption that contextual
+  practice drives measurable skill improvement. Validate at smaller scale first.
+
+### Phase 0 — Immediate
+
+Quick wins and developer tooling. Can start now.
+
+| Issue | Description |
+|---|---|
+| #215 | Fix keyboard shortcuts in learn/review confirmation loop (bug) |
+| #221 | Playwright MCP for Claude frontend debugging |
+
+### Phase 1 — Foundations
+
+Must be substantially complete before Phase 3 begins. #222 is the hard
+blocker; the rest of this phase can run in parallel with each other and with
+Phase 2.
+
+| Issue | Description |
+|---|---|
+| #222 | Multi-axis skill architecture — the central prerequisite |
+| #233 | Learner progress dashboard — makes skill data visible |
+| #234 | Onboarding flow — makes the system usable for the first time |
+| #235 | LLM provider infrastructure and prompt management |
+| #236 | Audio platform infrastructure (Azure Cognitive Services) |
+| #237 | SRS scheduling evolution + ADR 0003 (supersedes ADR 0002) |
+
+### Phase 2 — Data enrichment
+
+Can run in parallel with Phase 1 after #222 ships. No inter-dependencies
+within this phase except the shared makemeahanzi import (#225 + #146).
+
+| Issue | Description |
+|---|---|
+| #226 | Multi-source dictionary hierarchy (CC-CEDICT de-prioritisation + Wiktionary) |
+| #224 | Pronunciation audio playback |
+| #225 + #146 | Stroke order + radical breakdown (shared makemeahanzi import) |
+| #206 | SUBTLEX-CH word frequency data |
+
+### Phase 3 — Practice modes
+
+Requires Phase 1 complete. Issues within this phase are largely independent
+and can be parallelised.
+
+| Issue | Description |
+|---|---|
+| #219 | Stable fixed-height flashcard UI |
+| #223 | Graded reading with click-to-reveal |
+| #227 | Remedial learning for struggling characters |
+| #229 | HSK grammar point assessment |
+| #228 | Voice input and pronunciation assessment (Phase 1: phonetics only) |
+
+### Phase 4 — AI-powered contextual practice
+
+Requires Phase 3 to have shipped and produced observable skill signal.
+#230 and #231 are explicitly contingent on #223 and #229 validating the
+engagement model.
+
+| Issue | Description |
+|---|---|
+| #220 | MCP server exposing learning state |
+| #238 | Content quality review pipeline (prerequisite for #229 Phase 2 + #231) |
+| #230 | Voice-to-voice dialogue (contingent on #223 + #229 data) |
+| #231 | Branching interactive narrative (contingent on #223 data) |
+
+### Phase 5 — Institutional
+
+Requires a stable, proven core loop.
+
+| Issue | Description |
+|---|---|
+| #232 | Teacher mode with student progress visibility and exercise commissioning |
+
+### Parallel — Deployment pipeline
+
+Independent of the feature phases; can proceed at any point. The hosting spike
+is the prerequisite for the remaining items in this track.
+
+| Issue | Description |
+|---|---|
+| Hosting spike | Decision required for #122, #123, #129 |
+| #122 | Configure Kamal 2 for production deployment |
+| #123 | Automated preview deployments for pull requests |
+| #128 | Error tracking and structured logging |
+| #129 | SQLite → Postgres (conditional on hosting decision) |
 
 ---
 
