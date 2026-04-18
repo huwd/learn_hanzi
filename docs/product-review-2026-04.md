@@ -88,49 +88,44 @@ implications, and how Anki-sourced data seeds the initial axis records.
 
 ## What is missing
 
-### 1. Learner progress dashboard (no issue exists)
+### 1. Learner progress dashboard → #233
 
 The most significant gap. #232 (teacher mode) describes a rich student view,
 but there is no issue for the student's own dashboard showing multi-axis mastery,
 trajectory over time, knowledge gaps toward HSK target, and struggling areas.
 The data from #222 has nowhere to surface for the learner themselves.
 
-**Recommended:** create this issue before any Layer 3+ features ship. It
-establishes the "output" that all skill tracking is building toward.
-
-### 2. Onboarding (no issue exists)
+### 2. Onboarding → #234
 
 No issue covers how a new user starts: setting target HSK level, connecting
 Anki, understanding what the system is doing. With this many features, onboarding
 will determine whether the system is usable at all for anyone beyond the
 original author.
 
-### 3. LLM / AI infrastructure (no issue exists)
+### 3. LLM / AI infrastructure → #235
 
 Six issues (#227, #229, #230, #231, and indirectly #220 and #232) depend on
 calling a language model. No issue covers: which model, how prompts are managed,
 cost controls, rate limiting, or API failure handling. This is a hidden
 dependency touching the majority of the advanced feature set.
 
-**Recommended:** one infrastructure issue covering LLM provider choice, prompt
-management strategy, cost guardrails, and graceful degradation.
-
-### 4. Audio platform infrastructure (no issue exists)
+### 4. Audio platform infrastructure → #236
 
 Azure Cognitive Services is recommended across #228 (pronunciation assessment),
 #230 (TTS for dialogue), and #231 (TTS narration). No issue covers account
 setup, key management, rate limiting, or the billing model. Should be one
 infrastructure issue that precedes the first audio feature.
 
-### 5. SRS scheduling evolution (underspecified in #222)
+### 5. SRS scheduling evolution → #237
 
 #222 disaggregates skill tracking but doesn't fully address how the scheduling
 algorithm adapts per axis. The SM-2 engine currently operates on a single
 `UserLearning` record. With multi-axis, does each axis maintain its own SRS
 schedule? Do they share one? This is the core of the existing app and the
-decision warrants its own ADR.
+decision warrants its own ADR. #237 resolves this and produces ADR 0003
+superseding ADR 0002.
 
-### 6. Content quality and moderation pipeline (no issue exists)
+### 6. Content quality and moderation pipeline → #238
 
 #229 (grammar exercises) and #231 (narrative stories) both produce AI-generated
 content shown to users. There is no review/approval workflow. This is a quality
@@ -141,36 +136,24 @@ linguistically incorrect.
 
 ## What to revise
 
-### #142 (Tatoeba sentences) may be superseded by #223 (graded reading)
+### #142 — closed as superseded by #223 ✓
 
-Both issues address "Chinese text in context with click-to-reveal." Tatoeba
-sentences are an appropriate *content source* for graded reading texts rather
-than a separate parallel feature. Consider closing #142 as superseded and
-listing Tatoeba as a candidate corpus in #223.
+Tatoeba is now listed as a content source candidate in #223. #142 closed.
 
-### #146 (radical breakdown) and #225 (stroke order) share a dataset
+### #146 and #225 — shared makemeahanzi import pipeline ✓
 
-Both issues note that makemeahanzi's `dictionary.txt` contains decomposition
-and radical data. These should share a single import task. The user-facing
-features can remain separate issues, but the data pipeline should be one Rake
-task, not two.
+Both issues updated to mandate a single shared `rake makemeahanzi:download`
+task. `rake radicals:import` (#146) and `rake stroke_order:import` (#225)
+consume from that shared download.
 
-### #222 is an invisible hard dependency
+### #222 hard dependency — prerequisite notices added ✓
 
-Every contextual practice issue (#223 onwards) writes `skill_review_events`
-that only make sense if #222's schema exists. If these issues are picked up
-independently or in parallel, they will produce orphaned data or require
-retroactive schema work. #222 must be explicitly marked as a prerequisite and
-shipped before any Layer 3+ features.
+Explicit prerequisite blocks added to #223, #227, #228, #229, #230, #231.
 
-### #230 and #231 may be premature without validating simpler modes
+### #230 and #231 — sequencing contingency notes added ✓
 
-Voice-to-voice dialogue and interactive narrative are the most ambitious features
-in the set. They rest on an assumption — that the engagement model works — that
-the simpler features (#223 reading, #229 grammar) have not yet validated. A
-sequencing rule worth establishing: prove reading and grammar exercises generate
-meaningful skill data before committing engineering effort to dialogue and
-narrative.
+Both issues updated to state they must not begin until #223 and #229 have
+shipped and produced observable skill signal.
 
 ---
 

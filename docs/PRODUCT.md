@@ -262,8 +262,14 @@ Feature ideas above are tracked as GitHub issues. Key issues by layer:
 **Layer 5 — Social and institutional**
 - #232 — Teacher mode with student progress visibility
 
-**Infrastructure**
+**Infrastructure and foundations**
 - #221 — Playwright MCP for Claude frontend debugging
+- #233 — Learner progress dashboard (prerequisite for all skill tracking to be visible)
+- #234 — Onboarding flow for new users
+- #235 — LLM provider infrastructure and prompt management (prerequisite for #227, #229, #230, #231)
+- #236 — Audio platform infrastructure — Azure Cognitive Services (prerequisite for #228, #230, #231)
+- #237 — SRS scheduling evolution for multi-axis architecture + ADR 0003
+- #238 — Content quality review pipeline for AI-generated content
 - #122/#123 — Kamal deployment and preview environments
 - #128 — Error tracking and structured logging
 
