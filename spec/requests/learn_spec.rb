@@ -256,6 +256,14 @@ RSpec.describe "Learn", type: :request do
         get learn_review_path
         expect(response.body).to include(new_card.dictionary_entry.text)
       end
+
+      it "renders ease buttons with data-ease attributes for keyboard shortcuts" do
+        get learn_review_path
+        expect(response.body).to include('data-ease="1"')
+        expect(response.body).to include('data-ease="2"')
+        expect(response.body).to include('data-ease="3"')
+        expect(response.body).to include('data-ease="4"')
+      end
     end
 
     context "when authenticated without an active review phase" do
