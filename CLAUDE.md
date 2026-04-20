@@ -2,15 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Browser automation (Playwright MCP)
+## Frontend debugging with Playwright MCP
 
-`.claude/settings.json` wires up `@playwright/mcp` so Claude can navigate the running app, take screenshots, read the DOM, and check JS console output. Before using it in a session, ensure Chromium is installed:
+`.claude/settings.json` wires up `@playwright/mcp` so Claude can navigate the running app, take screenshots, read the DOM, and check JS console output.
+
+### One-time setup
 
 ```bash
 npx playwright install chromium
 ```
 
-The Rails dev server must be running (`bin/rails server`) for any browser navigation to work.
+### Workflow
+
+1. Start the dev server: `bin/rails server`
+2. **Authenticate first** — navigate to `http://localhost:3000/sign_in` and complete the OIDC login (Pocket ID on the NAS). The session cookie persists for subsequent Playwright navigations in the same browser context.
+3. Navigate to the relevant route and use `browser_take_screenshot`, `browser_snapshot` (accessibility tree), or `browser_console_messages` to inspect state.
+
+### Key routes for UI verification
+
+| Flow | Routes |
+|---|---|
+| Learn | `/learn` → `/learn/card` → `/learn/review` → `/learn/summary` |
+| Review | `/review` → `/review/card` → `/review/summary` |
+| History | `/review/history` |
+
+### Stimulus controllers
+
+- `card_flip_controller.js` — handles card reveal and keyboard shortcuts (1–4 ease keys) on both review flows
+- `learn_card_controller.js` — controls the learn card presentation
+- `collapsible_controller.js` — show/hide toggles (e.g. supplemental meanings)
+- `dropdown_controller.js` — dropdown menus
+
+After any frontend change: navigate to the affected route, take a screenshot, and check `browser_console_messages` for JS errors before marking the task complete.
 
 ## Commands
 
