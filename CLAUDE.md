@@ -19,10 +19,7 @@ When upgrading the version in `.claude/settings.json`, re-run this command to ke
 ### Workflow
 
 1. Start the dev server: `bin/rails server`
-2. **Authenticate first (headless-safe)** — `@playwright/mcp` runs headless, so do not rely on manually completing OIDC in a visible browser window. Use one of these approaches instead:
-   - Reuse a pre-authenticated browser/storage state if one has already been prepared for local debugging.
-   - Or navigate to `http://localhost:3000/sign_in` with MCP and drive the OIDC flow via MCP actions, validating progress with `browser_take_screenshot`, `browser_snapshot`, and `browser_console_messages`.
-   The authenticated session cookie persists for subsequent Playwright navigations in the same browser context.
+2. **Authenticate first** — `@playwright/mcp` runs in headed mode so a browser window is visible. Navigate to `http://localhost:3000/sign_in` and complete the OIDC login in that window. The session cookie then persists for subsequent Playwright navigations in the same browser context.
 3. Navigate to the relevant route and use `browser_take_screenshot`, `browser_snapshot` (accessibility tree), or `browser_console_messages` to inspect state.
 
 ### Key routes for UI verification
