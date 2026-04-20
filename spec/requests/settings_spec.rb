@@ -50,12 +50,12 @@ RSpec.describe "Settings", type: :request do
       context "with invalid params" do
         it "re-renders the form when session_size is out of range" do
           patch settings_path, params: { user: { session_size: 0, new_cards_per_session: 5 } }
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
 
         it "re-renders the form when new_cards_per_session exceeds session_size" do
           patch settings_path, params: { user: { session_size: 5, new_cards_per_session: 10 } }
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end

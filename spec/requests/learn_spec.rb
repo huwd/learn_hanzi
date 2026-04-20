@@ -304,7 +304,7 @@ RSpec.describe "Learn", type: :request do
     context "with an invalid ease rating" do
       it "returns unprocessable content" do
         post learn_review_path, params: { ease: 5 }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end
