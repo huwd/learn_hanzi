@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Frontend debugging with Playwright MCP
 
-`.claude/settings.json` wires up `@playwright/mcp` so Claude can navigate the running app, take screenshots, read the DOM, and check JS console output.
+`.mcp.json` wires up `@playwright/mcp` so Claude can navigate the running app, take screenshots, read the DOM, and check JS console output.
 
 ### One-time setup
 
