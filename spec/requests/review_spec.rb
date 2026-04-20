@@ -279,7 +279,7 @@ RSpec.describe "Review", type: :request do
       context "with an invalid ease rating" do
         it "returns unprocessable content" do
           post review_card_path, params: { ease: 99 }
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
         end
       end
     end

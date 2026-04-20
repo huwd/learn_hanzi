@@ -8,7 +8,7 @@ class SettingsController < ApplicationController
     if @user.update(settings_params)
       redirect_to settings_path, notice: "Settings saved."
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 
