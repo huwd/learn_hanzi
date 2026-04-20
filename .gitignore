@@ -40,4 +40,4 @@
 /coverage/*
 
 /.claude.env
-.claude/
+.claude/settings.local.json
