@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Browser automation (Playwright MCP)
+
+`.claude/settings.json` wires up `@playwright/mcp` so Claude can navigate the running app, take screenshots, read the DOM, and check JS console output. Before using it in a session, ensure Chromium is installed:
+
+```bash
+npx playwright install chromium
+```
+
+The Rails dev server must be running (`bin/rails server`) for any browser navigation to work.
+
 ## Commands
 
 ```bash
