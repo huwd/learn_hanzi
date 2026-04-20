@@ -8,9 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### One-time setup
 
+Install the Chromium build that matches the pinned `@playwright/mcp` version:
+
 ```bash
-npx playwright install chromium
+npx -p @playwright/mcp@0.0.70 playwright install chromium
 ```
+
+When upgrading the version in `.claude/settings.json`, re-run this command to keep the browser in sync.
 
 ### Workflow
 
