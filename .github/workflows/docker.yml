@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+env:
+  REGISTRY: registry.huwdiprose.co.uk
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -29,10 +32,10 @@ jobs:
               client_max_body_size 0;
 
               location / {
-                  proxy_pass              https://registry.huwdiprose.co.uk;
+                  proxy_pass              https://${{ env.REGISTRY }};
                   proxy_ssl_server_name   on;
-                  proxy_ssl_name          registry.huwdiprose.co.uk;
-                  proxy_set_header        Host                    registry.huwdiprose.co.uk;
+                  proxy_ssl_name          ${{ env.REGISTRY }};
+                  proxy_set_header        Host                    ${{ env.REGISTRY }};
                   proxy_set_header        CF-Access-Client-Id     "${CF_ACCESS_CLIENT_ID}";
                   proxy_set_header        CF-Access-Client-Secret "${CF_ACCESS_CLIENT_SECRET}";
                   proxy_request_buffering off;
