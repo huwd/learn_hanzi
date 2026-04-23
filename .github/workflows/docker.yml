@@ -14,10 +14,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+            -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
+
+      - name: Start cloudflared TCP proxy
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          cloudflared access tcp \
+            --hostname registry.huwdiprose.co.uk \
+            --url localhost:5000 &
+          sleep 3
+
       - name: Log in to private registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          registry: registry.huwdiprose.co.uk
+          registry: localhost:5000
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
@@ -25,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
-          images: registry.huwdiprose.co.uk/learn_hanzi
+          images: localhost:5000/learn_hanzi
           tags: |
             type=sha,prefix=,format=short
             type=raw,value=latest
