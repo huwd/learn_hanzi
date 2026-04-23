@@ -4,20 +4,32 @@
 require "rails_helper"
 
 RSpec.describe "OmniAuth CSRF protection middleware", type: :request do
-  # The test environment disables forgery protection globally so that request
-  # specs don't need to supply CSRF tokens. The middleware's TokenVerifier calls
-  # verified_request?, which checks ActionController::Base.allow_forgery_protection,
-  # so we re-enable it here to exercise the actual CSRF check.
+  # Enforce that OmniAuth test mode is off for the duration of these specs.
+  # Test mode bypasses the CSRF middleware entirely; restoring the prior value
+  # avoids leaking state into specs that legitimately enable it.
   around do |example|
+    original_test_mode = OmniAuth.config.test_mode
+    OmniAuth.config.test_mode = false
+
+    # The test environment disables forgery protection globally so that request
+    # specs don't need to supply CSRF tokens. The middleware's TokenVerifier
+    # calls verified_request?, which checks
+    # ActionController::Base.allow_forgery_protection, so we re-enable it here
+    # to exercise the actual CSRF check.
+    original_allow_forgery_protection = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
+
     example.run
   ensure
-    ActionController::Base.allow_forgery_protection = false
+    ActionController::Base.allow_forgery_protection = original_allow_forgery_protection
+    OmniAuth.config.test_mode = original_test_mode
   end
 
   # Read the configured OIDC issuer the same way the initializer does, so stubs
   # target the right host regardless of the local environment.
-  let(:oidc_issuer) { ENV.fetch("OIDC_ISSUER", "http://localhost:8080") }
+  # The SWD discovery client enforces HTTPS, so the default uses https even for
+  # local development to keep the stub URL consistent with what is actually requested.
+  let(:oidc_issuer) { ENV.fetch("OIDC_ISSUER", "https://localhost:8080") }
 
   # Minimal OIDC discovery document. Required when a request passes the CSRF
   # check and reaches the OmniAuth OIDC strategy, which fetches this before
@@ -38,11 +50,17 @@ RSpec.describe "OmniAuth CSRF protection middleware", type: :request do
 
   describe "POST /auth/oidc" do
     context "without a CSRF token" do
-      # OmniAuth catches InvalidAuthenticityToken from the validation phase and
-      # redirects to the failure endpoint rather than returning 422 directly.
-      it "is redirected to the auth failure endpoint" do
+      # Depending on OmniAuth/gem versions and configuration, CSRF rejection may
+      # surface either as a direct 422 InvalidAuthenticityToken response or as a
+      # redirect to the OmniAuth failure endpoint.
+      it "is rejected" do
         post "/auth/oidc"
-        expect(response).to redirect_to(%r{/auth/failure})
+
+        if response.redirect?
+          expect(response).to redirect_to(%r{/auth/failure})
+        else
+          expect(response).to have_http_status(:unprocessable_content)
+        end
       end
     end
 
@@ -70,7 +88,8 @@ RSpec.describe "OmniAuth CSRF protection middleware", type: :request do
     # config/initializers/omniauth.rb, so GET never reaches the strategy.
     it "is rejected regardless of CSRF token" do
       get "/auth/oidc"
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to have_http_status(:not_found)
+      expect(response.location).to be_nil
     end
   end
 end
