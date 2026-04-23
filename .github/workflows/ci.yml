@@ -122,7 +122,7 @@ jobs:
 
   build-and-push:
     needs: [scan_ruby, scan_js, lint, test, analyze]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci/diagnose-registry-403'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -131,95 +131,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Install nginx
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends nginx
-
-      - name: Start CF-Access registry proxy
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-        run: |
-          # nginx reverse-proxies HTTP from localhost:5000 to the HTTPS registry,
-          # injecting CF-Access service token headers so Cloudflare Access accepts
-          # the request. cloudflared access tcp cannot do this because it forwards
-          # raw TCP bytes — Docker's plain HTTP reaches the HTTPS origin and is reset.
-          REGISTRY="${{ vars.REGISTRY }}"
-          if [ -z "$REGISTRY" ]; then
-            echo "::error::REGISTRY repository variable is not set" >&2
-            exit 1
-          fi
-
-          cat > /tmp/registry-proxy.conf <<NGINX
-          server {
-              listen 127.0.0.1:5000;
-              client_max_body_size 0;
-
-              location / {
-                  proxy_pass              https://${REGISTRY};
-                  proxy_ssl_server_name   on;
-                  proxy_ssl_name          ${REGISTRY};
-                  proxy_http_version      1.1;
-                  proxy_set_header        Connection              "";
-                  proxy_set_header        Host                    ${REGISTRY};
-                  proxy_set_header        CF-Access-Client-Id     "${CF_ACCESS_CLIENT_ID}";
-                  proxy_set_header        CF-Access-Client-Secret "${CF_ACCESS_CLIENT_SECRET}";
-                  proxy_request_buffering off;
-                  proxy_buffering         off;
-                  proxy_read_timeout      300s;
-                  proxy_send_timeout      300s;
-              }
-          }
-          NGINX
-
-          sudo cp /tmp/registry-proxy.conf /etc/nginx/conf.d/registry-proxy.conf
-          sudo rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
-          sudo nginx -t
-          sudo systemctl reload-or-restart nginx
-
-          for i in $(seq 1 30); do
-            if bash -c '</dev/tcp/127.0.0.1/5000' 2>/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "::error::Timed out waiting for nginx to bind localhost:5000" >&2
-          exit 1
-
-      - name: Diagnose registry reachability
-        env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-        run: |
-          REGISTRY="${{ vars.REGISTRY }}"
-          echo "=== 1. Through nginx (what Docker will hit) ==="
-          curl -sS -o /tmp/a.body -D /tmp/a.hdr -w "status=%{http_code}\n" http://localhost:5000/v2/ || true
-          echo "--- response headers (names only) ---"
-          awk -F: '/^[A-Za-z-]+:/ {print $1}' /tmp/a.hdr
-          echo "--- body (first 500 chars) ---"
-          head -c 500 /tmp/a.body; echo
-
-          echo "=== 2. Direct to origin from runner, NO CF headers (should 403) ==="
-          curl -sS -o /dev/null -w "status=%{http_code}\n" "https://${REGISTRY}/v2/" || true
-
-          echo "=== 3. Direct to origin from runner, WITH CF headers (should 401 Docker challenge) ==="
-          curl -sS -o /tmp/c.body -D /tmp/c.hdr -w "status=%{http_code}\n" \
-            -H "CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}" \
-            -H "CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}" \
-            "https://${REGISTRY}/v2/" || true
-          echo "--- response headers (names only) ---"
-          awk -F: '/^[A-Za-z-]+:/ {print $1}' /tmp/c.hdr
-          echo "--- body (first 500 chars) ---"
-          head -c 500 /tmp/c.body; echo
-
-          echo "=== 4. nginx error log ==="
-          sudo tail -n 50 /var/log/nginx/error.log || true
+      - name: Enroll runner in Cloudflare One via WARP
+        uses: Boostport/setup-cloudflare-warp@427fc9c04f371e4e0338701954d495c669ae7885 # v1.17.1
+        with:
+          organization: ${{ vars.CLOUDFLARE_TEAM }}
+          auth_client_id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          auth_client_secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
       - name: Log in to private registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          registry: localhost:5000
+          registry: ${{ vars.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
@@ -227,7 +149,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
-          images: localhost:5000/learn_hanzi
+          images: ${{ vars.REGISTRY }}/learn_hanzi
           tags: |
             type=sha,prefix=,format=short
             type=raw,value=latest
