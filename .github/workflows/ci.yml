@@ -122,7 +122,7 @@ jobs:
 
   build-and-push:
     needs: [scan_ruby, scan_js, lint, test, analyze]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ci/diagnose-registry-403'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -186,6 +186,35 @@ jobs:
           done
           echo "::error::Timed out waiting for nginx to bind localhost:5000" >&2
           exit 1
+
+      - name: Diagnose registry reachability
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          REGISTRY="${{ vars.REGISTRY }}"
+          echo "=== 1. Through nginx (what Docker will hit) ==="
+          curl -sS -o /tmp/a.body -D /tmp/a.hdr -w "status=%{http_code}\n" http://localhost:5000/v2/ || true
+          echo "--- response headers (names only) ---"
+          awk -F: '/^[A-Za-z-]+:/ {print $1}' /tmp/a.hdr
+          echo "--- body (first 500 chars) ---"
+          head -c 500 /tmp/a.body; echo
+
+          echo "=== 2. Direct to origin from runner, NO CF headers (should 403) ==="
+          curl -sS -o /dev/null -w "status=%{http_code}\n" "https://${REGISTRY}/v2/" || true
+
+          echo "=== 3. Direct to origin from runner, WITH CF headers (should 401 Docker challenge) ==="
+          curl -sS -o /tmp/c.body -D /tmp/c.hdr -w "status=%{http_code}\n" \
+            -H "CF-Access-Client-Id: ${CF_ACCESS_CLIENT_ID}" \
+            -H "CF-Access-Client-Secret: ${CF_ACCESS_CLIENT_SECRET}" \
+            "https://${REGISTRY}/v2/" || true
+          echo "--- response headers (names only) ---"
+          awk -F: '/^[A-Za-z-]+:/ {print $1}' /tmp/c.hdr
+          echo "--- body (first 500 chars) ---"
+          head -c 500 /tmp/c.body; echo
+
+          echo "=== 4. nginx error log ==="
+          sudo tail -n 50 /var/log/nginx/error.log || true
 
       - name: Log in to private registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
