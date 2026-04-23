@@ -185,13 +185,6 @@ jobs:
           echo "::error::Timed out waiting for nginx to bind localhost:5000" >&2
           exit 1
 
-      - name: Debug proxy response
-        run: |
-          echo "--- Response from /v2/ ---"
-          curl -si http://localhost:5000/v2/ | head -30
-          echo "--- nginx config ---"
-          sudo cat /etc/nginx/conf.d/registry-proxy.conf
-
       - name: Log in to private registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
