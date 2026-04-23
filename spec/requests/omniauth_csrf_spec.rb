@@ -25,11 +25,18 @@ RSpec.describe "OmniAuth CSRF protection middleware", type: :request do
     OmniAuth.config.test_mode = original_test_mode
   end
 
-  # Read the configured OIDC issuer the same way the initializer does, so stubs
-  # target the right host regardless of the local environment.
-  # The SWD discovery client enforces HTTPS, so the default uses https even for
-  # local development to keep the stub URL consistent with what is actually requested.
-  let(:oidc_issuer) { ENV.fetch("OIDC_ISSUER", "https://localhost:8080") }
+  # Read the configured OIDC issuer the same way the initializer does, so the
+  # discovery document's issuer field matches what OmniAuth validates against.
+  let(:oidc_issuer) { ENV.fetch("OIDC_ISSUER", "http://localhost:8080") }
+
+  # SWD (the discovery client used by omniauth-openid-connect) enforces HTTPS
+  # when fetching the OpenID configuration document, so the WebMock stub must
+  # target the HTTPS URL even when the configured issuer uses HTTP.
+  let(:oidc_discovery_url) do
+    uri = URI.parse("#{oidc_issuer}/.well-known/openid-configuration")
+    uri.scheme = "https"
+    uri.to_s
+  end
 
   # Minimal OIDC discovery document. Required when a request passes the CSRF
   # check and reaches the OmniAuth OIDC strategy, which fetches this before
@@ -66,7 +73,7 @@ RSpec.describe "OmniAuth CSRF protection middleware", type: :request do
 
     context "with a valid CSRF token" do
       before do
-        stub_request(:get, "#{oidc_issuer}/.well-known/openid-configuration")
+        stub_request(:get, oidc_discovery_url)
           .to_return(status: 200, body: oidc_discovery,
                      headers: { "Content-Type" => "application/json" })
       end
