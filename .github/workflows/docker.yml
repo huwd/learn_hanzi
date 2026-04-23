@@ -16,8 +16,10 @@ jobs:
 
       - name: Install cloudflared
         run: |
-          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
+          curl --fail --silent --show-error --location \
+            https://github.com/cloudflare/cloudflared/releases/download/2024.12.2/cloudflared-linux-amd64 \
+            --output /tmp/cloudflared
+          sudo install -m 0755 /tmp/cloudflared /usr/local/bin/cloudflared
 
       - name: Start cloudflared TCP proxy
         env:
@@ -27,7 +29,21 @@ jobs:
           cloudflared access tcp \
             --hostname registry.huwdiprose.co.uk \
             --url localhost:5000 &
-          sleep 3
+          CLOUDFLARED_PID=$!
+
+          for _ in $(seq 1 30); do
+            if ! kill -0 "$CLOUDFLARED_PID" 2>/dev/null; then
+              echo "cloudflared exited before the TCP proxy became ready" >&2
+              exit 1
+            fi
+            if bash -c '</dev/tcp/127.0.0.1/5000' 2>/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Timed out waiting for cloudflared TCP proxy on localhost:5000" >&2
+          exit 1
 
       - name: Log in to private registry
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
