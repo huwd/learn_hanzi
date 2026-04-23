@@ -25,13 +25,15 @@ jobs:
           # raw TCP bytes — Docker's plain HTTP reaches the HTTPS origin and is reset.
           cat > /tmp/registry-proxy.conf <<NGINX
           server {
-              listen 5000;
+              listen 127.0.0.1:5000;
               client_max_body_size 0;
 
               location / {
                   proxy_pass              https://${{ vars.REGISTRY }};
                   proxy_ssl_server_name   on;
                   proxy_ssl_name          ${{ vars.REGISTRY }};
+                  proxy_http_version      1.1;
+                  proxy_set_header        Connection              "";
                   proxy_set_header        Host                    ${{ vars.REGISTRY }};
                   proxy_set_header        CF-Access-Client-Id     "${CF_ACCESS_CLIENT_ID}";
                   proxy_set_header        CF-Access-Client-Secret "${CF_ACCESS_CLIENT_SECRET}";
