@@ -163,6 +163,7 @@ jobs:
       - name: Redeploy on Portainer
         env:
           PORTAINER_ACCESS_KEY: ${{ secrets.PORTAINER_ACCESS_KEY }}
+          PORTAINER_STACK_ID: ${{ vars.PORTAINER_STACK_ID }}
           REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
@@ -170,7 +171,7 @@ jobs:
           import base64, json, urllib.request, os
 
           PORTAINER = "http://gismo:9000"
-          STACK_ID = 0       # TODO: replace with the learn_hanzi Portainer stack ID
+          STACK_ID = int(os.environ["PORTAINER_STACK_ID"])
           ENDPOINT_ID = 2
 
           key = os.environ["PORTAINER_ACCESS_KEY"]
