@@ -119,3 +119,98 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@c10b8064de6f491fea524254123dbe5e09572f13 # v3
+
+  publish:
+    name: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [scan_ruby, scan_js, lint, test, analyze]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Allow insecure registry over Tailscale
+        run: |
+          echo '{"insecure-registries": ["gismo:5000"]}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl restart docker
+
+      - uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: gismo:5000
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Generate CalVer tag
+        id: calver
+        run: |
+          commit_date="$(TZ=UTC git show -s --format=%cd --date=format-local:%Y.%m.%d "$GITHUB_SHA")"
+          echo "tag=${commit_date}-$(echo "$GITHUB_SHA" | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        with:
+          context: .
+          push: true
+          tags: |
+            gismo:5000/learn_hanzi:latest
+            gismo:5000/learn_hanzi:${{ steps.calver.outputs.tag }}
+
+      - name: Redeploy on Portainer
+        env:
+          PORTAINER_ACCESS_KEY: ${{ secrets.PORTAINER_ACCESS_KEY }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          python3 << 'PYEOF'
+          import base64, json, urllib.request, os
+
+          PORTAINER = "http://gismo:9000"
+          STACK_ID = 0       # TODO: replace with the learn_hanzi Portainer stack ID
+          ENDPOINT_ID = 2
+
+          key = os.environ["PORTAINER_ACCESS_KEY"]
+          headers = {"X-API-Key": key, "Content-Type": "application/json"}
+
+          # Pull via 127.0.0.1:5000 — already in the daemon's insecure CIDR,
+          # avoids routing through Cloudflare entirely.
+          reg_auth = base64.b64encode(json.dumps({
+              "username": os.environ["REGISTRY_USERNAME"],
+              "password": os.environ["REGISTRY_PASSWORD"],
+              "serveraddress": "127.0.0.1:5000",
+          }).encode()).decode()
+          pull_req = urllib.request.Request(
+              f"{PORTAINER}/api/endpoints/{ENDPOINT_ID}/docker/images/create"
+              "?fromImage=127.0.0.1:5000/learn_hanzi&tag=latest",
+              data=b"",
+              headers={"X-API-Key": key, "X-Registry-Auth": reg_auth},
+              method="POST",
+          )
+          with urllib.request.urlopen(pull_req, timeout=120) as resp:
+              resp.read()
+          print("Image pulled via 127.0.0.1:5000")
+
+          # Fetch env vars stored in Portainer (source of truth for secrets)
+          req = urllib.request.Request(f"{PORTAINER}/api/stacks/{STACK_ID}", headers={"X-API-Key": key})
+          with urllib.request.urlopen(req, timeout=30) as resp:
+              stack = json.load(resp)
+
+          with open("docker-compose.yml") as f:
+              compose = f.read()
+
+          # Image is already on the host — no pull needed during stack update
+          payload = {"stackFileContent": compose, "env": stack["Env"], "pullImage": False}
+          req = urllib.request.Request(
+              f"{PORTAINER}/api/stacks/{STACK_ID}?endpointId={ENDPOINT_ID}",
+              data=json.dumps(payload).encode(),
+              headers=headers,
+              method="PUT",
+          )
+          with urllib.request.urlopen(req, timeout=120) as resp:
+              result = json.load(resp)
+              print(f"Redeployed learn_hanzi stack (status={result['Status']})")
+          PYEOF

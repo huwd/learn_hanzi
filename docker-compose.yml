@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/${GHCR_OWNER:?GHCR_OWNER is required}/learn_hanzi:${IMAGE_TAG:-latest}
+    image: 127.0.0.1:5000/learn_hanzi:${IMAGE_TAG:-latest}
     user: "${CONTAINER_UID:-1000}:${CONTAINER_GID:-1000}"
     restart: unless-stopped
     ports:
