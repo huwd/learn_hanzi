@@ -21,6 +21,32 @@ RSpec.describe "Settings", type: :request do
         get settings_path
         expect(response).to have_http_status(:ok)
       end
+
+      context "when settings differ from the advisor's recommendation" do
+        before do
+          create(:user_learning, user: user)
+          # user defaults: session_size 20, new_cards_per_session 5
+          # lapsed advisor (no review_logs) recommends: size 15, new_cap 0 — both differ
+        end
+
+        it "shows the advisor suggestion callout" do
+          get settings_path
+          expect(response.body).to include("Advisor suggestion")
+        end
+
+        it "includes an align-to-recommendation button" do
+          get settings_path
+          expect(response.body).to include("Align to recommendation")
+        end
+      end
+
+      context "when settings match the advisor's recommendation" do
+        # no user_learnings → empty profile recommends size 20, new_cap 5 — matches DB defaults
+        it "does not show the advisor suggestion callout" do
+          get settings_path
+          expect(response.body).not_to include("Advisor suggestion")
+        end
+      end
     end
   end
 
