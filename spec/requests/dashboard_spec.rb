@@ -75,6 +75,28 @@ RSpec.describe "Dashboard", type: :request do
           get root_path
           expect(response.body).to include(CGI.escapeHTML(LearningAdvisor::NARRATIVES[:lapsed]))
         end
+
+        context "when settings differ from the advisor's recommendation" do
+          # user defaults (20/5) differ from lapsed recommendation (15/0)
+          it "shows a nudge toward settings" do
+            get root_path
+            expect(response.body).to include("differ from")
+          end
+
+          it "links to the settings page in the nudge" do
+            get root_path
+            expect(response.body).to include("href=\"#{settings_path}\"")
+          end
+        end
+
+        context "when settings match the advisor's recommendation" do
+          before { user.update!(session_size: 15, new_cards_per_session: 0) }
+
+          it "does not show a settings nudge" do
+            get root_path
+            expect(response.body).not_to include("differ from")
+          end
+        end
       end
 
       context "with an overdue learning card" do
