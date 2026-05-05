@@ -44,6 +44,21 @@
         </div>
       </div>
 
+      <% if @advice.recommended_size != @user.session_size || @advice.recommended_new_cap != @user.new_cards_per_session %>
+        <div class="mt-6 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-4">
+          <p class="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Advisor suggestion</p>
+          <p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
+            Based on your recent learning patterns, we suggest session size
+            <strong><%= @advice.recommended_size %></strong> and
+            <strong><%= @advice.recommended_new_cap %></strong> new cards per session.
+          </p>
+          <%= button_to "Align to recommendation", settings_path,
+                method: :patch,
+                params: { user: { session_size: @advice.recommended_size, new_cards_per_session: @advice.recommended_new_cap } },
+                class: "text-sm font-semibold text-amber-800 dark:text-amber-200 underline hover:no-underline bg-transparent border-0 p-0 cursor-pointer" %>
+        </div>
+      <% end %>
+
       <div class="mt-8">
         <%= f.submit "Save settings",
               class: "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3

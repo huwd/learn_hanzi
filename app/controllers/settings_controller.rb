@@ -1,6 +1,7 @@
 class SettingsController < ApplicationController
   def show
-    @user = Current.user
+    @user   = Current.user
+    @advice = LearningAdvisor.classify(user: Current.user)
   end
 
   def update
@@ -8,6 +9,7 @@ class SettingsController < ApplicationController
     if @user.update(settings_params)
       redirect_to settings_path, notice: "Settings saved."
     else
+      @advice = LearningAdvisor.classify(user: Current.user)
       render :show, status: :unprocessable_content
     end
   end
