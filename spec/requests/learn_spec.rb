@@ -77,6 +77,31 @@ RSpec.describe "Learn", type: :request do
         end
       end
 
+      context "when new_cards_per_session is lower than the available new cards" do
+        before do
+          user.update!(new_cards_per_session: 2)
+          create_list(:user_learning, 4, user: user, state: "new")
+        end
+
+        it "caps the queue at new_cards_per_session" do
+          get learn_path
+          expect(request.session[:learn_queue].size).to eq(2)
+        end
+      end
+
+      context "when new_cards_per_session exceeds what the advisor would cap" do
+        before do
+          user.update!(new_cards_per_session: 8)
+          create_list(:user_learning, 8, user: user, state: "new")
+          new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1)
+        end
+
+        it "queues up to new_cards_per_session rather than the advisor's lower recommendation" do
+          get learn_path
+          expect(request.session[:learn_queue].size).to eq(8)
+        end
+      end
+
       context "when no new cards are available" do
         before { new_card.update!(state: "learning", next_due: 1.day.from_now, last_interval: 1) }
 
