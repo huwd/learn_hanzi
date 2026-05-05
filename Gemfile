@@ -31,7 +31,6 @@ gem "mission_control-jobs"
 gem "rubyzip", "~> 3.0"
 
 # Observability
-gem "sentry-ruby"
 gem "sentry-rails"
 gem "lograge"
 
