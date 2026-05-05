@@ -1,13 +1,10 @@
 class LearnController < ApplicationController
-  QUEUE_SIZE = 5
-
   before_action :require_learn_session, only: [ :show, :submit ]
   before_action :require_review_phase,  only: [ :review_show, :review_submit ]
   before_action :require_started_session, only: [ :summary ]
 
   def start
-    advice     = LearningAdvisor.classify(user: Current.user)
-    queue_size = advice.recommended_new_cap
+    queue_size = Current.user.new_cards_per_session
 
     queue = if params[:tag_id].present?
       tag = Tag.find_by(id: params[:tag_id])
@@ -117,7 +114,7 @@ class LearnController < ApplicationController
   # Priority 1: entries with no UserLearning yet ("Not Learned Yet") — create records on demand.
   # Priority 2: existing UserLearnings with state "new" for this tag.
   # Both groups are sorted by HSK level within their priority band.
-  def build_tagged_queue(tag, size = QUEUE_SIZE)
+  def build_tagged_queue(tag, size)
     learned_entry_ids = Current.user.user_learnings
                                .joins(:dictionary_entry)
                                .where(dictionary_entries: { id: tag.dictionary_entries.select(:id) })
@@ -143,7 +140,7 @@ class LearnController < ApplicationController
     (newly_created + existing_new.first(remaining))
   end
 
-  def build_global_queue(size = QUEUE_SIZE)
+  def build_global_queue(size)
     Current.user.user_learnings
            .new_learnings
            .includes(dictionary_entry: { tags: { parent: :parent } })
