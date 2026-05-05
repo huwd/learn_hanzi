@@ -4,6 +4,10 @@ class DashboardController < ApplicationController
 
     @no_data = user_learnings.none?
     @advice  = @no_data ? nil : LearningAdvisor.classify(user: Current.user)
+    @settings_nudge = @advice && (
+      @advice.recommended_size != Current.user.session_size ||
+      @advice.recommended_new_cap != Current.user.new_cards_per_session
+    )
 
     @learning_due = user_learnings.overdue_learning.count
     @review_due   = user_learnings.due_mastered.count

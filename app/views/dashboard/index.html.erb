@@ -34,6 +34,12 @@
         Some cards keep slipping back — they may benefit from a mnemonic or a fresh look rather than more repetition.
       </p>
     <% end %>
+    <% if @settings_nudge %>
+      <p class="mt-2 text-xs text-indigo-600 dark:text-indigo-400">
+        Your current session caps differ from our recommendation —
+        <%= link_to "adjust your settings", settings_path, class: "underline hover:no-underline" %>.
+      </p>
+    <% end %>
   </div>
 
   <%# Top panels: Learn / Review / Progress %>
