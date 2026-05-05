@@ -586,7 +586,6 @@ DEPENDENCIES
   rubyzip (~> 3.0)
   selenium-webdriver
   sentry-rails
-  sentry-ruby
   shoulda-matchers (~> 7.0)
   simplecov
   solid_cache
