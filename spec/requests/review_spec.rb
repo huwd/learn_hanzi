@@ -360,7 +360,7 @@ RSpec.describe "Review", type: :request do
         create(:learning_session, user: user, state: "completed",
                started_at: 1.hour.ago, completed_at: 30.minutes.ago, card_count: 5)
         get review_history_path
-        expect(response.body).to include("5")
+        expect(response.body).to match(/<td[^>]*>\s*5\s*<\/td>/)
       end
 
       it "does not show in_progress sessions" do
@@ -369,8 +369,8 @@ RSpec.describe "Review", type: :request do
         create(:learning_session, user: user, state: "in_progress",
                started_at: 1.hour.ago, card_count: 263)
         get review_history_path
-        expect(response.body).to include("271")
-        expect(response.body).not_to include("263")
+        expect(response.body).to match(/<td[^>]*>\s*271\s*<\/td>/)
+        expect(response.body).not_to match(/<td[^>]*>\s*263\s*<\/td>/)
       end
     end
   end
