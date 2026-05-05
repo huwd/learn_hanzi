@@ -46,16 +46,30 @@ RSpec.describe "Review", type: :request do
         end
       end
 
-      context "when there are more overdue cards than the advisor's recommended size" do
+      context "when there are more overdue cards than the user's session_size" do
         before do
-          # advisor classifies as :lapsed (no review_logs) → recommended_size: 15
+          user.update!(session_size: 10)
+          create_list(:user_learning, 15, user: user, state: "learning",
+                      next_due: 1.day.ago, last_interval: 1)
+        end
+
+        it "caps the queue at session_size" do
+          get review_path
+          expect(LearningSession.last.card_count).to eq(10)
+        end
+      end
+
+      context "when session_size exceeds what the advisor would cap" do
+        before do
+          user_learning.update!(next_due: 7.days.from_now)
+          user.update!(session_size: 25)
           create_list(:user_learning, 20, user: user, state: "learning",
                       next_due: 1.day.ago, last_interval: 1)
         end
 
-        it "limits the queue to the advisor's recommended size" do
+        it "queues up to session_size rather than the advisor's lower recommendation" do
           get review_path
-          expect(LearningSession.last.card_count).to eq(15)
+          expect(LearningSession.last.card_count).to eq(20)
         end
       end
 
