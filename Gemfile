@@ -27,7 +27,13 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 # Use the database-backed adapters for Rails.cache and Active Job
 gem "solid_cache"
 gem "solid_queue"
+gem "mission_control-jobs"
 gem "rubyzip", "~> 3.0"
+
+# Observability
+gem "sentry-ruby"
+gem "sentry-rails"
+gem "lograge"
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
