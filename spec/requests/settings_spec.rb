@@ -71,6 +71,18 @@ RSpec.describe "Settings", type: :request do
           expect(user.reload.new_cards_per_session).to eq(8)
           expect(response).to redirect_to(settings_path)
         end
+
+        it "enables telemetry_enabled and redirects back to settings" do
+          patch settings_path, params: { user: { telemetry_enabled: true } }
+          expect(user.reload.telemetry_enabled).to be(true)
+          expect(response).to redirect_to(settings_path)
+        end
+
+        it "disables telemetry_enabled" do
+          user.update!(telemetry_enabled: true)
+          patch settings_path, params: { user: { telemetry_enabled: false } }
+          expect(user.reload.telemetry_enabled).to be(false)
+        end
       end
 
       context "with invalid params" do
