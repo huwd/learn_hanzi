@@ -16,6 +16,7 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?OIDC_CLIENT_ID must be set}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?OIDC_CLIENT_SECRET must be set}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:?OIDC_REDIRECT_URI must be set}
+      GLITCHTIP_DSN: ${GLITCHTIP_DSN}
     volumes:
       - ${STORAGE_PATH:?STORAGE_PATH is required}:/rails/storage
     healthcheck:
