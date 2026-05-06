@@ -17,6 +17,6 @@ class SettingsController < ApplicationController
   private
 
   def settings_params
-    params.require(:user).permit(:session_size, :new_cards_per_session)
+    params.require(:user).permit(:session_size, :new_cards_per_session, :telemetry_enabled)
   end
 end
