@@ -68,6 +68,32 @@
   </div>
 
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-8">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6">Privacy</h2>
+
+    <%= form_with model: @user, url: settings_path, method: :patch do |f| %>
+      <div class="flex items-start gap-3">
+        <%= f.check_box :telemetry_enabled,
+              class: "mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600
+                      text-indigo-600 focus:ring-indigo-500 cursor-pointer" %>
+        <div>
+          <%= f.label :telemetry_enabled, "Share diagnostic data",
+                class: "block text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer" %>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Attach your user ID and email to error reports sent to our error tracker.
+            Helps diagnose issues affecting your account. Off by default.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <%= f.submit "Save privacy settings",
+              class: "bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3
+                      transition-colors cursor-pointer" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-8">
     <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Your data</h2>
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
       Export all your learning progress as a JSON file, or restore from a previous export.
