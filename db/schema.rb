@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_182048) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_05_130100) do
   create_table "admin_tasks", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -159,6 +159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_182048) do
     t.integer "new_cards_per_session", default: 5, null: false
     t.string "provider", default: "", null: false
     t.integer "session_size", default: 20, null: false
+    t.boolean "telemetry_enabled", default: false, null: false
     t.string "uid", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
