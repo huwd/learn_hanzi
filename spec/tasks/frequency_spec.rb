@@ -35,11 +35,42 @@ RSpec.describe "frequency", type: :task do
 
     after { Rake::Task["frequency:import"].reenable }
 
-    it "assigns lower ranks to higher W.million values" do
+    it "uses source corpus positions for ranks" do
       silence_output { Rake::Task["frequency:import"].invoke(fixture_file_path.to_s) }
 
       expect(entry_nihao.reload.frequency_rank).to eq(1)
       expect(entry_ai.reload.frequency_rank).to eq(2)
+    end
+
+    it "keeps source rank when top words are missing in dictionary" do
+      temp_file = Rails.root.join("tmp", "frequency_spec_rank.tsv")
+      File.write(temp_file, <<~TSV)
+        Word\tWCount\tW.million\tDominant.PoS
+        缺词\t300\t90.0\tn
+        你好\t200\t60.0\tn
+        爱\t180\t45.5\tv
+      TSV
+
+      silence_output { Rake::Task["frequency:import"].invoke(temp_file.to_s) }
+
+      expect(entry_nihao.reload.frequency_rank).to eq(2)
+      expect(entry_ai.reload.frequency_rank).to eq(3)
+    ensure
+      FileUtils.rm_f(temp_file)
+    end
+
+    it "raises when required SUBTLEX headers are missing" do
+      temp_file = Rails.root.join("tmp", "frequency_spec_invalid.tsv")
+      File.write(temp_file, <<~TSV)
+        Token\tCount
+        你好\t10
+      TSV
+
+      expect {
+        Rake::Task["frequency:import"].invoke(temp_file.to_s)
+      }.to raise_error(/Invalid SUBTLEX header/)
+    ensure
+      FileUtils.rm_f(temp_file)
     end
 
     it "prints parsed and updated counts" do
@@ -47,7 +78,7 @@ RSpec.describe "frequency", type: :task do
 
       expect(output).to include("3 unique words parsed")
       expect(output).to include("2 dictionary entries updated")
-      expect(output).to include("1 words missing from dictionary")
+      expect(output).to include("1 word missing from dictionary")
     end
   end
 end

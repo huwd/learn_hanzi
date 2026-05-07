@@ -23,18 +23,20 @@ namespace :frequency do
 
     start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     word_to_freq = parse_subtlex_frequencies(file_path)
+    if word_to_freq.empty?
+      raise "No valid SUBTLEX rows found in #{file_path}. Aborting to avoid clearing existing ranks."
+    end
+
     ranked_words = word_to_freq.sort_by { |word, freq| [ -freq, word ] }
     texts = ranked_words.map(&:first)
 
     entry_id_by_text = DictionaryEntry.where(text: texts).pluck(:text, :id).to_h
 
     rows = []
-    rank = 0
-    ranked_words.each do |word, _freq|
+    ranked_words.each_with_index do |(word, _freq), idx|
       entry_id = entry_id_by_text[word]
       next unless entry_id
-      rank += 1
-      rows << { id: entry_id, frequency_rank: rank }
+      rows << { id: entry_id, frequency_rank: idx + 1 }
     end
 
     DictionaryEntry.transaction do
@@ -48,7 +50,9 @@ namespace :frequency do
     puts "Imported frequency ranks from #{file_path} in #{elapsed.round(2)}s"
     puts "#{word_to_freq.size} unique words parsed"
     puts "#{rows.size} dictionary entries updated"
-    puts "#{word_to_freq.size - rows.size} words missing from dictionary"
+    missing_count = word_to_freq.size - rows.size
+    label = missing_count == 1 ? "word" : "words"
+    puts "#{missing_count} #{label} missing from dictionary"
   end
 end
 
@@ -57,21 +61,33 @@ def subtlex_default_path
 end
 
 def parse_subtlex_frequencies(file_path)
-  lines = File.readlines(file_path, chomp: true, encoding: "bom|utf-8")
-  header = lines.shift.to_s.split("\t")
-  word_index = header.index("Word")
-  freq_index = header.index("W.million")
+  word_index = nil
+  freq_index = nil
+  word_to_freq = {}
 
-  return {} if word_index.nil? || freq_index.nil?
-
-  lines.each_with_object({}) do |line, acc|
+  File.foreach(file_path, chomp: true, encoding: "bom|utf-8").with_index do |line, idx|
     fields = line.split("\t")
+
+    if idx.zero?
+      word_index = fields.index("Word")
+      freq_index = fields.index("W.million")
+      next
+    end
+
+    next if word_index.nil? || freq_index.nil?
+
     word = fields[word_index]&.strip
     next if word.blank?
 
     freq = fields[freq_index].to_s.strip.tr(",", "").to_f
     next if freq <= 0
 
-    acc[word] = [ acc[word].to_f, freq ].max
+    word_to_freq[word] = [ word_to_freq[word].to_f, freq ].max
   end
+
+  if word_index.nil? || freq_index.nil?
+    raise "Invalid SUBTLEX header in #{file_path}: expected Word and W.million columns"
+  end
+
+  word_to_freq
 end
