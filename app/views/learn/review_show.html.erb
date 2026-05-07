@@ -7,7 +7,7 @@
 <%
   entry    = @user_learning.dictionary_entry
   meanings = entry.flashcard_meanings
-  primary_meaning       = entry.flashcard_primary_meaning
+  primary_meaning       = meanings.first
   pinyin   = primary_meaning&.pinyin
   supplemental_meanings = meanings.drop(1)
 %>

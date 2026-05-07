@@ -71,7 +71,11 @@ RSpec.describe DictionaryEntry, type: :model do
 
   describe "#flashcard_meanings" do
     let(:entry) { create(:dictionary_entry) }
-    let(:cedict_source) { create(:source, name: "CC-CEDICT") }
+    let(:cedict_source) do
+      create(:source,
+             name: "CC-CEDICT",
+             url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip")
+    end
 
     before { entry.meanings.destroy_all }
 

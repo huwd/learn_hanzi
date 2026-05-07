@@ -28,23 +28,31 @@ class DictionaryEntry < ApplicationRecord
   end
 
   def flashcard_meanings
-    english_meanings = if persisted?
+    english_meanings = if association(:meanings).loaded?
+      meanings.select { |meaning| meaning.language == "en" }
+    elsif persisted?
       Meaning.includes(:source).where(dictionary_entry_id: id, language: "en").order(:id).to_a
     else
       meanings.select { |meaning| meaning.language == "en" }
     end
 
-    candidate_meanings = english_meanings.reject { |meaning| meaning.text.start_with?("CL:") }
-
-    return candidate_meanings unless candidate_meanings.any? { |meaning| cc_cedict_meaning?(meaning) }
-
-    keep_obscure_first = candidate_meanings.none? do |meaning|
-      cc_cedict_meaning?(meaning) && !obscure_cedict_meaning?(meaning)
+    if persisted? && association(:meanings).loaded? && english_meanings.empty?
+      english_meanings = Meaning.includes(:source).where(dictionary_entry_id: id, language: "en").order(:id).to_a
     end
 
-    candidate_meanings.each_with_index
-                      .sort_by { |meaning, index| [ deprioritise_obscure?(meaning, keep_obscure_first), index ] }
-                      .map(&:first)
+    candidate_meanings = english_meanings.reject { |meaning| meaning.text.start_with?("CL:") }
+
+    if candidate_meanings.any? { |meaning| cc_cedict_meaning?(meaning) }
+      keep_obscure_first = candidate_meanings.none? do |meaning|
+        cc_cedict_meaning?(meaning) && !obscure_cedict_meaning?(meaning)
+      end
+
+      candidate_meanings.each_with_index
+                        .sort_by { |meaning, index| [ deprioritise_obscure?(meaning, keep_obscure_first), index ] }
+                        .map(&:first)
+    else
+      candidate_meanings
+    end
   end
 
   def flashcard_primary_meaning
