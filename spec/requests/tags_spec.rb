@@ -48,6 +48,47 @@ RSpec.describe "Tags", type: :request do
         get tag_path(root_tag)
         expect(response.body).not_to include("breadcrumb")
       end
+
+      it "renders ordering options for entries" do
+        get tag_path(root_tag)
+
+        expect(response.body).to include("Most common first")
+        expect(response.body).to include("Rarest first")
+      end
+    end
+
+    describe "GET /tags/:id ordering" do
+      let(:entry_common) { create(:dictionary_entry, text: "常", frequency_rank: 1) }
+      let(:entry_mid) { create(:dictionary_entry, text: "中", frequency_rank: 100) }
+      let(:entry_nil) { create(:dictionary_entry, text: "稀") }
+
+      before do
+        root_tag.dictionary_entries << entry_common
+        root_tag.dictionary_entries << entry_mid
+        root_tag.dictionary_entries << entry_nil
+      end
+
+      it "orders new entries by ascending frequency for common-first" do
+        get tag_path(root_tag, order: "frequency_common")
+
+        common_idx = response.body.index(entry_common.text)
+        mid_idx = response.body.index(entry_mid.text)
+        nil_idx = response.body.index(entry_nil.text)
+
+        expect(common_idx).to be < mid_idx
+        expect(mid_idx).to be < nil_idx
+      end
+
+      it "orders new entries by descending frequency for rare-first" do
+        get tag_path(root_tag, order: "frequency_rare")
+
+        mid_idx = response.body.index(entry_mid.text)
+        common_idx = response.body.index(entry_common.text)
+        nil_idx = response.body.index(entry_nil.text)
+
+        expect(mid_idx).to be < common_idx
+        expect(common_idx).to be < nil_idx
+      end
     end
 
     describe "GET /tags/:id — due indicator" do
