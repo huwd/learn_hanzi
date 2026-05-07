@@ -57,6 +57,14 @@ RSpec.describe "Admin::Tasks", type: :request do
         end
       end
 
+      context "when task_type is frequency_data" do
+        it "creates a frequency_data task" do
+          post admin_tasks_path, params: { task_type: "frequency_data" }
+
+          expect(AdminTask.last.task_type).to eq("frequency_data")
+        end
+      end
+
       context "when the task type is already locked" do
         before { create(:admin_task, task_type: "cc_cedict", state: "running") }
 

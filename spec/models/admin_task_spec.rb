@@ -77,6 +77,12 @@ RSpec.describe AdminTask, type: :model do
     end
   end
 
+  describe "VALID_TASK_TYPES" do
+    it "includes frequency_data for admin provisioning" do
+      expect(AdminTask::VALID_TASK_TYPES).to include("frequency_data")
+    end
+  end
+
   describe ".in_progress" do
     it "returns pending and running tasks" do
       pending_task = create(:admin_task, task_type: "cc_cedict",         state: "pending")
