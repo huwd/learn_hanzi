@@ -4,7 +4,7 @@ class TagsController < ApplicationController
   end
 
   def show
-    @order = params[:order].presence_in(TagEntriesGrouper::ORDER_OPTIONS.keys) || "hsk"
+    @order = params[:order].presence_in(TagEntriesGrouper::ORDER_OPTIONS.keys) || "text"
     @entry_tag = Tag.includes(children: :children).find(params[:id])
     @child_tags = @entry_tag.children
     @dictionary_entries_grouped = TagEntriesGrouper.new(@entry_tag, Current.user).grouped_by_learning_state(order: @order)
