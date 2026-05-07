@@ -1,5 +1,7 @@
 module Admin
   class FrequencyProvisioningService
+    include ImportFilesHelper
+
     SUBTLEX_URL = "https://raw.githubusercontent.com/krmanik/HSK-3.0/main/Scripts%20and%20data/SUBTLEX_CH_131210_CE.utf8"
     SUBTLEX_PATH = Rails.root.join("tmp", "frequency", "SUBTLEX_CH_131210_CE.utf8")
 
@@ -42,12 +44,8 @@ module Admin
     private
 
     def download_subtlex
-      path = SUBTLEX_PATH.to_s
-      FileUtils.mkdir_p(File.dirname(path))
-
-      File.open(path, "wb") do |file|
-        file.write(URI(SUBTLEX_URL).open.read)
-      end
+      download_file_to_tmp(SUBTLEX_URL, SUBTLEX_PATH)
+      confirm_file_presence(SUBTLEX_PATH.basename.to_s, SUBTLEX_PATH.dirname)
     end
 
     def parse_subtlex_frequencies(file_path)

@@ -9,8 +9,8 @@ namespace :frequency do
   task download: :environment do
     file_dir = Rails.root.join("tmp", "frequency")
     file_path = file_dir.join("SUBTLEX_CH_131210_CE.utf8")
-    ImportFilesHelper.download_file_to_tmp(SUBTLEX_URL, file_path)
-    ImportFilesHelper.confirm_file_presence(File.basename(file_path), file_dir)
+    download_file_to_tmp(SUBTLEX_URL, file_path)
+    confirm_file_presence(File.basename(file_path), file_dir)
   end
 
   desc "Import SUBTLEX-CH frequency ranks into DictionaryEntry"
