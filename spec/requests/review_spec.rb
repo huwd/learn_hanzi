@@ -195,6 +195,20 @@ RSpec.describe "Review", type: :request do
         get review_card_path
         expect(response.body).to include("1 / 1")
       end
+
+      it "renders a fixed-height adaptive card" do
+        get review_card_path
+        expect(response.body).to include("h-[28rem]")
+        expect(response.body).to include('data-controller="card-flip adaptive-card-text"')
+      end
+
+      it "shows a supplemental meanings toggle when multiple meanings exist" do
+        create(:meaning, dictionary_entry: user_learning.dictionary_entry, text: "secondary meaning")
+
+        get review_card_path
+
+        expect(response.body).to include("Show more meanings")
+      end
     end
   end
 
