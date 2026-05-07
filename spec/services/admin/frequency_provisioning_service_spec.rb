@@ -34,11 +34,26 @@ RSpec.describe Admin::FrequencyProvisioningService do
       )
     end
 
-    it "updates contiguous ranks for matched dictionary entries" do
+    it "uses source corpus positions for matched dictionary entries" do
       result
 
       expect(entry_nihao.reload.frequency_rank).to eq(1)
       expect(entry_ai.reload.frequency_rank).to eq(2)
+    end
+
+    it "preserves source rank positions when top words are missing" do
+      stub_request(:get, Admin::FrequencyProvisioningService::SUBTLEX_URL)
+        .to_return(body: <<~TSV)
+          Word\tWCount\tW.million\tDominant.PoS
+          缺词\t300\t90.0\tn
+          你好\t200\t60.0\tn
+          爱\t180\t45.5\tv
+        TSV
+
+      result
+
+      expect(entry_nihao.reload.frequency_rank).to eq(2)
+      expect(entry_ai.reload.frequency_rank).to eq(3)
     end
 
     it "clears ranks for entries absent from the latest import" do
@@ -47,6 +62,13 @@ RSpec.describe Admin::FrequencyProvisioningService do
       result
 
       expect(stale_entry.reload.frequency_rank).to be_nil
+    end
+
+    it "raises on invalid SUBTLEX headers" do
+      stub_request(:get, Admin::FrequencyProvisioningService::SUBTLEX_URL)
+        .to_return(body: "Token\tCount\n你好\t10\n")
+
+      expect { result }.to raise_error(/Invalid SUBTLEX header/)
     end
   end
 end
