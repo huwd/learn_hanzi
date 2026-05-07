@@ -57,6 +57,15 @@ bin/rails tag_import:audit_hsk_3_gaps
 
 See `docs/DATA_GAPS.md` for current known counts and context.
 
+### Import SUBTLEX-CH frequency ranks
+
+Download and import frequency data used to populate `DictionaryEntry#frequency_rank`:
+
+```bash
+bin/rails frequency:download
+bin/rails frequency:import
+```
+
 ### Connect your Anki collection
 
 Export a backup from Anki (`File → Export → Anki Collection Package`) and unzip it:
