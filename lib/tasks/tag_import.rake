@@ -1,4 +1,5 @@
 require_relative "../../app/helpers/tag_import_helper"
+require "set"
 
 include TagImportHelper
 
@@ -15,6 +16,29 @@ namespace :tag_import do
     hsk_level_files = hsk_file_paths_for_level(args, "hsk_3", "*.txt")
     parent_tag = find_or_create_top_level_tags("HSK 3.0")
     import_hsk_file(hsk_level_files, parent_tag)
+  end
+
+  desc "Audit HSK 3.0 words absent from dictionary and TSV fallbacks"
+  task :audit_hsk_3_gaps, [ :file_path ] => :environment do |_task, args|
+    hsk_level_files = hsk_file_paths_for_level(args, "hsk_3", "*.txt")
+    rows, missing_by_level = hsk_3_gap_report(hsk_level_files)
+
+    puts "Level | Expected | Covered | Missing"
+    rows.each do |row|
+      puts "#{row[:level]} | #{row[:expected]} | #{row[:covered]} | #{row[:missing]}"
+    end
+
+    total_expected = rows.sum { |row| row[:expected] }
+    total_covered = rows.sum { |row| row[:covered] }
+    total_missing = rows.sum { |row| row[:missing] }
+    puts "Total | #{total_expected} | #{total_covered} | #{total_missing}"
+
+    missing_by_level.each do |level, words|
+      next if words.empty?
+
+      puts "\n#{level} missing from dictionary and TSV:"
+      puts words.join("\n")
+    end
   end
 end
 
@@ -119,6 +143,33 @@ def parse_tsv_lookup(tsv_file)
     _traditional, simplified, pinyin, definition = parts
     lookup[simplified] = { pinyin: pinyin, definition: definition }
   end
+end
+
+def hsk_3_gap_report(hsk_level_files)
+  rows = []
+  missing_by_level = {}
+
+  hsk_level_files.each do |file|
+    texts = texts_from_file(file)
+    existing = DictionaryEntry.where(text: texts).pluck(:text).to_set
+    tsv_file = file.sub(/\.txt$/, ".tsv")
+    tsv_lookup = File.exist?(tsv_file) ? parse_tsv_lookup(tsv_file) : {}
+
+    missing = texts.reject do |text|
+      existing.include?(text) || tsv_lookup.key?(text)
+    end
+
+    level = tag_name_from_file(file)
+    rows << {
+      level: level,
+      expected: texts.count,
+      covered: texts.count - missing.count,
+      missing: missing.count
+    }
+    missing_by_level[level] = missing
+  end
+
+  [ rows, missing_by_level ]
 end
 
 def find_or_create_krmanik_source

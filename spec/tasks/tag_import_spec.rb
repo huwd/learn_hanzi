@@ -122,4 +122,30 @@ RSpec.describe "tag_import", type: :task do
       expect(output).to match(/Completed in [\d.]+s/)
     end
   end
+
+  describe "audit_hsk_3_gaps" do
+    include_context "hsk 3 fixture directory"
+
+    let!(:entry_ai)  { create(:dictionary_entry, text: "爱") }
+    let!(:entry_hao) { create(:dictionary_entry, text: "好") }
+
+    after { Rake::Task["tag_import:audit_hsk_3_gaps"].reenable }
+
+    it "reports rows with expected, covered, and missing counts" do
+      output = capture_output { Rake::Task["tag_import:audit_hsk_3_gaps"].invoke(fixture_dir) }
+
+      expect(output).to include("Level | Expected | Covered | Missing")
+      expect(output).to include("HSK 1 | 3 | 3 | 0")
+      expect(output).to include("Total | 3 | 3 | 0")
+    end
+
+    it "lists words that are absent from both dictionary and TSV" do
+      File.write(File.join(fixture_dir, "HSK 2.txt"), "缺词\n")
+
+      output = capture_output { Rake::Task["tag_import:audit_hsk_3_gaps"].invoke(fixture_dir) }
+
+      expect(output).to include("HSK 2 missing from dictionary and TSV:")
+      expect(output).to include("缺词")
+    end
+  end
 end
