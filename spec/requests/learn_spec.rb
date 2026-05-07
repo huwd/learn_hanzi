@@ -209,7 +209,9 @@ RSpec.describe "Learn", type: :request do
 
       it "uses learner-friendly CC-CEDICT meaning and pinyin as primary" do
         new_card.dictionary_entry.meanings.destroy_all
-        cedict_source = create(:source, name: "CC-CEDICT")
+        cedict_source = create(:source,
+                               name: "CC-CEDICT",
+                               url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip")
         create(:meaning, dictionary_entry: new_card.dictionary_entry,
                          source: cedict_source,
                          text: "surname Li", pinyin: "Lǐ")
