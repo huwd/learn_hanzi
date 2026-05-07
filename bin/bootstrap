@@ -51,6 +51,12 @@ FileUtils.chdir APP_ROOT do
   step "Importing HSK 3.0 tags"
   system! "bin/rails tag_import:hsk_3"
 
+  step "Downloading SUBTLEX-CH frequency data"
+  system! "bin/rails frequency:download"
+
+  step "Importing SUBTLEX-CH frequency ranks"
+  system! "bin/rails frequency:import"
+
   puts "\n== Bootstrap complete =="
   puts ""
   puts "To import your Anki learning history:"

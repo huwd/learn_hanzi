@@ -5,6 +5,7 @@ class DictionaryEntry < ApplicationRecord
   has_many :user_learnings, dependent: :destroy
 
   validates :text, presence: true
+  validates :frequency_rank, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
   validate :must_have_at_least_one_meaning
 
   accepts_nested_attributes_for :meanings, allow_destroy: true

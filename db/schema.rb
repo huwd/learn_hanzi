@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_05_130100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_07_120000) do
   create_table "admin_tasks", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -40,8 +40,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_05_130100) do
 
   create_table "dictionary_entries", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "frequency_rank"
     t.string "text"
     t.datetime "updated_at", null: false
+    t.index ["frequency_rank"], name: "index_dictionary_entries_on_frequency_rank"
     t.index ["text"], name: "index_dictionary_entries_on_text", unique: true
   end
 
