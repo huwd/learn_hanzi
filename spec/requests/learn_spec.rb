@@ -196,6 +196,7 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include('data-card-text-scaling="adaptive"')
         expect(response.body).to include("learn-card")
         expect(response.body).to include("adaptive-card-text")
+        expect(response.body).to include("w-full max-w-xl")
       end
 
       it "shows a supplemental meanings toggle when available" do
@@ -286,6 +287,7 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include('data-card-text-scaling="adaptive"')
         expect(response.body).to include("card-flip")
         expect(response.body).to include("adaptive-card-text")
+        expect(response.body).to include("w-full max-w-xl")
       end
 
       it "renders ease buttons with data-ease attributes for keyboard shortcuts" do
