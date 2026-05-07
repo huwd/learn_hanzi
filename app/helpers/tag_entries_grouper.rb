@@ -1,6 +1,6 @@
 class TagEntriesGrouper
   ORDER_OPTIONS = {
-    "hsk" => "HSK order",
+    "text" => "Text (A-Z)",
     "frequency_common" => "Most common first",
     "frequency_rare" => "Rarest first"
   }.freeze
@@ -10,24 +10,24 @@ class TagEntriesGrouper
     @user = user
   end
 
-  def grouped_by_learning_state(order: "hsk")
+  def grouped_by_learning_state(order: "text")
     entries = @tag.dictionary_entries
                     .joins(:user_learnings)
                     .where(user_learnings: { user_id: @user.id })
                     .select("dictionary_entries.*, user_learnings.state as learning_state, user_learnings.factor as learning_factor")
 
-    grouped = entries.group_by(&:learning_state).transform_values { |group| apply_order(group, order) }
-    learning = grouped["learning"] || []
+    grouped = entries.group_by(&:learning_state)
+    learning = apply_order(grouped["learning"] || [], order)
 
     unstarted = @tag.dictionary_entries.where.not(id: UserLearning.where(user: @user).select(:dictionary_entry_id)).to_a
-    ordered_unstarted = apply_order(unstarted, order)
+    new_entries = apply_order((grouped["new"] || []) + unstarted, order)
 
     {
-      new_entries:  apply_order((grouped["new"] || []) + ordered_unstarted, order),
+      new_entries:  new_entries,
       learning:     learning.reject { |e| e.learning_factor < 2000 },
       struggling:   learning.select { |e| e.learning_factor < 2000 },
-      mastered:     grouped["mastered"] || [],
-      suspended:    grouped["suspended"] || []
+      mastered:     apply_order(grouped["mastered"] || [], order),
+      suspended:    apply_order(grouped["suspended"] || [], order)
     }
   end
 
