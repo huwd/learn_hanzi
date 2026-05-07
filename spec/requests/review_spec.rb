@@ -198,8 +198,10 @@ RSpec.describe "Review", type: :request do
 
       it "renders a fixed-height adaptive card" do
         get review_card_path
-        expect(response.body).to include("h-[28rem]")
-        expect(response.body).to include('data-controller="card-flip adaptive-card-text"')
+        expect(response.body).to include('data-card-layout="fixed"')
+        expect(response.body).to include('data-card-text-scaling="adaptive"')
+        expect(response.body).to include("card-flip")
+        expect(response.body).to include("adaptive-card-text")
       end
 
       it "shows a supplemental meanings toggle when multiple meanings exist" do
