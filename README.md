@@ -47,6 +47,16 @@ A small number of HSK vocabulary items are not present in CC-CEDICT (multi-chara
 bin/rails dictionary_import:custom_entries
 ```
 
+### Audit unresolved HSK 3.0 gaps
+
+To report words still absent from both the dictionary and TSV fallback stubs:
+
+```bash
+bin/rails tag_import:audit_hsk_3_gaps
+```
+
+See `docs/DATA_GAPS.md` for current known counts and context.
+
 ### Connect your Anki collection
 
 Export a backup from Anki (`File → Export → Anki Collection Package`) and unzip it:
