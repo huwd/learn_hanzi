@@ -1,6 +1,6 @@
 module Admin
   class DashboardController < BaseController
-    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary hsk_tags].freeze
+    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary hsk_tags frequency_data].freeze
 
     def index
       @tasks_by_type = AdminTask::VALID_TASK_TYPES.index_with do |type|
@@ -35,7 +35,8 @@ module Admin
       {
         dictionary_entries: DictionaryEntry.count,
         hsk_tags:           Tag.where(category: "HSK").count,
-        custom_entries:     Meaning.joins(:source).where(sources: { name: "learn_hanzi" }).select(:dictionary_entry_id).distinct.count
+        custom_entries:     Meaning.joins(:source).where(sources: { name: "learn_hanzi" }).select(:dictionary_entry_id).distinct.count,
+        frequency_entries:  DictionaryEntry.where.not(frequency_rank: nil).count
       }
     end
   end
