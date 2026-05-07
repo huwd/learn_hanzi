@@ -68,4 +68,43 @@ RSpec.describe DictionaryEntry, type: :model do
       expect(result[:user_learning]).to eq(user_learning)
     end
   end
+
+  describe "#flashcard_meanings" do
+    let(:entry) { create(:dictionary_entry) }
+    let(:cedict_source) { create(:source, name: "CC-CEDICT") }
+
+    before { entry.meanings.destroy_all }
+
+    it "keeps CL senses out of flashcard meanings" do
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "CL:個|个[ge4]", pinyin: "gè")
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "to look", pinyin: "kàn")
+
+      expect(entry.flashcard_meanings.map(&:text)).to eq([ "to look" ])
+    end
+
+    it "de-prioritises obscure CC-CEDICT senses when a plain sense exists" do
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "surname Li", pinyin: "Lǐ")
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "plum", pinyin: "lǐ")
+
+      expect(entry.flashcard_primary_meaning.text).to eq("plum")
+      expect(entry.flashcard_primary_meaning.pinyin).to eq("lǐ")
+      expect(entry.flashcard_meanings.map(&:text)).to eq([ "plum", "surname Li" ])
+    end
+
+    it "preserves order when only obscure CC-CEDICT senses are available" do
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "surname Zhao", pinyin: "Zhào")
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: "variant of 趙|赵", pinyin: "Zhào")
+
+      expect(entry.flashcard_meanings.map(&:text)).to eq([ "surname Zhao", "variant of 趙|赵" ])
+      expect(entry.flashcard_primary_meaning.text).to eq("surname Zhao")
+    end
+
+    it "does not reorder non-CC-CEDICT meanings" do
+      custom_source = create(:source, name: "Custom Dictionary")
+      create(:meaning, dictionary_entry: entry, source: custom_source, text: "surname Wu", pinyin: "Wú")
+      create(:meaning, dictionary_entry: entry, source: custom_source, text: "martial", pinyin: "wǔ")
+
+      expect(entry.flashcard_meanings.map(&:text)).to eq([ "surname Wu", "martial" ])
+    end
+  end
 end

@@ -36,7 +36,7 @@ class LearnController < ApplicationController
                        .joins(:dictionary_entry)
                        .where("dictionary_entries.text LIKE ?", "%#{safe_char}%")
                        .where.not(id: @user_learning.id)
-                       .includes(dictionary_entry: :meanings)
+                       .includes(dictionary_entry: { meanings: :source })
                        .limit(5)
   end
 
@@ -189,14 +189,14 @@ class LearnController < ApplicationController
   def current_card
     id = session[:learn_queue][session[:learn_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: :meanings)
+           .includes(dictionary_entry: { meanings: :source })
            .find(id)
   end
 
   def current_review_card
     id = session[:learn_introduced][session[:learn_review_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: :meanings)
+           .includes(dictionary_entry: { meanings: :source })
            .find(id)
   end
 end

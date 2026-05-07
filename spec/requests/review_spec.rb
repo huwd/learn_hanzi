@@ -212,6 +212,22 @@ RSpec.describe "Review", type: :request do
 
         expect(response.body).to include("Show more meanings")
       end
+
+      it "uses learner-friendly CC-CEDICT meaning and pinyin as primary" do
+        user_learning.dictionary_entry.meanings.destroy_all
+        cedict_source = create(:source, name: "CC-CEDICT")
+        create(:meaning, dictionary_entry: user_learning.dictionary_entry,
+                         source: cedict_source,
+                         text: "surname Wang", pinyin: "Wáng")
+        create(:meaning, dictionary_entry: user_learning.dictionary_entry,
+                         source: cedict_source,
+                         text: "king", pinyin: "wáng")
+
+        get review_card_path
+
+        expect(response.body).to include("king")
+        expect(response.body).to include("wáng")
+      end
     end
   end
 

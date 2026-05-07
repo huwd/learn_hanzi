@@ -6,9 +6,9 @@
 
 <%
   entry    = @user_learning.dictionary_entry
-  pinyin   = entry.meanings.first&.pinyin
-  meanings = entry.meanings.reject { |m| m.text.start_with?("CL:") }
-  primary_meaning       = meanings.first
+  meanings = entry.flashcard_meanings
+  primary_meaning       = entry.flashcard_primary_meaning
+  pinyin   = primary_meaning&.pinyin
   supplemental_meanings = meanings.drop(1)
 %>
 

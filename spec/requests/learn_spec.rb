@@ -206,6 +206,22 @@ RSpec.describe "Learn", type: :request do
 
         expect(response.body).to include("Show more meanings")
       end
+
+      it "uses learner-friendly CC-CEDICT meaning and pinyin as primary" do
+        new_card.dictionary_entry.meanings.destroy_all
+        cedict_source = create(:source, name: "CC-CEDICT")
+        create(:meaning, dictionary_entry: new_card.dictionary_entry,
+                         source: cedict_source,
+                         text: "surname Li", pinyin: "Lǐ")
+        create(:meaning, dictionary_entry: new_card.dictionary_entry,
+                         source: cedict_source,
+                         text: "plum", pinyin: "lǐ")
+
+        get learn_card_path
+
+        expect(response.body).to include("plum")
+        expect(response.body).to include("lǐ")
+      end
     end
 
     context "when authenticated without an active learn session" do
