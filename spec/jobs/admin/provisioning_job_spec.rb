@@ -78,4 +78,11 @@ RSpec.describe Admin::ProvisioningJob, type: :job do
 
     include_examples "a provisioning job", Admin::CustomDictionaryProvisioningService
   end
+
+  describe "#perform for frequency_data" do
+    let(:task_type)      { "frequency_data" }
+    let(:summary_result) { { words_parsed: 120_000, entries_updated: 95_000, missing_from_dictionary: 25_000 } }
+
+    include_examples "a provisioning job", Admin::FrequencyProvisioningService
+  end
 end
