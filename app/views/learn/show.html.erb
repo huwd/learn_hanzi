@@ -12,11 +12,11 @@
   supplemental_meanings = meanings.drop(1)
 %>
 
-<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="learn-card adaptive-card-text" data-card-layout="fixed" data-card-text-scaling="adaptive">
+<div class="w-full flex flex-col items-center pt-6 sm:pt-12 pb-8 sm:pb-12" data-controller="learn-card adaptive-card-text" data-card-layout="fixed" data-card-text-scaling="adaptive">
 
-  <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
+  <p class="text-sm text-gray-400 mb-4 sm:mb-8"><%= @position %> / <%= @total %></p>
 
-  <div class="w-fit min-w-72 max-w-xl flex flex-col items-stretch">
+  <div class="w-full max-w-xl flex flex-col items-stretch px-4 sm:px-0">
 
     <%# Card %>
     <div class="h-[28rem] md:h-[30rem] bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-col items-center px-8 md:px-10 pt-12 pb-10 text-center">
