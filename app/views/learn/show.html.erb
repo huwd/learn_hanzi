@@ -6,9 +6,9 @@
 
 <%
   entry    = @user_learning.dictionary_entry
-  pinyin   = entry.meanings.first&.pinyin
-  meanings = entry.meanings.reject { |m| m.text.start_with?("CL:") }
-  primary_meaning       = meanings.first
+  meanings = entry.flashcard_meanings
+  primary_meaning       = entry.flashcard_primary_meaning
+  pinyin   = primary_meaning&.pinyin
   supplemental_meanings = meanings.drop(1)
 %>
 
@@ -88,10 +88,10 @@
           </p>
           <ul class="space-y-2">
             <% @related.each do |rel| %>
-              <% rel_meaning = rel.dictionary_entry.meanings.reject { |m| m.text.start_with?("CL:") }.first %>
+              <% rel_meaning = rel.dictionary_entry.flashcard_primary_meaning %>
               <li class="flex items-baseline gap-2 text-sm">
                 <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel.dictionary_entry.text %></span>
-                <span class="text-gray-400"><%= rel.dictionary_entry.meanings.first&.pinyin %></span>
+                <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
                 <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
               </li>
             <% end %>

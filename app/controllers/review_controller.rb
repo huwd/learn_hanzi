@@ -27,7 +27,7 @@ class ReviewController < ApplicationController
     @learning_session = active_learning_session
     @session_card     = @learning_session.current_card(current_position)
     @user_learning    = UserLearning
-                          .includes(dictionary_entry: [ :meanings, { tags: :parent } ])
+                          .includes(dictionary_entry: [ { meanings: :source }, { tags: :parent } ])
                           .find(@session_card.user_learning_id)
     @position         = current_position + 1
     @total            = @learning_session.card_count
