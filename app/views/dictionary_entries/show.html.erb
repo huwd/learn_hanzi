@@ -86,6 +86,11 @@
             NOT STARTED
           </span>
         <% end %>
+        <% if @dictionary_entry.frequency_rank.present? %>
+          <p class="de-mono text-[11px] text-gray-400 mt-3">FREQUENCY #<%= @dictionary_entry.frequency_rank %></p>
+        <% else %>
+          <p class="de-mono text-[11px] text-gray-600 mt-3">FREQUENCY N/A</p>
+        <% end %>
       </div>
 
     </div>
