@@ -12,7 +12,7 @@
   supplemental_meanings = meanings.drop(1)
 %>
 
-<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="card-flip adaptive-card-text">
+<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="card-flip adaptive-card-text" data-card-layout="fixed" data-card-text-scaling="adaptive">
 
   <p class="text-sm text-gray-400 mb-2"><%= @position %> / <%= @total %></p>
   <p class="text-xs text-gray-300 mb-6">Quick review of today's new characters</p>
@@ -33,7 +33,7 @@
 
           <% if supplemental_meanings.any? %>
             <div data-controller="collapsible" data-collapsible-open-value="false" class="mt-4 text-left">
-              <button type="button" data-action="click->collapsible#toggle" class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+              <button type="button" data-collapsible-target="button" data-action="click->collapsible#toggle" class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                 <span>Show more meanings</span>
                 <span data-collapsible-target="chevron" class="inline-block transition-transform">▸</span>
               </button>
