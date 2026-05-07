@@ -189,6 +189,20 @@ RSpec.describe "Learn", type: :request do
         get learn_card_path
         expect(response.body).to include(new_card.dictionary_entry.text)
       end
+
+      it "renders a fixed-height adaptive card container" do
+        get learn_card_path
+        expect(response.body).to include("h-[28rem]")
+        expect(response.body).to include('data-controller="learn-card adaptive-card-text"')
+      end
+
+      it "shows a supplemental meanings toggle when available" do
+        create(:meaning, dictionary_entry: new_card.dictionary_entry, text: "secondary meaning")
+
+        get learn_card_path
+
+        expect(response.body).to include("Show more meanings")
+      end
     end
 
     context "when authenticated without an active learn session" do
@@ -263,6 +277,11 @@ RSpec.describe "Learn", type: :request do
       it "includes the character in the response" do
         get learn_review_path
         expect(response.body).to include(new_card.dictionary_entry.text)
+      end
+
+      it "renders adaptive text sizing on review cards" do
+        get learn_review_path
+        expect(response.body).to include('data-controller="card-flip adaptive-card-text"')
       end
 
       it "renders ease buttons with data-ease attributes for keyboard shortcuts" do

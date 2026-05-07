@@ -8,25 +8,43 @@
   entry    = @user_learning.dictionary_entry
   pinyin   = entry.meanings.first&.pinyin
   meanings = entry.meanings.reject { |m| m.text.start_with?("CL:") }
-  shown    = meanings.first(3)
+  primary_meaning       = meanings.first
+  supplemental_meanings = meanings.drop(1)
 %>
 
-<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="learn-card">
+<div class="w-full flex flex-col items-center pt-16 pb-12" data-controller="learn-card adaptive-card-text">
 
   <p class="text-sm text-gray-400 mb-8"><%= @position %> / <%= @total %></p>
 
   <div class="w-fit min-w-72 max-w-xl flex flex-col items-stretch">
 
     <%# Card %>
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-col items-center px-10 pt-12 pb-10 text-center">
-      <span class="<%= hanzi_size_class(entry.text) %> font-hanzi text-gray-900 dark:text-gray-100 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
+    <div class="h-[28rem] md:h-[30rem] bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-col items-center px-8 md:px-10 pt-12 pb-10 text-center">
+      <span data-adaptive-card-text-target="hanzi" class="text-9xl font-hanzi text-gray-900 dark:text-gray-100 select-none whitespace-nowrap antialiased"><%= entry.text %></span>
 
-      <div data-learn-card-target="pinyin" class="hidden mt-6 w-full border-t border-gray-100 dark:border-gray-700 pt-6">
-        <p class="text-3xl text-gray-400"><%= pinyin %></p>
-      </div>
+      <div class="mt-6 w-full border-t border-gray-100 dark:border-gray-700 pt-6 flex-1 min-h-0 overflow-y-auto pr-1">
+        <div data-learn-card-target="pinyin" class="hidden">
+          <p class="text-3xl text-gray-400"><%= pinyin %></p>
+        </div>
 
-      <div data-learn-card-target="meaning" class="hidden mt-4">
-        <p class="text-xl font-medium text-gray-800 dark:text-gray-200"><%= shown.map(&:text).join(", ") %></p>
+        <div data-learn-card-target="meaning" class="hidden mt-4">
+          <p data-adaptive-card-text-target="meaning" class="text-xl font-medium text-gray-800 dark:text-gray-200"><%= primary_meaning&.text %></p>
+
+          <% if supplemental_meanings.any? %>
+            <div data-controller="collapsible" data-collapsible-open-value="false" class="mt-4 text-left">
+              <button type="button" data-action="click->collapsible#toggle" class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <span>Show more meanings</span>
+                <span data-collapsible-target="chevron" class="inline-block transition-transform">▸</span>
+              </button>
+
+              <ul data-collapsible-target="content" class="hidden mt-3 space-y-2 text-gray-600 dark:text-gray-300 text-sm">
+                <% supplemental_meanings.each do |meaning| %>
+                  <li><%= meaning.text %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
 
