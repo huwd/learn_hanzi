@@ -18,6 +18,20 @@ RSpec.describe "DictionaryEntries", type: :request do
         expect(response.body).to include(dictionary_entry.text)
       end
 
+      it "shows frequency rank when present" do
+        dictionary_entry.update!(frequency_rank: 42)
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("FREQUENCY #42")
+      end
+
+      it "shows frequency as unavailable when absent" do
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("FREQUENCY N/A")
+      end
+
       context "when the user has no learning record" do
         it "shows the not-started state" do
           get dictionary_entry_path(dictionary_entry)
