@@ -5,7 +5,8 @@ module Admin
     SERVICE_MAP = {
       "cc_cedict"          => Admin::CcCedictProvisioningService,
       "hsk_tags"           => Admin::HskTagsProvisioningService,
-      "custom_dictionary"  => Admin::CustomDictionaryProvisioningService
+      "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
+      "frequency_data"     => Admin::FrequencyProvisioningService
     }.freeze
 
     def perform(task_id)
