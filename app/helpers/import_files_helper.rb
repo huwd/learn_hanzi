@@ -4,7 +4,7 @@ require "zip"
 module ImportFilesHelper
   def download_file_to_tmp(url, destination)
     FileUtils.mkdir_p(File.dirname(destination))
-    URI.open(url) do |remote_file|
+    URI(url).open do |remote_file|
       File.open(destination, "wb") do |local_file|
         IO.copy_stream(remote_file, local_file)
       end
