@@ -188,7 +188,7 @@ class LearnController < ApplicationController
   def current_card
     id = session[:learn_queue][session[:learn_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: [ { meanings: :source }, { dictionary_entry_radicals: :radical } ])
+           .includes(dictionary_entry: { meanings: :source })
            .find(id)
   end
 
