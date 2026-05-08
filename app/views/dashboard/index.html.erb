@@ -48,7 +48,15 @@
     <%# Learn panel %>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col">
       <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-1">Learn</h2>
-      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">New characters to introduce</p>
+      <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">
+        <% if @next_hsk_milestone.nil? %>
+          New words to introduce
+        <% elsif @next_hsk_milestone[:complete] %>
+          All HSK 3.0 tiers mastered
+        <% else %>
+          <%= @next_hsk_milestone[:remaining_words] %> words until <%= @next_hsk_milestone[:tier_name] %> mastery
+        <% end %>
+      </p>
       <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6"><%= @new_cards_count %></div>
       <%= link_to learn_path,
             class: "mt-auto inline-block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>

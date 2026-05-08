@@ -19,6 +19,7 @@ class DashboardController < ApplicationController
     }
 
     @new_cards_count = @state_counts[:new]
+    @next_hsk_milestone = build_next_hsk_milestone
 
     @vocabulary_sections = build_vocabulary_sections
   end
@@ -78,5 +79,53 @@ class DashboardController < ApplicationController
     %i[total mastered learning new_count not_started].each_with_object({}) do |key, agg|
       agg[key] = stats_list.sum { |s| s[key] }
     end
+  end
+
+  def build_next_hsk_milestone
+    hsk3 = Tag.find_by(name: "HSK 3.0")
+    return nil unless hsk3
+
+    levels = hsk3.children.sort_by { |tag| hsk_level_sort_key(tag.name) }
+    return nil if levels.empty?
+
+    level_ids = levels.map(&:id)
+
+    entry_counts = DictionaryEntryTag
+      .where(tag_id: level_ids)
+      .group(:tag_id)
+      .count
+
+    mastered_counts = UserLearning
+      .where(user: Current.user, state: "mastered")
+      .joins(dictionary_entry: :dictionary_entry_tags)
+      .where(dictionary_entry_tags: { tag_id: level_ids })
+      .group("dictionary_entry_tags.tag_id")
+      .count
+
+    next_level = levels.find do |level|
+      total = entry_counts[level.id] || 0
+      next false if total.zero?
+
+      mastered = mastered_counts[level.id] || 0
+      mastered < total
+    end
+
+    return { complete: true } unless next_level
+
+    total = entry_counts[next_level.id] || 0
+    mastered = mastered_counts[next_level.id] || 0
+
+    {
+      complete: false,
+      tier_name: next_level.name,
+      remaining_words: total - mastered
+    }
+  end
+
+  def hsk_level_sort_key(name)
+    return [ 9_999, 0 ] if name.include?("7-9")
+
+    number = name[/\d+/]&.to_i
+    [ number || 9_998, 0 ]
   end
 end
