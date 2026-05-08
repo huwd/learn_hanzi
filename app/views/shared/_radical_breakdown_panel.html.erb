@@ -11,7 +11,7 @@
           <div class="flex items-baseline gap-2">
             <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= item.radical.character %></span>
             <% if item.radical.stroke_count.present? %>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"><%= item.radical.stroke_count %> strokes</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"><%= pluralize(item.radical.stroke_count, "stroke") %></span>
             <% end %>
             <% if item.mastered %>
               <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Mastered</span>
