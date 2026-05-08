@@ -372,6 +372,17 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include('data-ease="3"')
         expect(response.body).to include('data-ease="4"')
       end
+
+      it "shows radical breakdown in learn review" do
+        radical_yan = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)
+        create(:dictionary_entry_radical, dictionary_entry: new_card.dictionary_entry, radical: radical_yan, position: 1)
+
+        get learn_review_path
+
+        expect(response.body).to include("Character components")
+        expect(response.body).to include("讠")
+        expect(response.body).to include("speech")
+      end
     end
 
     context "when authenticated without an active review phase" do

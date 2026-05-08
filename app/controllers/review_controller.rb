@@ -36,6 +36,10 @@ class ReviewController < ApplicationController
       target_learning: @user_learning,
       limit: 5
     )
+    @radical_breakdown = RadicalBreakdownBuilder.call(
+      user: Current.user,
+      dictionary_entry: @user_learning.dictionary_entry
+    )
   end
 
   def submit

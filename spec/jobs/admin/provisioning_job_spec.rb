@@ -100,4 +100,17 @@ RSpec.describe Admin::ProvisioningJob, type: :job do
 
     include_examples "a provisioning job", Admin::UnihanProvisioningService
   end
+
+  describe "#perform for radicals" do
+    let(:task_type) { "radicals" }
+    let(:summary_result) do
+      {
+        entries_processed: 120_000,
+        radicals_created: 380,
+        associations_created: 240_000
+      }
+    end
+
+    include_examples "a provisioning job", Admin::RadicalsProvisioningService
+  end
 end

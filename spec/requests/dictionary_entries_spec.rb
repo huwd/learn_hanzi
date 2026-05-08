@@ -92,6 +92,18 @@ RSpec.describe "DictionaryEntries", type: :request do
 
         expect(response.body.index("plum")).to be < response.body.index("surname Li")
       end
+
+      it "shows radical breakdown details" do
+        radical_yan = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)
+        create(:dictionary_entry_radical, dictionary_entry: dictionary_entry, radical: radical_yan, position: 1)
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("Radical Breakdown")
+        expect(response.body).to include("Character components")
+        expect(response.body).to include("讠")
+        expect(response.body).to include("speech")
+      end
     end
   end
 

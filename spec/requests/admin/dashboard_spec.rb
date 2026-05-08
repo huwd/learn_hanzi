@@ -34,6 +34,7 @@ RSpec.describe "Admin::Dashboard", type: :request do
         expect(response.body).to include("CC-CEDICT")
         expect(response.body).to include("HSK")
         expect(response.body).to include("Frequency data")
+        expect(response.body).to include("Radical breakdowns")
       end
 
       it "shows task history" do
@@ -81,13 +82,13 @@ RSpec.describe "Admin::Dashboard", type: :request do
       end
 
       it "enqueues a job for each unlocked task type" do
-        expect(Admin::ProvisioningJob).to receive(:perform_later).exactly(6).times
+        expect(Admin::ProvisioningJob).to receive(:perform_later).exactly(7).times
         post admin_provision_all_path
       end
 
       it "does not enqueue a job for a locked task type" do
         create(:admin_task, task_type: "cc_cedict", state: "running")
-        expect(Admin::ProvisioningJob).to receive(:perform_later).exactly(5).times
+        expect(Admin::ProvisioningJob).to receive(:perform_later).exactly(6).times
         post admin_provision_all_path
       end
 

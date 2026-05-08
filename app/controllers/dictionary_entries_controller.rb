@@ -15,5 +15,9 @@ class DictionaryEntriesController < ApplicationController
       else
         ReviewLog.none
       end
+    @radical_breakdown = RadicalBreakdownBuilder.call(
+      user: Current.user,
+      dictionary_entry: @dictionary_entry
+    )
   end
 end

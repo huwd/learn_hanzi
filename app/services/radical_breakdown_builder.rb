@@ -1,5 +1,6 @@
 class RadicalBreakdownBuilder
-  Result = Data.define(:radical, :position, :mastered)
+  Row = Data.define(:radical, :position, :source_character)
+  Result = Data.define(:radical, :position, :mastered, :source_character)
 
   def self.call(user:, dictionary_entry:)
     new(user:, dictionary_entry:).call
@@ -11,10 +12,8 @@ class RadicalBreakdownBuilder
   end
 
   def call
-    rows = @dictionary_entry
-      .dictionary_entry_radicals
-      .includes(:radical)
-      .order(:position, :id)
+    rows = direct_rows
+    rows = fallback_rows_for_multi_character_entry if rows.empty?
 
     return [] if rows.empty?
 
@@ -24,7 +23,8 @@ class RadicalBreakdownBuilder
       Result.new(
         radical: row.radical,
         position: row.position,
-        mastered: mastered_characters.include?(row.radical.character)
+        mastered: mastered_characters.include?(row.radical.character),
+        source_character: row.source_character
       )
     end
   end
@@ -40,5 +40,38 @@ class RadicalBreakdownBuilder
          .where(dictionary_entries: { text: characters })
          .pluck("dictionary_entries.text")
          .uniq
+  end
+
+  def direct_rows
+    @dictionary_entry
+      .dictionary_entry_radicals
+      .includes(:radical)
+      .order(:position, :id)
+      .map { |row| Row.new(radical: row.radical, position: row.position, source_character: nil) }
+  end
+
+  def fallback_rows_for_multi_character_entry
+    characters = @dictionary_entry.text.scan(/\p{Han}/u)
+    return [] unless characters.size > 1
+
+    entries_by_text = DictionaryEntry
+      .where(text: characters.uniq)
+      .includes(dictionary_entry_radicals: :radical)
+      .index_by(&:text)
+
+    characters.flat_map do |character|
+      entry = entries_by_text[character]
+      next [] unless entry
+
+      entry.dictionary_entry_radicals
+           .sort_by { |row| [ row.position, row.id ] }
+           .map do |row|
+             Row.new(
+               radical: row.radical,
+               position: row.position,
+               source_character: character
+             )
+           end
+    end
   end
 end

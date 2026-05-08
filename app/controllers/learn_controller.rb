@@ -64,6 +64,15 @@ class LearnController < ApplicationController
     @user_learning = current_review_card
     @position      = session[:learn_review_index] + 1
     @total         = session[:learn_introduced].size
+    @related_anchors = RelatedAnchorBuilder.call(
+      user: Current.user,
+      target_learning: @user_learning,
+      limit: 5
+    )
+    @radical_breakdown = RadicalBreakdownBuilder.call(
+      user: Current.user,
+      dictionary_entry: @user_learning.dictionary_entry
+    )
   end
 
   def review_submit

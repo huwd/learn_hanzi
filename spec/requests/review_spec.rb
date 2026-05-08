@@ -256,6 +256,17 @@ RSpec.describe "Review", type: :request do
 
         expect(response.body.scan("学习班").size).to eq(1)
       end
+
+      it "shows radical breakdown details" do
+        radical_yan = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)
+        create(:dictionary_entry_radical, dictionary_entry: user_learning.dictionary_entry, radical: radical_yan, position: 1)
+
+        get review_card_path
+
+        expect(response.body).to include("Character components")
+        expect(response.body).to include("讠")
+        expect(response.body).to include("speech")
+      end
     end
   end
 

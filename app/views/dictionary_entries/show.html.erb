@@ -259,18 +259,11 @@
   <%# ── Future sections ──────────────────────────────────── %>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 
-    <div class="de-future rounded-xl p-6">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="de-lora text-[10px] text-gray-600 uppercase tracking-[0.2em] font-semibold">
-          Radical Breakdown
-        </h2>
-        <span class="de-mono text-[9px] text-gray-700 border border-gray-700/60 rounded px-1.5 py-0.5 tracking-widest">
-          SOON
-        </span>
-      </div>
-      <p class="de-lora text-gray-600 text-sm italic leading-relaxed">
-        Component radicals and stroke order will appear here.
-      </p>
+    <div class="bg-gray-800/40 border border-gray-700/40 rounded-xl p-6">
+      <h2 class="de-lora text-[10px] text-red-500 uppercase tracking-[0.2em] font-semibold mb-3">
+        Radical Breakdown
+      </h2>
+      <%= render "shared/radical_breakdown_panel", radical_breakdown: @radical_breakdown %>
     </div>
 
     <div class="de-future rounded-xl p-6">

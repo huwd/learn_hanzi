@@ -1,4 +1,6 @@
 <% radical_breakdown ||= [] %>
+<% grouped_by_character = radical_breakdown.group_by(&:source_character) %>
+<% show_character_groups = grouped_by_character.keys.any?(&:present?) %>
 
 <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
   <% if radical_breakdown.any? %>
@@ -8,6 +10,11 @@
     <ul class="space-y-3">
       <% radical_breakdown.each do |item| %>
         <li class="text-base">
+          <% if show_character_groups && item.source_character.present? %>
+            <div class="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
+              Character <span class="font-hanzi text-sm normal-case"><%= item.source_character %></span>
+            </div>
+          <% end %>
           <div class="flex items-baseline gap-2">
             <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= item.radical.character %></span>
             <% if item.radical.stroke_count.present? %>
