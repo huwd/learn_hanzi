@@ -83,7 +83,7 @@ namespace :dictionary_import do
 
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
     puts "\nDone! Completed in #{elapsed.round(2)}s"
-    puts "Wiktionary meanings created/updated: #{result[:created_meanings]}"
+    puts "Wiktionary meanings created: #{result[:created_meanings]}"
     puts "Total Wiktionary meanings in database: #{result[:entries_after]}"
   end
 end

@@ -1,6 +1,6 @@
 module Admin
   class DashboardController < BaseController
-    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary hsk_tags wiktionary frequency_data].freeze
+    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary wiktionary hsk_tags frequency_data].freeze
 
     def index
       @tasks_by_type = AdminTask::VALID_TASK_TYPES.index_with do |type|
