@@ -85,4 +85,19 @@ RSpec.describe Admin::ProvisioningJob, type: :job do
 
     include_examples "a provisioning job", Admin::FrequencyProvisioningService
   end
+
+  describe "#perform for unihan" do
+    let(:task_type) { "unihan" }
+    let(:summary_result) do
+      {
+        definitions_parsed: 2,
+        meanings_before: 0,
+        meanings_after: 2,
+        meanings_created: 2,
+        skipped_higher_priority: 0
+      }
+    end
+
+    include_examples "a provisioning job", Admin::UnihanProvisioningService
+  end
 end

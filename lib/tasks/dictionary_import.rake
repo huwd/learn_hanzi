@@ -86,4 +86,19 @@ namespace :dictionary_import do
     puts "Wiktionary meanings created: #{result[:created_meanings]}"
     puts "Total Wiktionary meanings in database: #{result[:entries_after]}"
   end
+
+  desc "Import Unihan kDefinition data"
+  task unihan: :environment do
+    puts "Starting Unihan import..."
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    result = Admin::UnihanProvisioningService.call
+
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+    puts "\nDone! Completed in #{elapsed.round(2)}s"
+    puts "Unihan definitions parsed: #{result[:definitions_parsed]}"
+    puts "Unihan meanings created: #{result[:meanings_created]}"
+    puts "Skipped due to higher-priority meanings: #{result[:skipped_higher_priority]}"
+    puts "Total Unihan meanings in database: #{result[:meanings_after]}"
+  end
 end
