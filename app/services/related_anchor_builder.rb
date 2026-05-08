@@ -14,82 +14,62 @@ class RelatedAnchorBuilder
   end
 
   def call
-    matches = build_match_map.values
+    return [] if limit <= 0
 
-    matches
-      .sort_by { |result| sort_key(result) }
-      .first(limit)
+    results = full_token_results
+    remaining = limit - results.size
+    return results if remaining <= 0
+
+    results + per_character_results(excluding_ids: results.map { |result| result.user_learning.id }, limit: remaining)
   end
 
   private
 
   attr_reader :user, :target_learning, :limit
 
-  def build_match_map
-    map = {}
-
-    full_token_matches.each do |learning|
-      map[learning.id] = Result.new(
-        user_learning: learning,
-        full_token_match: true,
-        matched_characters: []
-      )
-    end
-
-    per_character_matches.each do |learning, chars|
-      existing = map[learning.id]
-      if existing
-        existing.matched_characters = chars
-      else
-        map[learning.id] = Result.new(
-          user_learning: learning,
-          full_token_match: false,
-          matched_characters: chars
-        )
-      end
-    end
-
-    map
-  end
-
-  def full_token_matches
+  def full_token_results
     target = target_text
     return [] if target.blank?
 
-    mastered_scope
+    ordered_mastered_scope
       .where("dictionary_entries.text LIKE ?", "%#{escape_like(target)}%")
+      .limit(limit)
       .to_a
+      .map do |learning|
+        Result.new(
+          user_learning: learning,
+          full_token_match: true,
+          matched_characters: matching_characters_for(learning, target_characters)
+        )
+      end
   end
 
-  def per_character_matches
+  def per_character_results(excluding_ids:, limit:)
     chars = target_characters
     return [] if chars.empty?
 
     pattern = chars.map { "dictionary_entries.text LIKE ?" }.join(" OR ")
     values = chars.map { |char| "%#{escape_like(char)}%" }
 
-    mastered_scope
+    scope = ordered_mastered_scope
       .where(pattern, *values)
+    scope = scope.where.not(id: excluding_ids) if excluding_ids.any?
+
+    scope
+      .limit(limit)
       .to_a
-      .map { |learning| [ learning, matching_characters_for(learning, chars) ] }
+      .map do |learning|
+        Result.new(
+          user_learning: learning,
+          full_token_match: false,
+          matched_characters: matching_characters_for(learning, chars)
+        )
+      end
   end
 
   def matching_characters_for(learning, chars)
     text = learning.dictionary_entry.text
     chars.select { |char| text.include?(char) }
-  end
-
-  def sort_key(result)
-    [
-      result.full_token_match ? 0 : 1,
-      frequency_presence_rank(result.user_learning.dictionary_entry),
-      result.user_learning.dictionary_entry.frequency_rank || Float::INFINITY,
-      result.user_learning.dictionary_entry.text
-    ]
-  end
-
-  def frequency_presence_rank(entry)
-    entry.frequency_rank.present? ? 0 : 1
   end
 
   def target_text
@@ -100,11 +80,14 @@ class RelatedAnchorBuilder
     target_text.to_s.each_char.uniq
   end
 
-  def mastered_scope
+  def ordered_mastered_scope
     user.user_learnings
         .mastered
         .joins(:dictionary_entry)
         .where.not(id: target_learning.id)
+        .order(Arel.sql("CASE WHEN dictionary_entries.frequency_rank IS NULL THEN 1 ELSE 0 END"))
+        .order("dictionary_entries.frequency_rank ASC")
+        .order("dictionary_entries.text ASC")
         .includes(dictionary_entry: { meanings: :source })
   end
 
