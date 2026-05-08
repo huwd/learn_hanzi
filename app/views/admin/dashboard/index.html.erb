@@ -62,6 +62,14 @@
           unit:      "ranked entries",
           requires_dictionary: @db_stats[:dictionary_entries].zero? %>
 
+    <%= render "task_card",
+          label:     "Radical breakdowns",
+          task_type: "radicals",
+          task:      @tasks_by_type["radicals"],
+          db_count:  @db_stats[:radical_entries],
+          unit:      "entries with radicals",
+          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+
   </div>
 
   <%# History log %>

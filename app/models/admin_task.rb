@@ -1,5 +1,13 @@
 class AdminTask < ApplicationRecord
-  VALID_TASK_TYPES = %w[cc_cedict hsk_tags custom_dictionary frequency_data wiktionary unihan].freeze
+  VALID_TASK_TYPES = %w[
+    cc_cedict
+    hsk_tags
+    custom_dictionary
+    frequency_data
+    wiktionary
+    unihan
+    radicals
+  ].freeze
   VALID_STATES     = %w[pending running complete failed].freeze
 
   validates :task_type, presence: true, inclusion: { in: VALID_TASK_TYPES }

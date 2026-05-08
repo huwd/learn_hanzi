@@ -8,7 +8,8 @@ module Admin
       "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
       "frequency_data"     => Admin::FrequencyProvisioningService,
       "wiktionary"         => Admin::WiktionaryProvisioningService,
-      "unihan"             => Admin::UnihanProvisioningService
+      "unihan"             => Admin::UnihanProvisioningService,
+      "radicals"           => Admin::RadicalsProvisioningService
     }.freeze
 
     def perform(task_id)
