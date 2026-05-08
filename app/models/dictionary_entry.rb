@@ -68,7 +68,7 @@ class DictionaryEntry < ApplicationRecord
       meanings.select { |m| m.language == "en" }
     elsif persisted?
       # If not preloaded, fetch from DB
-      meanings.where(language: "en").includes(:source).order(:id)
+      meanings.where(language: "en").includes(:source).order(:id).to_a
     else
       # For new records not yet in the DB
       meanings.select { |m| m.language == "en" }
