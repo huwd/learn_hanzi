@@ -13,6 +13,7 @@ class RadicalBreakdownBuilder
   def call
     rows = @dictionary_entry
       .dictionary_entry_radicals
+      .includes(:radical)
       .order(:position, :id)
 
     return [] if rows.empty?
