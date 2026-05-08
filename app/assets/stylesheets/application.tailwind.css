@@ -4,16 +4,6 @@
 
 @layer utilities {
   .font-hanzi {
-    font-family: 'Ma Shan Zheng', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-family: "Ma Shan Zheng", "PingFang SC", "Microsoft YaHei", sans-serif;
   }
 }
-
-/*
-
-@layer components {
-  .btn-primary {
-    @apply py-2 px-4 bg-blue-200;
-  }
-}
-
-*/
