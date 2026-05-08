@@ -1,0 +1,31 @@
+<% radical_breakdown ||= [] %>
+
+<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+  <% if radical_breakdown.any? %>
+    <p class="text-base font-medium text-gray-600 dark:text-gray-400 mb-3">
+      Character components:
+    </p>
+    <ul class="space-y-3">
+      <% radical_breakdown.each do |item| %>
+        <li class="text-base">
+          <div class="flex items-baseline gap-2">
+            <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= item.radical.character %></span>
+            <% if item.radical.stroke_count.present? %>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"><%= item.radical.stroke_count %> strokes</span>
+            <% end %>
+            <% if item.mastered %>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300">Mastered</span>
+            <% end %>
+          </div>
+          <% if item.radical.meaning.present? %>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1"><%= item.radical.meaning %></div>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-base text-gray-400 text-center">
+      No radical breakdown available for this character yet.
+    </p>
+  <% end %>
+</div>

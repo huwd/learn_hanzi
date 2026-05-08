@@ -5,6 +5,8 @@ RSpec.describe DictionaryEntry, type: :model do
     it { should have_many(:dictionary_entry_tags).dependent(:destroy) }
     it { should have_many(:tags).through(:dictionary_entry_tags) }
     it { should have_many(:meanings).dependent(:destroy) }
+    it { should have_many(:dictionary_entry_radicals).dependent(:destroy) }
+    it { should have_many(:radicals).through(:dictionary_entry_radicals) }
     it { should have_many(:user_learnings).dependent(:destroy) }
   end
 

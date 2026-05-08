@@ -253,6 +253,34 @@ RSpec.describe "Learn", type: :request do
 
         expect(response.body.index("学习者")).to be < response.body.index("学校")
       end
+
+      it "shows radical breakdown details in the contextual panel" do
+        radical_yan = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)
+        radical_wu = create(:radical, character: "吾", meaning: "I", stroke_count: 7)
+
+        create(:dictionary_entry_radical, dictionary_entry: new_card.dictionary_entry, radical: radical_yan, position: 1)
+        create(:dictionary_entry_radical, dictionary_entry: new_card.dictionary_entry, radical: radical_wu, position: 2)
+
+        get learn_card_path
+
+        expect(response.body).to include("Character components")
+        expect(response.body).to include("讠")
+        expect(response.body).to include("2 strokes")
+        expect(response.body).to include("speech")
+        expect(response.body).to include("吾")
+        expect(response.body).to include("7 strokes")
+      end
+
+      it "marks a radical as mastered when the learner knows it" do
+        radical_wu = create(:radical, character: "吾", meaning: "I", stroke_count: 7)
+        radical_entry = create(:dictionary_entry, text: "吾")
+        create(:user_learning, user: user, dictionary_entry: radical_entry, state: "mastered")
+        create(:dictionary_entry_radical, dictionary_entry: new_card.dictionary_entry, radical: radical_wu, position: 1)
+
+        get learn_card_path
+
+        expect(response.body).to include("Mastered")
+      end
     end
 
     context "when authenticated without an active learn session" do

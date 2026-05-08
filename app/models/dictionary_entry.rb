@@ -9,6 +9,8 @@ class DictionaryEntry < ApplicationRecord
   has_many :dictionary_entry_tags, dependent: :destroy
   has_many :tags, through: :dictionary_entry_tags
   has_many :meanings, dependent: :destroy
+  has_many :dictionary_entry_radicals, dependent: :destroy
+  has_many :radicals, through: :dictionary_entry_radicals
   has_many :user_learnings, dependent: :destroy
 
   validates :text, presence: true

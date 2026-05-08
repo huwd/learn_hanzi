@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_08_144551) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_08_164258) do
   create_table "admin_tasks", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -45,6 +45,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_08_144551) do
     t.datetime "updated_at", null: false
     t.index ["frequency_rank"], name: "index_dictionary_entries_on_frequency_rank"
     t.index ["text"], name: "index_dictionary_entries_on_text", unique: true
+  end
+
+  create_table "dictionary_entry_radicals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "dictionary_entry_id", null: false
+    t.integer "position", null: false
+    t.integer "radical_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dictionary_entry_id", "position"], name: "index_unique_radical_position_on_entry", unique: true
+    t.index ["dictionary_entry_id"], name: "index_dictionary_entry_radicals_on_dictionary_entry_id"
+    t.index ["radical_id"], name: "index_dictionary_entry_radicals_on_radical_id"
   end
 
   create_table "dictionary_entry_tags", force: :cascade do |t|
@@ -93,6 +104,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_08_144551) do
     t.index ["dictionary_entry_id", "language", "text", "pinyin", "source_id"], name: "index_meanings_on_dictionary_entry_source_and_content", unique: true
     t.index ["dictionary_entry_id"], name: "index_meanings_on_dictionary_entry_id"
     t.index ["source_id"], name: "index_meanings_on_source_id"
+  end
+
+  create_table "radicals", force: :cascade do |t|
+    t.string "character", null: false
+    t.datetime "created_at", null: false
+    t.string "meaning"
+    t.integer "stroke_count"
+    t.datetime "updated_at", null: false
+    t.index ["character"], name: "index_radicals_on_character", unique: true
   end
 
   create_table "review_logs", force: :cascade do |t|
@@ -170,6 +190,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_08_144551) do
   end
 
   add_foreign_key "anki_imports", "users"
+  add_foreign_key "dictionary_entry_radicals", "dictionary_entries"
+  add_foreign_key "dictionary_entry_radicals", "radicals"
   add_foreign_key "dictionary_entry_tags", "dictionary_entries"
   add_foreign_key "dictionary_entry_tags", "tags"
   add_foreign_key "learning_session_cards", "learning_sessions"
