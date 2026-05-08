@@ -53,5 +53,23 @@ RSpec.describe Admin::RadicalsProvisioningService do
       expect(result).to include(entries_processed: 1, associations_created: 2)
       expect(entry.reload.dictionary_entry_radicals.order(:position).map { |row| row.radical.character }).to eq([ "讠", "吾" ])
     end
+
+    it "imports in insert batches for larger datasets" do
+      many_entries = 200.times.map do |idx|
+        character = [ 0x4E00 + idx ].pack("U")
+        create(:dictionary_entry, text: character)
+        { "character" => character, "decomposition" => "⿰讠吾" }
+      end
+
+      File.write(
+        dictionary_path,
+        many_entries.map(&:to_json).join("\n") + "\n"
+      )
+
+      result = described_class.call(dictionary_path: dictionary_path.to_s, graphics_path: graphics_path.to_s)
+
+      expect(result).to include(entries_processed: 200, associations_created: 400)
+      expect(DictionaryEntryRadical.count).to eq(400)
+    end
   end
 end

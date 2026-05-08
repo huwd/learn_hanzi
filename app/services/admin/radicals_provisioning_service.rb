@@ -6,6 +6,7 @@ module Admin
     DICTIONARY_PATH = Rails.root.join("tmp", "makemeahanzi", "dictionary.txt")
     GRAPHICS_PATH = Rails.root.join("tmp", "makemeahanzi", "graphics.txt")
     BATCH_SIZE = 900
+    INSERT_BATCH_SIZE = 150
 
     def self.call(dictionary_path: DICTIONARY_PATH.to_s, graphics_path: GRAPHICS_PATH.to_s)
       new(dictionary_path:, graphics_path:).call
@@ -167,7 +168,9 @@ module Admin
         in_batches(entry_ids) do |batch|
           DictionaryEntryRadical.where(dictionary_entry_id: batch).delete_all
         end
-        DictionaryEntryRadical.insert_all(rows) if rows.any?
+        rows.each_slice(INSERT_BATCH_SIZE) do |slice|
+          DictionaryEntryRadical.insert_all(slice)
+        end
       end
     end
 
