@@ -1,5 +1,10 @@
 class DictionaryEntry < ApplicationRecord
-  CEDICT_DEPRIORITISED_SENSE_PATTERN = /\b(?:surname|archaic|classical|literary|dialect|old(?:\s+variant)?|variant(?:\s+of)?|also\s+written)\b/i
+  CEDICT_SENSE_DEPRIORITISATION_RULES = [
+    [ /\b(?:classifier|measure\s+word)\b/i, 10 ],
+    [ /\b(?:archaic|classical|literary|dialect|old\s+name\s+of)\b/i, 20 ],
+    [ /\b(?:old(?:\s+variant)?|variant(?:\s+of)?|also\s+written)\b/i, 40 ],
+    [ /\bsurname\b/i, 50 ]
+  ].freeze
 
   has_many :dictionary_entry_tags, dependent: :destroy
   has_many :tags, through: :dictionary_entry_tags
@@ -28,31 +33,27 @@ class DictionaryEntry < ApplicationRecord
   end
 
   def flashcard_meanings
-    english_meanings = if association(:meanings).loaded?
-      meanings.select { |meaning| meaning.language == "en" }
-    elsif persisted?
-      Meaning.includes(:source).where(dictionary_entry_id: id, language: "en").order(:id).to_a
-    else
-      meanings.select { |meaning| meaning.language == "en" }
-    end
+    english_meanings = fetch_english_meanings
+    return english_meanings if english_meanings.empty?
 
-    if persisted? && association(:meanings).loaded? && english_meanings.empty?
-      english_meanings = Meaning.includes(:source).where(dictionary_entry_id: id, language: "en").order(:id).to_a
-    end
-
+    # First, filter out any classifier-only senses
     candidate_meanings = english_meanings.reject { |meaning| meaning.text.start_with?("CL:") }
+    return candidate_meanings if candidate_meanings.empty?
 
-    if candidate_meanings.any? { |meaning| cc_cedict_meaning?(meaning) }
-      keep_obscure_first = candidate_meanings.none? do |meaning|
-        cc_cedict_meaning?(meaning) && !obscure_cedict_meaning?(meaning)
-      end
+    # If there are no CC-CEDICT meanings, there's no sorting to do.
+    return candidate_meanings unless candidate_meanings.any?(&method(:cc_cedict_meaning?))
 
-      candidate_meanings.each_with_index
-                        .sort_by { |meaning, index| [ deprioritise_obscure?(meaning, keep_obscure_first), index ] }
-                        .map(&:first)
-    else
-      candidate_meanings
+    # Keep original order when all CC-CEDICT senses are deprioritised.
+    has_plain_cedict = candidate_meanings.any? do |meaning|
+      cc_cedict_meaning?(meaning) && cedict_deprioritisation_score(meaning).zero?
     end
+    return candidate_meanings unless has_plain_cedict
+
+    ordered_by_pinyin(candidate_meanings)
+  end
+
+  def flashcard_primary_pinyin
+    flashcard_primary_meaning&.pinyin
   end
 
   def flashcard_primary_meaning
@@ -61,19 +62,59 @@ class DictionaryEntry < ApplicationRecord
 
   private
 
+  def fetch_english_meanings
+    # Prioritise loaded associations to avoid N+1 queries
+    if association(:meanings).loaded?
+      meanings.select { |m| m.language == "en" }
+    elsif persisted?
+      # If not preloaded, fetch from DB
+      meanings.where(language: "en").includes(:source).order(:id)
+    else
+      # For new records not yet in the DB
+      meanings.select { |m| m.language == "en" }
+    end
+  end
+
+  def sort_penalty(meaning)
+    return 0 unless cc_cedict_meaning?(meaning)
+
+    cedict_deprioritisation_score(meaning)
+  end
+
+  def ordered_by_pinyin(candidate_meanings)
+    indexed = candidate_meanings.each_with_index.to_a
+    grouped = indexed.group_by { |meaning, _index| meaning.pinyin }
+
+    grouped
+      .sort_by { |_pinyin, meanings| pinyin_group_sort_key(meanings) }
+      .flat_map do |_pinyin, meanings|
+        meanings.sort_by { |meaning, index| [ sort_penalty(meaning), index ] }.map(&:first)
+      end
+  end
+
+  def pinyin_group_sort_key(meanings)
+    penalties = meanings.map { |meaning, _index| sort_penalty(meaning) }
+
+    [
+      penalties.min,
+      -penalties.count(0),
+      penalties.sum,
+      meanings.first.last
+    ]
+  end
+
+  def cedict_deprioritisation_score(meaning)
+    text = meaning.text
+
+    CEDICT_SENSE_DEPRIORITISATION_RULES.each do |pattern, score|
+      return score if text.match?(pattern)
+    end
+
+    0
+  end
+
   def cc_cedict_meaning?(meaning)
     meaning.source&.name == "CC-CEDICT"
-  end
-
-  def obscure_cedict_meaning?(meaning)
-    meaning.text.match?(CEDICT_DEPRIORITISED_SENSE_PATTERN)
-  end
-
-  def deprioritise_obscure?(meaning, keep_obscure_first)
-    return 0 unless cc_cedict_meaning?(meaning)
-    return 0 if keep_obscure_first
-
-    obscure_cedict_meaning?(meaning) ? 1 : 0
   end
 
   def must_have_at_least_one_meaning
