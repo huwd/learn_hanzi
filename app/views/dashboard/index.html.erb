@@ -52,12 +52,20 @@
         <% if @next_hsk_milestone.nil? %>
           New words to introduce
         <% elsif @next_hsk_milestone[:complete] %>
-          All HSK 3.0 tiers mastered
+          HSK 3.0 tiers mastered
         <% else %>
-          <%= @next_hsk_milestone[:remaining_words] %> words until <%= @next_hsk_milestone[:tier_name] %> mastery
+          words until <%= @next_hsk_milestone[:tier_name] %> mastery
         <% end %>
       </p>
-      <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6"><%= @new_cards_count %></div>
+      <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">
+        <% if @next_hsk_milestone.nil? %>
+          <%= @new_cards_count %>
+        <% elsif @next_hsk_milestone[:complete] %>
+          0
+        <% else %>
+          <%= @next_hsk_milestone[:remaining_words] %>
+        <% end %>
+      </div>
       <%= link_to learn_path,
             class: "mt-auto inline-block text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors" do %>
         <%= @new_cards_count > 0 ? "Start learning" : "Nothing new today" %>
