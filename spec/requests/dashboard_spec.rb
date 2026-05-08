@@ -198,7 +198,7 @@ RSpec.describe "Dashboard", type: :request do
 
         it "shows words remaining until the next incomplete HSK tier" do
           get root_path
-          expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">\s*1\s*</div>})
+          expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 text-center">\s*1\s*</div>})
           expect(response.body).to include("words until HSK 1 mastery")
         end
 
@@ -210,7 +210,7 @@ RSpec.describe "Dashboard", type: :request do
           it "shows a clear completion state" do
             get root_path
             expect(response.body).to include("HSK 3.0 tiers mastered")
-            expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">\s*0\s*</div>})
+            expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 text-center">\s*0\s*</div>})
           end
         end
 
@@ -223,6 +223,35 @@ RSpec.describe "Dashboard", type: :request do
             get root_path
             expect(response.body).to include("New words to introduce")
           end
+        end
+      end
+
+      context "with mastered vocabulary containing overlapping characters" do
+        let!(:entry_hello) { create(:dictionary_entry, text: "你好") }
+        let!(:entry_you)   { create(:dictionary_entry, text: "你") }
+        let!(:entry_good)  { create(:dictionary_entry, text: "好") }
+        let!(:entry_new)   { create(:dictionary_entry, text: "学") }
+
+        before do
+          create(:user_learning, user: user, dictionary_entry: entry_hello,
+                 state: "mastered")
+          create(:user_learning, user: user, dictionary_entry: entry_you,
+                 state: "mastered")
+          create(:user_learning, user: user, dictionary_entry: entry_good,
+                 state: "mastered")
+          create(:user_learning, user: user, dictionary_entry: entry_new,
+                 state: "new")
+        end
+
+        it "shows deduplicated mastered character count in progress" do
+          get root_path
+          expect(response.body).to include("Characters mastered")
+          expect(response.body).to match(%r{Characters mastered</span>\s*<span[^>]*>2</span>})
+        end
+
+        it "does not render the old New row in progress" do
+          get root_path
+          expect(response.body).not_to include("New</dt>")
         end
       end
     end

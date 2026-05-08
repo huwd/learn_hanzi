@@ -20,6 +20,7 @@ class DashboardController < ApplicationController
 
     @new_cards_count = @state_counts[:new]
     @next_hsk_milestone = build_next_hsk_milestone
+    @mastered_characters_count = count_mastered_characters(user_learnings)
 
     @vocabulary_sections = build_vocabulary_sections
   end
@@ -127,5 +128,20 @@ class DashboardController < ApplicationController
 
     number = name[/\d+/]&.to_i
     [ number || 9_998, 0 ]
+  end
+
+  def count_mastered_characters(user_learnings)
+    texts = user_learnings
+      .mastered
+      .joins(:dictionary_entry)
+      .distinct
+      .pluck("dictionary_entries.text")
+
+    seen = {}
+    texts.each do |text|
+      text.to_s.each_char { |char| seen[char] = true }
+    end
+
+    seen.size
   end
 end
