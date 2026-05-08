@@ -2,7 +2,10 @@ class DictionaryEntriesController < ApplicationController
   def show
     @entry = DictionaryEntry.find_with_associations(params[:id], Current.user)
     @dictionary_entry = @entry[:entry]
-    english_meanings = @entry[:meanings].where(language: "en").to_a
+    preloaded_meanings = @entry[:meanings].to_a
+    @dictionary_entry.association(:meanings).target = preloaded_meanings
+
+    english_meanings = preloaded_meanings.select { |meaning| meaning.language == "en" }
     flashcard_order = @dictionary_entry.flashcard_meanings
     @meanings = flashcard_order + (english_meanings - flashcard_order)
     @user_learning = @entry[:user_learning]
