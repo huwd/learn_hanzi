@@ -67,6 +67,10 @@
         <%= button_to "Easy",  learn_review_path, params: { ease: 4 }, data: { ease: "4" },
               class: "p-5 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors" %>
       </div>
+
+      <div class="mt-6">
+        <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
+      </div>
     </div>
 
   </div>

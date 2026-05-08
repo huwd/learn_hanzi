@@ -56,9 +56,6 @@
             </div>
           <% end %>
 
-          <div class="mt-6">
-            <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
-          </div>
         </div>
       </div>
 
@@ -96,6 +93,10 @@
           <span class="absolute top-1.5 right-1.5 text-xs font-mono border border-current rounded px-1 leading-none opacity-40">4</span>
           Easy
         <% end %>
+      </div>
+
+      <div class="mt-6">
+        <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
       </div>
     </div>
 
