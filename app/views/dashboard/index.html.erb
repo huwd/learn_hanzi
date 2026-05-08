@@ -54,7 +54,7 @@
         <% elsif @next_hsk_milestone[:complete] %>
           HSK 3.0 tiers mastered
         <% else %>
-          words until <%= @next_hsk_milestone[:tier_name] %> mastery
+          <%= pluralize(@next_hsk_milestone[:remaining_words], "word") %> until <%= @next_hsk_milestone[:tier_name] %> mastery
         <% end %>
       </p>
       <div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 text-center">

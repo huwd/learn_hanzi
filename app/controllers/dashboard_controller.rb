@@ -83,43 +83,37 @@ class DashboardController < ApplicationController
   end
 
   def build_next_hsk_milestone
-    hsk3 = Tag.find_by(name: "HSK 3.0")
+    hsk_root = Tag.find_by(name: "HSK", parent_id: nil)
+    return nil unless hsk_root
+
+    hsk3 = hsk_root.children.find_by(name: "HSK 3.0")
     return nil unless hsk3
 
     levels = hsk3.children.sort_by { |tag| hsk_level_sort_key(tag.name) }
     return nil if levels.empty?
 
-    level_ids = levels.map(&:id)
-
-    entry_counts = DictionaryEntryTag
-      .where(tag_id: level_ids)
-      .group(:tag_id)
-      .count
-
-    mastered_counts = UserLearning
-      .where(user: Current.user, state: "mastered")
-      .joins(dictionary_entry: :dictionary_entry_tags)
-      .where(dictionary_entry_tags: { tag_id: level_ids })
-      .group("dictionary_entry_tags.tag_id")
-      .count
+    level_stats = level_tag_stats(levels)
+    return nil if level_stats.values.all? { |stats| stats[:total].zero? }
 
     next_level = levels.find do |level|
-      total = entry_counts[level.id] || 0
+      stats = level_stats[level.id]
+      total = stats[:total]
       next false if total.zero?
 
-      mastered = mastered_counts[level.id] || 0
+      mastered = stats[:mastered]
       mastered < total
     end
 
     return { complete: true } unless next_level
 
-    total = entry_counts[next_level.id] || 0
-    mastered = mastered_counts[next_level.id] || 0
+    stats = level_stats[next_level.id]
+    total = stats[:total]
+    mastered = stats[:mastered]
 
     {
       complete: false,
       tier_name: next_level.name,
-      remaining_words: total - mastered
+      remaining_words: [ total - mastered, 0 ].max
     }
   end
 
