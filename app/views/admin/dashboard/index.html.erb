@@ -16,7 +16,7 @@
   </div>
 
   <%# Task cards %>
-  <div class="grid gap-4 sm:grid-cols-4">
+  <div class="grid gap-4 sm:grid-cols-5">
 
     <%= render "task_card",
           label:     "CC-CEDICT dictionary",
@@ -30,6 +30,13 @@
           task_type: "custom_dictionary",
           task:      @tasks_by_type["custom_dictionary"],
           db_count:  @db_stats[:custom_entries],
+          unit:      "entries" %>
+
+    <%= render "task_card",
+          label:     "Wiktionary entries",
+          task_type: "wiktionary",
+          task:      @tasks_by_type["wiktionary"],
+          db_count:  @db_stats[:wiktionary_entries],
           unit:      "entries" %>
 
     <%= render "task_card",

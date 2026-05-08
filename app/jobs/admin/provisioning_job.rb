@@ -6,7 +6,8 @@ module Admin
       "cc_cedict"          => Admin::CcCedictProvisioningService,
       "hsk_tags"           => Admin::HskTagsProvisioningService,
       "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
-      "frequency_data"     => Admin::FrequencyProvisioningService
+      "frequency_data"     => Admin::FrequencyProvisioningService,
+      "wiktionary"         => Admin::WiktionaryProvisioningService
     }.freeze
 
     def perform(task_id)
@@ -22,6 +23,7 @@ module Admin
         summary:      result.to_json
       )
     rescue => e
+      Sentry.capture_exception(e) if defined?(Sentry)
       Rails.logger.error(
         [
           "Admin::ProvisioningJob failed for task_id=#{task_id}",

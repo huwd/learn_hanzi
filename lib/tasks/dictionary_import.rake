@@ -73,4 +73,17 @@ namespace :dictionary_import do
 
     puts "Done! #{created} entries created, #{updated} already existed."
   end
+
+  desc "Import Wiktionary dictionary entries from kaikki.org JSONL"
+  task wiktionary: :environment do
+    puts "Starting Wiktionary import..."
+    start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    result = Admin::WiktionaryProvisioningService.call
+
+    elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time
+    puts "\nDone! Completed in #{elapsed.round(2)}s"
+    puts "Wiktionary meanings created/updated: #{result[:created_meanings]}"
+    puts "Total Wiktionary meanings in database: #{result[:entries_after]}"
+  end
 end
