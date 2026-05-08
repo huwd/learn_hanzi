@@ -40,16 +40,10 @@ class DictionaryEntry < ApplicationRecord
     candidate_meanings = english_meanings.reject { |meaning| meaning.text.start_with?("CL:") }
     return candidate_meanings if candidate_meanings.empty?
 
-    # If there are no CC-CEDICT meanings, there's no sorting to do.
-    return candidate_meanings unless candidate_meanings.any?(&method(:cc_cedict_meaning?))
-
-    # Keep original order when all CC-CEDICT senses are deprioritised.
-    has_plain_cedict = candidate_meanings.any? do |meaning|
-      cc_cedict_meaning?(meaning) && cedict_deprioritisation_score(meaning).zero?
-    end
-    return candidate_meanings unless has_plain_cedict
-
-    ordered_by_pinyin(candidate_meanings)
+    candidate_meanings
+      .group_by { |meaning| source_priority(meaning) }
+      .sort_by(&:first)
+      .flat_map { |_priority, meanings| order_meanings_within_priority(meanings) }
   end
 
   def flashcard_primary_pinyin
@@ -73,6 +67,23 @@ class DictionaryEntry < ApplicationRecord
       # For new records not yet in the DB
       meanings.select { |m| m.language == "en" }
     end
+  end
+
+  def source_priority(meaning)
+    meaning.source&.priority || 100
+  end
+
+  def order_meanings_within_priority(candidate_meanings)
+    # If there are no CC-CEDICT meanings at this priority, keep insertion order.
+    return candidate_meanings unless candidate_meanings.any?(&method(:cc_cedict_meaning?))
+
+    # Keep original order when all CC-CEDICT senses are deprioritised.
+    has_plain_cedict = candidate_meanings.any? do |meaning|
+      cc_cedict_meaning?(meaning) && cedict_deprioritisation_score(meaning).zero?
+    end
+    return candidate_meanings unless has_plain_cedict
+
+    ordered_by_pinyin(candidate_meanings)
   end
 
   def sort_penalty(meaning)
