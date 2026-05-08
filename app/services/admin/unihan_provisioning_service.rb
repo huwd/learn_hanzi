@@ -67,13 +67,13 @@ module Admin
       source = Source.find_or_create_by!(name: "Unihan") do |s|
         s.url = UNIHAN_URL
         s.date_accessed = Time.zone.today
-        s.priority = 50
+        s.priority = 200
       end
 
       attrs = {
         url: UNIHAN_URL,
         date_accessed: Time.zone.today,
-        priority: 50
+        priority: 200
       }
       source.update!(attrs) if source.slice(*attrs.keys.map(&:to_s)) != attrs.stringify_keys
       source

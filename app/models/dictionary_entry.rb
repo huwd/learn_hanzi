@@ -72,7 +72,12 @@ class DictionaryEntry < ApplicationRecord
   end
 
   def source_priority(meaning)
-    meaning.source&.priority || 100
+    base_priority = meaning.source&.priority || 100
+    missing_pinyin?(meaning) ? base_priority + 1_000 : base_priority
+  end
+
+  def missing_pinyin?(meaning)
+    meaning.pinyin.blank? || meaning.pinyin.casecmp("unknown").zero?
   end
 
   def order_meanings_within_priority(candidate_meanings)

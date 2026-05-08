@@ -73,7 +73,7 @@ RSpec.describe "DictionaryEntries", type: :request do
         dictionary_entry.meanings.destroy_all
 
         cedict = create(:source, name: "CC-CEDICT", priority: 20)
-        wiktionary = create(:source, name: "Wiktionary", priority: 10)
+        wiktionary = create(:source, name: "Wiktionary", priority: 50)
 
         create(:meaning,
                dictionary_entry: dictionary_entry,
@@ -90,7 +90,7 @@ RSpec.describe "DictionaryEntries", type: :request do
 
         get dictionary_entry_path(dictionary_entry)
 
-        expect(response.body.index("plum")).to be < response.body.index("surname Li")
+        expect(response.body.index("surname Li")).to be < response.body.index("plum")
       end
 
       it "shows radical breakdown details" do

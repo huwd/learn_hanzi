@@ -20,13 +20,13 @@ module Admin
       source = Source.find_or_create_by!(name: "Wiktionary") do |s|
         s.url = WIKTIONARY_URL
         s.date_accessed = Time.zone.today
-        s.priority = 10
+        s.priority = 50
       end
 
       source_attrs = {
         url: WIKTIONARY_URL,
         date_accessed: Time.zone.today,
-        priority: 10
+        priority: 50
       }
       source.update!(source_attrs) if source.slice(*source_attrs.keys.map(&:to_s)) != source_attrs.stringify_keys
 

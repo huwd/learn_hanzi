@@ -143,12 +143,21 @@ RSpec.describe DictionaryEntry, type: :model do
     end
 
     it 'prioritises meanings from lower-priority-number sources' do
-      wiktionary_source = create(:source, name: 'Wiktionary', priority: 10)
+      wiktionary_source = create(:source, name: 'Wiktionary', priority: 50)
       create(:meaning, dictionary_entry: entry, source: cedict_source, text: 'surname Li', pinyin: 'Lǐ')
       create(:meaning, dictionary_entry: entry, source: wiktionary_source, text: 'plum', pinyin: 'lǐ')
 
-      expect(entry.reload.flashcard_primary_meaning.source.name).to eq('Wiktionary')
-      expect(entry.flashcard_primary_meaning.text).to eq('plum')
+      expect(entry.reload.flashcard_primary_meaning.source.name).to eq('CC-CEDICT')
+      expect(entry.flashcard_primary_meaning.text).to eq('surname Li')
+    end
+
+    it 'deprioritises unknown pinyin even in a higher-priority source' do
+      wiktionary_source = create(:source, name: 'Wiktionary', priority: 50)
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: 'to study', pinyin: 'xué')
+      create(:meaning, dictionary_entry: entry, source: wiktionary_source, text: 'to study', pinyin: 'Unknown')
+
+      expect(entry.reload.flashcard_primary_meaning.source.name).to eq('CC-CEDICT')
+      expect(entry.flashcard_primary_pinyin).to eq('xué')
     end
 
     it 'keeps CC-CEDICT heuristics within the same source priority band' do
