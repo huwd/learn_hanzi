@@ -8,6 +8,10 @@ namespace :radicals do
       raise "Dictionary file not found at #{dictionary_path}"
     end
 
+    unless File.exist?(graphics_path)
+      raise "Graphics file not found at #{graphics_path}. Run `bin/rails makemeahanzi:download` to download the required source files."
+    end
+
     puts "Importing radicals from #{dictionary_path}..."
     start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
