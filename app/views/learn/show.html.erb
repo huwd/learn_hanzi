@@ -81,27 +81,7 @@
     <%# Contextual panel (shown after "I need to learn this") %>
     <div data-learn-card-target="contextual" class="hidden mt-6 space-y-3">
 
-      <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-        <% if @related.any? %>
-          <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
-            Words you already know containing <span class="font-hanzi text-lg"><%= entry.text %></span>:
-          </p>
-          <ul class="space-y-2">
-            <% @related.each do |rel| %>
-              <% rel_meaning = rel.dictionary_entry.flashcard_primary_meaning %>
-              <li class="flex items-baseline gap-2 text-sm">
-                <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel.dictionary_entry.text %></span>
-                <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
-                <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <p class="text-sm text-gray-400 text-center">
-            No related words in your mastered vocabulary yet.
-          </p>
-        <% end %>
-      </div>
+      <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
 
       <%# Radical breakdown placeholder — see issue #146 %>
       <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center opacity-40">

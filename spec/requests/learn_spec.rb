@@ -224,6 +224,35 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include("plum")
         expect(response.body).to include("lǐ")
       end
+
+      it "shows full-token and per-character related anchors with labels" do
+        new_card.dictionary_entry.update!(text: "学习")
+
+        full_entry = create(:dictionary_entry, text: "学习者", frequency_rank: 120)
+        per_entry = create(:dictionary_entry, text: "学校", frequency_rank: 10)
+
+        create(:user_learning, user: user, dictionary_entry: full_entry, state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: per_entry, state: "mastered")
+
+        get learn_card_path
+
+        expect(response.body).to include("Full token")
+        expect(response.body).to include("Char 学")
+      end
+
+      it "orders related anchors by match type then frequency rank" do
+        new_card.dictionary_entry.update!(text: "学习")
+
+        full_entry = create(:dictionary_entry, text: "学习者", frequency_rank: 999)
+        per_entry = create(:dictionary_entry, text: "学校", frequency_rank: 1)
+
+        create(:user_learning, user: user, dictionary_entry: per_entry, state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: full_entry, state: "mastered")
+
+        get learn_card_path
+
+        expect(response.body.index("学习者")).to be < response.body.index("学校")
+      end
     end
 
     context "when authenticated without an active learn session" do

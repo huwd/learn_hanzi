@@ -31,6 +31,11 @@ class ReviewController < ApplicationController
                           .find(@session_card.user_learning_id)
     @position         = current_position + 1
     @total            = @learning_session.card_count
+    @related_anchors  = RelatedAnchorBuilder.call(
+      user: Current.user,
+      target_learning: @user_learning,
+      limit: 5
+    )
   end
 
   def submit

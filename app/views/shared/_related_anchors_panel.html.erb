@@ -1,0 +1,33 @@
+<div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+  <% if related_anchors.any? %>
+    <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+      Words you already know related to
+      <span class="font-hanzi text-lg"><%= entry.text %></span>:
+    </p>
+    <ul class="space-y-3">
+      <% related_anchors.each do |anchor| %>
+        <% rel_entry = anchor.user_learning.dictionary_entry %>
+        <% rel_meaning = rel_entry.flashcard_primary_meaning %>
+        <li class="text-sm">
+          <div class="flex items-baseline gap-2">
+            <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel_entry.text %></span>
+            <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
+            <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
+          </div>
+          <div class="mt-1 flex flex-wrap gap-1">
+            <% if anchor.full_token_match %>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Full token</span>
+            <% end %>
+            <% anchor.matched_characters.each do |character| %>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Char <%= character %></span>
+            <% end %>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="text-sm text-gray-400 text-center">
+      No related words in your mastered vocabulary yet.
+    </p>
+  <% end %>
+</div>
