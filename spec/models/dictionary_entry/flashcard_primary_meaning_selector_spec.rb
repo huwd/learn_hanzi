@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe "Flashcard primary meaning selection" do
+RSpec.describe DictionaryEntry, "flashcard primary meaning selection" do
   let(:source) { create(:source, name: "CC-CEDICT") }
 
   def create_entry_with_meanings(text, meanings_attrs)
