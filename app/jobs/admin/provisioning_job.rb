@@ -7,7 +7,8 @@ module Admin
       "hsk_tags"           => Admin::HskTagsProvisioningService,
       "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
       "frequency_data"     => Admin::FrequencyProvisioningService,
-      "wiktionary"         => Admin::WiktionaryProvisioningService
+      "wiktionary"         => Admin::WiktionaryProvisioningService,
+      "unihan"             => Admin::UnihanProvisioningService
     }.freeze
 
     def perform(task_id)
