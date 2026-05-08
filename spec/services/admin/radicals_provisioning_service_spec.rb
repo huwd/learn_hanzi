@@ -30,6 +30,39 @@ RSpec.describe Admin::RadicalsProvisioningService do
 
     after { FileUtils.rm_rf(tmp_dir) }
 
+    it "downloads source files when paths are missing" do
+      service = described_class.new(
+        dictionary_path: dictionary_path.to_s,
+        graphics_path: graphics_path.to_s
+      )
+
+      FileUtils.rm_f(dictionary_path)
+      FileUtils.rm_f(graphics_path)
+
+      expect(service).to receive(:download_file_to_tmp)
+        .with(Admin::RadicalsProvisioningService::DICTIONARY_URL, dictionary_path.to_s)
+        .ordered do |_url, dest|
+          File.write(dest, "{\"character\":\"语\",\"decomposition\":\"⿰讠吾\"}\n")
+        end
+
+      expect(service).to receive(:confirm_file_presence)
+        .with("dictionary.txt", dictionary_path.dirname)
+        .ordered
+
+      expect(service).to receive(:download_file_to_tmp)
+        .with(Admin::RadicalsProvisioningService::GRAPHICS_URL, graphics_path.to_s)
+        .ordered do |_url, dest|
+          File.write(dest, "{\"character\":\"吾\",\"strokes\":[\"a\"]}\n")
+        end
+
+      expect(service).to receive(:confirm_file_presence)
+        .with("graphics.txt", graphics_path.dirname)
+        .ordered
+
+      result = service.call
+      expect(result).to include(entries_processed: 1, associations_created: 2)
+    end
+
     it "creates radicals and dictionary entry associations" do
       result = described_class.call(dictionary_path: dictionary_path.to_s, graphics_path: graphics_path.to_s)
 

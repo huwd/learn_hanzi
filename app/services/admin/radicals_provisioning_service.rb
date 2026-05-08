@@ -3,6 +3,10 @@ require "set"
 
 module Admin
   class RadicalsProvisioningService
+    include ImportFilesHelper
+
+    DICTIONARY_URL = "https://raw.githubusercontent.com/skishore/makemeahanzi/master/dictionary.txt"
+    GRAPHICS_URL = "https://raw.githubusercontent.com/skishore/makemeahanzi/master/graphics.txt"
     DICTIONARY_PATH = Rails.root.join("tmp", "makemeahanzi", "dictionary.txt")
     GRAPHICS_PATH = Rails.root.join("tmp", "makemeahanzi", "graphics.txt")
     BATCH_SIZE = 900
@@ -18,6 +22,8 @@ module Admin
     end
 
     def call
+      ensure_source_files!
+
       records = parsed_records
       return empty_result if records.empty?
 
@@ -47,6 +53,18 @@ module Admin
     end
 
     private
+
+    def ensure_source_files!
+      ensure_source_file!(DICTIONARY_URL, @dictionary_path)
+      ensure_source_file!(GRAPHICS_URL, @graphics_path)
+    end
+
+    def ensure_source_file!(url, path)
+      return if File.exist?(path)
+
+      download_file_to_tmp(url, path)
+      confirm_file_presence(Pathname(path).basename.to_s, Pathname(path).dirname)
+    end
 
     def parsed_records
       return [] unless File.exist?(@dictionary_path)
