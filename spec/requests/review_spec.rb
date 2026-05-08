@@ -230,6 +230,32 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to include("king")
         expect(response.body).to include("wáng")
       end
+
+      it "shows the related anchors panel with match labels" do
+        user_learning.dictionary_entry.update!(text: "学习")
+
+        full_entry = create(:dictionary_entry, text: "学习者")
+        per_entry = create(:dictionary_entry, text: "学校")
+
+        create(:user_learning, user: user, dictionary_entry: full_entry, state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: per_entry, state: "mastered")
+
+        get review_card_path
+
+        expect(response.body).to include("Words you already know related to")
+        expect(response.body).to include("Full token")
+        expect(response.body).to include("Char 学")
+      end
+
+      it "shows each related entry once even when matching both strategies" do
+        user_learning.dictionary_entry.update!(text: "学习")
+        overlap_entry = create(:dictionary_entry, text: "学习班")
+        create(:user_learning, user: user, dictionary_entry: overlap_entry, state: "mastered")
+
+        get review_card_path
+
+        expect(response.body.scan("学习班").size).to eq(1)
+      end
     end
   end
 

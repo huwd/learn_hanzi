@@ -28,16 +28,11 @@ class LearnController < ApplicationController
     @user_learning = current_card
     @position      = session[:learn_index] + 1
     @total         = session[:learn_queue].size
-
-    char      = @user_learning.dictionary_entry.text
-    safe_char = ActiveRecord::Base.sanitize_sql_like(char)
-    @related  = Current.user.user_learnings
-                       .mastered
-                       .joins(:dictionary_entry)
-                       .where("dictionary_entries.text LIKE ?", "%#{safe_char}%")
-                       .where.not(id: @user_learning.id)
-                       .includes(dictionary_entry: { meanings: :source })
-                       .limit(5)
+    @related_anchors = RelatedAnchorBuilder.call(
+      user: Current.user,
+      target_learning: @user_learning,
+      limit: 5
+    )
   end
 
   def submit
