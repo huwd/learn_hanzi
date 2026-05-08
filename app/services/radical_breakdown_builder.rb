@@ -13,7 +13,7 @@ class RadicalBreakdownBuilder
   def call
     rows = @dictionary_entry
       .dictionary_entry_radicals
-      .sort_by { |row| [ row.position || Float::INFINITY, row.id ] }
+      .order(:position, :id)
 
     return [] if rows.empty?
 

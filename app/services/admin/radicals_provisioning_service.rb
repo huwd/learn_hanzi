@@ -1,9 +1,11 @@
 require "json"
+require "set"
 
 module Admin
   class RadicalsProvisioningService
     DICTIONARY_PATH = Rails.root.join("tmp", "makemeahanzi", "dictionary.txt")
     GRAPHICS_PATH = Rails.root.join("tmp", "makemeahanzi", "graphics.txt")
+    BATCH_SIZE = 900
 
     def self.call(dictionary_path: DICTIONARY_PATH.to_s, graphics_path: GRAPHICS_PATH.to_s)
       new(dictionary_path:, graphics_path:).call
@@ -18,7 +20,7 @@ module Admin
       records = parsed_records
       return empty_result if records.empty?
 
-      entry_id_by_text = DictionaryEntry.where(text: records.map { |row| row[:character] }).pluck(:text, :id).to_h
+      entry_id_by_text = dictionary_entry_ids_by_text(records.map { |row| row[:character] })
       records.select! { |row| entry_id_by_text.key?(row[:character]) }
       return empty_result if records.empty?
 
@@ -84,11 +86,12 @@ module Admin
       return {} unless File.exist?(@graphics_path)
 
       lookup = {}
+      component_set = component_characters.to_set
 
       File.foreach(@graphics_path, chomp: true) do |line|
         payload = JSON.parse(line)
         character = payload["character"].to_s
-        next unless component_characters.include?(character)
+        next unless component_set.include?(character)
 
         strokes = payload["strokes"]
         next unless strokes.is_a?(Array) && strokes.any?
@@ -102,16 +105,20 @@ module Admin
     end
 
     def meaning_lookup(component_characters)
-      DictionaryEntry
-        .where(text: component_characters)
-        .includes(meanings: :source)
-        .each_with_object({}) do |entry, lookup|
-          lookup[entry.text] = entry.flashcard_primary_meaning&.text
-        end
+      in_batches(component_characters).each_with_object({}) do |batch, lookup|
+        DictionaryEntry
+          .where(text: batch)
+          .includes(meanings: :source)
+          .each do |entry|
+            lookup[entry.text] = entry.flashcard_primary_meaning&.text
+          end
+      end
     end
 
     def upsert_radicals(component_characters, meaning_by_char, stroke_count_by_char)
-      existing = Radical.where(character: component_characters).index_by(&:character)
+      existing = in_batches(component_characters).each_with_object({}) do |batch, lookup|
+        lookup.merge!(Radical.where(character: batch).index_by(&:character))
+      end
       radicals_created = 0
 
       component_characters.each do |character|
@@ -157,9 +164,21 @@ module Admin
 
     def sync_dictionary_entry_radicals(entry_ids, rows)
       DictionaryEntryRadical.transaction do
-        DictionaryEntryRadical.where(dictionary_entry_id: entry_ids).delete_all
+        in_batches(entry_ids) do |batch|
+          DictionaryEntryRadical.where(dictionary_entry_id: batch).delete_all
+        end
         DictionaryEntryRadical.insert_all(rows) if rows.any?
       end
+    end
+
+    def dictionary_entry_ids_by_text(texts)
+      in_batches(texts.uniq).each_with_object({}) do |batch, lookup|
+        lookup.merge!(DictionaryEntry.where(text: batch).pluck(:text, :id).to_h)
+      end
+    end
+
+    def in_batches(values)
+      values.each_slice(BATCH_SIZE)
     end
 
     def empty_result
