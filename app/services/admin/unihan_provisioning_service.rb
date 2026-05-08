@@ -108,11 +108,15 @@ module Admin
 
       entry_id_map = DictionaryEntry.where(text: words).pluck(:text, :id).to_h
       blocked_entry_ids = entry_ids_with_higher_priority_meanings(entry_id_map.values, source.priority)
+      skipped_higher_priority = 0
 
       meaning_rows = batch.filter_map do |row|
         entry_id = entry_id_map[row[:word]]
         next unless entry_id
-        next if blocked_entry_ids.include?(entry_id)
+        if blocked_entry_ids.include?(entry_id)
+          skipped_higher_priority += 1
+          next
+        end
 
         {
           dictionary_entry_id: entry_id,
@@ -137,7 +141,7 @@ module Admin
 
       {
         created_meanings: created,
-        skipped_higher_priority: batch.size - meaning_rows.size
+        skipped_higher_priority: skipped_higher_priority
       }
     end
 
