@@ -198,7 +198,8 @@ RSpec.describe "Dashboard", type: :request do
 
         it "shows words remaining until the next incomplete HSK tier" do
           get root_path
-          expect(response.body).to include("1 words until HSK 1 mastery")
+          expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">\s*1\s*</div>})
+          expect(response.body).to include("words until HSK 1 mastery")
         end
 
         context "when all HSK 3.0 tiers are mastered" do
@@ -208,7 +209,8 @@ RSpec.describe "Dashboard", type: :request do
 
           it "shows a clear completion state" do
             get root_path
-            expect(response.body).to include("All HSK 3.0 tiers mastered")
+            expect(response.body).to include("HSK 3.0 tiers mastered")
+            expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">\s*0\s*</div>})
           end
         end
 
