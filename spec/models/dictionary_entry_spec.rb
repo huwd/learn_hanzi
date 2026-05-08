@@ -77,6 +77,7 @@ RSpec.describe DictionaryEntry, type: :model do
     let(:cedict_source) do
       create(:source,
              name: 'CC-CEDICT',
+             priority: 20,
              url: 'https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip')
     end
 
@@ -137,6 +138,23 @@ RSpec.describe DictionaryEntry, type: :model do
       create(:meaning, dictionary_entry: entry, source: custom_source, text: 'martial', pinyin: 'wǔ')
 
       expect(entry.reload.flashcard_meanings.map(&:text)).to eq([ 'surname Wu', 'martial' ])
+    end
+
+    it 'prioritises meanings from lower-priority-number sources' do
+      wiktionary_source = create(:source, name: 'Wiktionary', priority: 10)
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: 'surname Li', pinyin: 'Lǐ')
+      create(:meaning, dictionary_entry: entry, source: wiktionary_source, text: 'plum', pinyin: 'lǐ')
+
+      expect(entry.reload.flashcard_primary_meaning.source.name).to eq('Wiktionary')
+      expect(entry.flashcard_primary_meaning.text).to eq('plum')
+    end
+
+    it 'keeps CC-CEDICT heuristics within the same source priority band' do
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: 'surname Zhao', pinyin: 'Zhào')
+      create(:meaning, dictionary_entry: entry, source: cedict_source, text: 'to surpass', pinyin: 'zhào')
+
+      expect(entry.reload.flashcard_primary_meaning.text).to eq('to surpass')
+      expect(entry.flashcard_meanings.map(&:text)).to eq([ 'to surpass', 'surname Zhao' ])
     end
   end
 end

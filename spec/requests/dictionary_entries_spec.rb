@@ -68,6 +68,30 @@ RSpec.describe "DictionaryEntries", type: :request do
           end
         end
       end
+
+      it "shows highest-priority source meaning first" do
+        dictionary_entry.meanings.destroy_all
+
+        cedict = create(:source, name: "CC-CEDICT", priority: 20)
+        wiktionary = create(:source, name: "Wiktionary", priority: 10)
+
+        create(:meaning,
+               dictionary_entry: dictionary_entry,
+               source: cedict,
+               language: "en",
+               pinyin: "lǐ",
+               text: "surname Li")
+        create(:meaning,
+               dictionary_entry: dictionary_entry,
+               source: wiktionary,
+               language: "en",
+               pinyin: "lǐ",
+               text: "plum")
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body.index("plum")).to be < response.body.index("surname Li")
+      end
     end
   end
 
