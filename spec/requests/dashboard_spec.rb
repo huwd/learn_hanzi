@@ -199,7 +199,7 @@ RSpec.describe "Dashboard", type: :request do
         it "shows words remaining until the next incomplete HSK tier" do
           get root_path
           expect(response.body).to match(%r{<div class="text-6xl font-extrabold text-gray-900 dark:text-gray-100 mb-6 text-center">\s*1\s*</div>})
-          expect(response.body).to include("words until HSK 1 mastery")
+          expect(response.body).to include("1 word until HSK 1 mastery")
         end
 
         context "when all HSK 3.0 tiers are mastered" do
@@ -222,6 +222,36 @@ RSpec.describe "Dashboard", type: :request do
           it "falls back to the default learn panel copy" do
             get root_path
             expect(response.body).to include("New words to introduce")
+          end
+        end
+
+        context "when HSK 3.0 tiers exist but have no tagged entries" do
+          let!(:hsk3_empty)   { create(:tag, name: "HSK 3.0", parent: hsk_root) }
+          let!(:hsk3_empty_1) { create(:tag, name: "HSK 1", parent: hsk3_empty) }
+
+          before do
+            hsk3.destroy!
+          end
+
+          it "falls back to the default learn panel copy" do
+            get root_path
+            expect(response.body).to include("New words to introduce")
+          end
+        end
+
+        context "when another orphan HSK 3.0 tag exists" do
+          before do
+            orphan_hsk3 = create(:tag, name: "HSK 3.0")
+            orphan_level = create(:tag, name: "HSK 1", parent: orphan_hsk3)
+            orphan_entry = create(:dictionary_entry)
+            orphan_entry.tags << orphan_level
+            create(:user_learning, user: user, dictionary_entry: orphan_entry,
+                   state: "new")
+          end
+
+          it "uses the HSK root hierarchy for milestone calculations" do
+            get root_path
+            expect(response.body).to include("1 word until HSK 1 mastery")
           end
         end
       end
