@@ -13,9 +13,9 @@ namespace :makemeahanzi do
     dictionary_path = output_dir.join("dictionary.txt")
     graphics_path = output_dir.join("graphics.txt")
 
-    ImportFilesHelper.download_file_to_tmp(DICTIONARY_URL, dictionary_path)
-    ImportFilesHelper.download_file_to_tmp(GRAPHICS_URL, graphics_path)
-    ImportFilesHelper.confirm_file_presence("dictionary.txt", output_dir)
-    ImportFilesHelper.confirm_file_presence("graphics.txt", output_dir)
+    download_file_to_tmp(DICTIONARY_URL, dictionary_path)
+    download_file_to_tmp(GRAPHICS_URL, graphics_path)
+    confirm_file_presence("dictionary.txt", output_dir)
+    confirm_file_presence("graphics.txt", output_dir)
   end
 end
