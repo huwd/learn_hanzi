@@ -31,7 +31,7 @@ RSpec.describe Admin::UnihanProvisioningService do
 
     it "creates a Unihan source with expected priority" do
       expect { result }.to change { Source.where(name: "Unihan").count }.by(1)
-      expect(Source.find_by(name: "Unihan").priority).to eq(50)
+      expect(Source.find_by(name: "Unihan").priority).to eq(200)
     end
 
     it "imports only kDefinition rows for Han characters" do
@@ -46,7 +46,7 @@ RSpec.describe Admin::UnihanProvisioningService do
     end
 
     it "skips importing meanings when higher-priority source meaning exists" do
-      wiktionary = create(:source, name: "Wiktionary", priority: 10)
+      wiktionary = create(:source, name: "Wiktionary", priority: 50)
       entry = create(:dictionary_entry, text: "你")
       entry.meanings.destroy_all
       create(:meaning,
