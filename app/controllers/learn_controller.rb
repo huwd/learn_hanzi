@@ -33,6 +33,10 @@ class LearnController < ApplicationController
       target_learning: @user_learning,
       limit: 5
     )
+    @radical_breakdown = RadicalBreakdownBuilder.call(
+      user: Current.user,
+      dictionary_entry: @user_learning.dictionary_entry
+    )
   end
 
   def submit
@@ -184,7 +188,7 @@ class LearnController < ApplicationController
   def current_card
     id = session[:learn_queue][session[:learn_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: { meanings: :source })
+           .includes(dictionary_entry: [ { meanings: :source }, { dictionary_entry_radicals: :radical } ])
            .find(id)
   end
 

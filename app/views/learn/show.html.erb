@@ -83,10 +83,7 @@
 
       <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
 
-      <%# Radical breakdown placeholder — see issue #146 %>
-      <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 text-center opacity-40">
-        <p class="text-xs text-gray-400">Radical breakdown coming soon</p>
-      </div>
+      <%= render "shared/radical_breakdown_panel", radical_breakdown: @radical_breakdown %>
 
       <%= button_to learn_card_path, params: { know_it: "false" },
             class: "relative w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors" do %>
