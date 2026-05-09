@@ -6,10 +6,21 @@
 
 <%
   entry    = @user_learning.dictionary_entry
-  meanings = entry.flashcard_meanings
-  primary_meaning       = meanings.first
-  pinyin   = primary_meaning&.pinyin
-  supplemental_meanings = meanings.drop(1)
+  meaning_groups = entry.flashcard_meaning_groups
+  primary_group = meaning_groups.first || []
+  primary_meaning = primary_group.first
+  pinyin = primary_meaning&.pinyin
+  supplemental_meaning_groups = []
+
+  if primary_group.drop(1).any?
+    supplemental_meaning_groups << [ pinyin, primary_group.drop(1) ]
+  end
+
+  meaning_groups.drop(1).each do |group|
+    supplemental_meaning_groups << [ group.first&.pinyin, group ]
+  end
+
+  multiple_readings = meaning_groups.filter_map { |group| group.first&.pinyin.presence }.uniq.many?
 %>
 
 <div class="w-full flex flex-col items-center pt-6 sm:pt-12 pb-8 sm:pb-12" data-controller="card-flip adaptive-card-text" data-card-layout="fixed" data-card-text-scaling="adaptive">
@@ -31,18 +42,28 @@
           <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
           <p data-adaptive-card-text-target="meaning" class="text-xl font-medium text-gray-800 dark:text-gray-200"><%= primary_meaning&.text %></p>
 
-          <% if supplemental_meanings.any? %>
+          <% if supplemental_meaning_groups.any? %>
             <div data-controller="collapsible" data-collapsible-open-value="false" class="mt-4 text-left">
               <button type="button" data-collapsible-target="button" data-action="click->collapsible#toggle" class="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                 <span>Show more meanings</span>
                 <span data-collapsible-target="chevron" class="inline-block transition-transform">▸</span>
               </button>
 
-              <ul data-collapsible-target="content" class="hidden mt-3 space-y-2 text-gray-600 dark:text-gray-300 text-sm">
-                <% supplemental_meanings.each do |meaning| %>
-                  <li><%= meaning.text %></li>
+              <div data-collapsible-target="content" class="hidden mt-3 space-y-3 text-gray-600 dark:text-gray-300 text-sm">
+                <% supplemental_meaning_groups.each do |group_pinyin, group_meanings| %>
+                  <div>
+                    <% if multiple_readings && group_pinyin.present? %>
+                      <p class="mb-1 text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500"><%= group_pinyin %></p>
+                    <% end %>
+
+                    <ul class="space-y-2">
+                      <% group_meanings.each do |meaning| %>
+                        <li><%= meaning.text %></li>
+                      <% end %>
+                    </ul>
+                  </div>
                 <% end %>
-              </ul>
+              </div>
             </div>
           <% end %>
         </div>

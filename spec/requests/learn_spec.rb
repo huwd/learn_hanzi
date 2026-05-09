@@ -207,6 +207,25 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include("Show more meanings")
       end
 
+      it "shows alternate reading pinyin alongside heteronym meanings" do
+        new_card.dictionary_entry.meanings.destroy_all
+        cedict_source = create(:source,
+                               name: "CC-CEDICT",
+                               url: "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.zip")
+        create(:meaning, dictionary_entry: new_card.dictionary_entry,
+                         source: cedict_source,
+                         text: "fake", pinyin: "jiǎ")
+        create(:meaning, dictionary_entry: new_card.dictionary_entry,
+                         source: cedict_source,
+                         text: "holiday", pinyin: "jià")
+
+        get learn_card_path
+
+        expect(response.body).to include("fake")
+        expect(response.body).to include("jià")
+        expect(response.body).to include("holiday")
+      end
+
       it "uses learner-friendly CC-CEDICT meaning and pinyin as primary" do
         new_card.dictionary_entry.meanings.destroy_all
         cedict_source = create(:source,

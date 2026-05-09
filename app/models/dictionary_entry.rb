@@ -56,6 +56,10 @@ class DictionaryEntry < ApplicationRecord
     flashcard_meanings.first
   end
 
+  def flashcard_meaning_groups
+    flashcard_meanings.group_by(&:pinyin).values
+  end
+
   private
 
   def fetch_english_meanings

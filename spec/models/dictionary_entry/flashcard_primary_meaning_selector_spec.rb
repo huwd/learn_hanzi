@@ -64,6 +64,24 @@ RSpec.describe DictionaryEntry, "flashcard primary meaning selection" do
     end
   end
 
+  describe "flashcard meaning groups" do
+    it "keeps alternate readings grouped by pinyin in flashcard order" do
+      entry = create_entry_with_meanings("假", [
+        { pinyin: "jiǎ", text: "fake" },
+        { pinyin: "jià", text: "holiday" },
+        { pinyin: "jià", text: "vacation" }
+      ])
+
+      groups = entry.flashcard_meaning_groups
+      grouped_pinyin = groups.map { |group| group.map(&:pinyin).uniq }
+      grouped_text = groups.map { |group| group.map(&:text) }
+
+      expect(grouped_pinyin.first).to eq([ entry.flashcard_primary_meaning.pinyin ])
+      expect(grouped_pinyin).to contain_exactly([ "jiǎ" ], [ "jià" ])
+      expect(grouped_text).to include([ "fake" ], [ "holiday", "vacation" ])
+    end
+  end
+
   describe "for an entry where one reading has several plain senses" do
     it "prefers that reading over a single plain alternative" do
       entry = create_entry_with_meanings("便宜", [
