@@ -80,6 +80,19 @@ RSpec.describe DictionaryEntry, "flashcard primary meaning selection" do
       expect(grouped_pinyin).to contain_exactly([ "jiǎ" ], [ "jià" ])
       expect(grouped_text).to include([ "fake" ], [ "holiday", "vacation" ])
     end
+
+    it "treats pinyin that differs only by case as one reading" do
+      entry = create_entry_with_meanings("王", [
+        { pinyin: "Wáng", text: "surname Wang" },
+        { pinyin: "wáng", text: "king" }
+      ])
+
+      groups = entry.flashcard_meaning_groups
+
+      expect(groups.size).to eq(1)
+      expect(groups.first.map(&:text)).to eq([ "king", "surname Wang" ])
+      expect(groups.first.map(&:pinyin)).to eq([ "wáng", "Wáng" ])
+    end
   end
 
   describe "for an entry where one reading has several plain senses" do
