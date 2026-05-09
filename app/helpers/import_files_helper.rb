@@ -14,11 +14,13 @@ module ImportFilesHelper
   def unzip_file(temp_zip_path, unzip_dir)
     FileUtils.mkdir_p(unzip_dir)
     puts "Unzipping files to #{unzip_dir}..."
+    base_path = File.expand_path(unzip_dir)
 
     Zip::File.open(temp_zip_path) do |zip_file|
       zip_file.each do |entry|
         puts "Extracting #{entry.name} to #{unzip_dir}..."
-        destination_path = File.join(unzip_dir, entry.name)
+        destination_path = File.expand_path(File.join(unzip_dir, entry.name))
+        ensure_within_directory!(destination_path, base_path)
 
         if entry.directory?
           FileUtils.mkdir_p(destination_path)
@@ -33,6 +35,12 @@ module ImportFilesHelper
         end
       end
     end
+  end
+
+  def ensure_within_directory!(destination_path, base_path)
+    return if destination_path.start_with?("#{base_path}/") || destination_path == base_path
+
+    raise "Refusing to extract outside #{base_path}: #{destination_path}"
   end
 
   def confirm_file_presence(file_name_search_string, unzip_dir)
