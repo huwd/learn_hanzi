@@ -2,6 +2,7 @@ module Admin
   class AudioPronunciationsProvisioningService
     include ImportFilesHelper
 
+    BATCH_SIZE = 500
     ARCHIVE_URL = "https://codeload.github.com/krmanik/HSK-3.0/zip/refs/heads/main"
     ARCHIVE_PATH = Rails.root.join("tmp", "audio", "krmanik_hsk_3_0.zip")
     EXTRACT_DIR = Rails.root.join("tmp", "audio", "krmanik_hsk_3_0")
@@ -44,6 +45,15 @@ module Admin
     end
 
     def download
+      if source_ready?
+        return {
+          archive_path: @archive_path.to_s,
+          audio_dir: resolved_audio_dir.to_s,
+          downloaded_files: audio_lookup.size,
+          reused_source: true
+        }
+      end
+
       download_file_to_tmp(@archive_url, @archive_path.to_s)
       FileUtils.rm_rf(@extract_dir)
       unzip_file(@archive_path, @extract_dir)
@@ -51,7 +61,8 @@ module Admin
       {
         archive_path: @archive_path.to_s,
         audio_dir: resolved_audio_dir.to_s,
-        downloaded_files: audio_lookup.size
+        downloaded_files: audio_lookup.size,
+        reused_source: false
       }
     end
 
@@ -62,18 +73,23 @@ module Admin
       unmatched_entries = []
       lookup = audio_lookup
 
-      target_entries.find_each do |entry|
-        file_path = lookup[entry.text]
+      target_entry_ids.each_slice(BATCH_SIZE) do |entry_ids|
+        entries = DictionaryEntry.where(id: entry_ids).to_a
+        existing_pronunciations = existing_pronunciations_for(entries)
 
-        unless file_path
-          unmatched_entries << entry
-          next
+        entries.each do |entry|
+          file_path = lookup[entry.text]
+
+          unless file_path
+            unmatched_entries << entry
+            next
+          end
+
+          result = import_file_for(entry, file_path, existing_pronunciations[entry.id])
+          imported += 1 if result == :created
+          updated += 1 if result == :updated
+          unchanged += 1 if result == :unchanged
         end
-
-        result = import_file_for(entry, file_path)
-        imported += 1 if result == :created
-        updated += 1 if result == :updated
-        unchanged += 1 if result == :unchanged
       end
 
       write_unmatched_log(unmatched_entries)
@@ -96,27 +112,45 @@ module Admin
                      .distinct
     end
 
-    def import_file_for(entry, file_path)
-      pronunciation = AudioPronunciation.find_or_initialize_by(
+    def target_entry_ids
+      @target_entry_ids ||= target_entries.pluck(:id)
+    end
+
+    def existing_pronunciations_for(entries)
+      AudioPronunciation
+        .where(
+          dictionary_entry_id: entries.map(&:id),
+          source: @source_key,
+          locale: @locale
+        )
+        .includes(audio_attachment: :blob)
+        .index_by(&:dictionary_entry_id)
+    end
+
+    def import_file_for(entry, file_path, existing_pronunciation = nil)
+      pronunciation = existing_pronunciation || AudioPronunciation.new(
         dictionary_entry: entry,
         source: @source_key,
         locale: @locale
       )
+      existing_attachment = pronunciation.audio_attachment
       status = pronunciation.new_record? ? :created : :updated
 
       if same_attachment?(pronunciation, file_path)
         return :unchanged
       end
 
-      pronunciation.audio.purge if pronunciation.audio.attached?
+      File.open(file_path, "rb") do |audio_file|
+        pronunciation.audio.attach(
+          io: audio_file,
+          filename: File.basename(file_path),
+          content_type: "audio/mpeg"
+        )
 
-      pronunciation.audio.attach(
-        io: StringIO.new(File.binread(file_path)),
-        filename: File.basename(file_path),
-        content_type: "audio/mpeg"
-      )
+        pronunciation.save!
+      end
 
-      pronunciation.save!
+      existing_attachment&.purge_later if existing_attachment && existing_attachment != pronunciation.audio_attachment
       status
     end
 
@@ -143,6 +177,10 @@ module Admin
 
         Pathname(match)
       end
+    end
+
+    def source_ready?
+      @archive_path.exist? && Dir.exist?(@extract_dir) && Dir.glob(@extract_dir.join(AUDIO_DIR_GLOB)).any?
     end
 
     def write_unmatched_log(unmatched_entries)
