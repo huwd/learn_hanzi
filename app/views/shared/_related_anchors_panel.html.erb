@@ -1,4 +1,13 @@
 <% related_anchors ||= [] %>
+<%
+  full_token_anchors = related_anchors.select(&:full_token_match)
+  grouped_character_anchors = related_anchors.reject(&:full_token_match).each_with_object({}) do |anchor, groups|
+    anchor.matched_characters.each do |character|
+      groups[character] ||= []
+      groups[character] << anchor
+    end
+  end
+%>
 
 <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
   <% if related_anchors.any? %>
@@ -6,27 +15,67 @@
       Words you already know related to
       <span class="font-hanzi text-lg"><%= entry.text %></span>:
     </p>
-    <ul class="space-y-3">
-      <% related_anchors.each do |anchor| %>
-        <% rel_entry = anchor.user_learning.dictionary_entry %>
-        <% rel_meaning = rel_entry.flashcard_primary_meaning %>
-        <li class="text-base">
-          <div class="flex items-baseline gap-2">
-            <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel_entry.text %></span>
-            <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
-            <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
+    <div class="space-y-3">
+      <% if full_token_anchors.any? %>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-500/70 overflow-hidden bg-white/80 dark:bg-gray-800/40 shadow-sm">
+          <div class="px-3 py-2 bg-gray-100 dark:bg-gray-500/25 border-b border-gray-200 dark:border-gray-500/60">
+            <span class="text-[10px] uppercase tracking-[0.12em] text-gray-500 dark:text-gray-300">Match</span>
+            <span class="text-base text-gray-800 dark:text-gray-100 ml-2">Full token</span>
           </div>
-          <div class="mt-1 flex flex-wrap gap-1">
-            <% if anchor.full_token_match %>
-              <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Full token</span>
+          <ul class="p-3 space-y-3 bg-gray-50/80 dark:bg-gray-800/30">
+            <% full_token_anchors.each do |anchor| %>
+              <% rel_entry = anchor.user_learning.dictionary_entry %>
+              <% rel_meaning = rel_entry.flashcard_primary_meaning %>
+              <li class="text-base">
+                <div class="flex items-baseline gap-2">
+                  <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel_entry.text %></span>
+                  <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
+                  <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
+                </div>
+                <% shared_characters = anchor.matched_characters %>
+                <% if shared_characters.any? %>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    <% shared_characters.each do |character| %>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Char <%= character %></span>
+                    <% end %>
+                  </div>
+                <% end %>
+              </li>
             <% end %>
-            <% anchor.matched_characters.each do |character| %>
-              <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Char <%= character %></span>
-            <% end %>
-          </div>
-        </li>
+          </ul>
+        </div>
       <% end %>
-    </ul>
+
+      <% grouped_character_anchors.each do |character, anchors| %>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-500/70 overflow-hidden bg-white/80 dark:bg-gray-800/40 shadow-sm">
+          <div class="px-3 py-2 bg-gray-100 dark:bg-gray-500/25 border-b border-gray-200 dark:border-gray-500/60">
+            <span class="text-[10px] uppercase tracking-[0.12em] text-gray-500 dark:text-gray-300">Character</span>
+            <span class="font-hanzi text-base text-gray-800 dark:text-gray-100 ml-2"><%= character %></span>
+          </div>
+          <ul class="p-3 space-y-3 bg-gray-50/80 dark:bg-gray-800/30">
+            <% anchors.each do |anchor| %>
+              <% rel_entry = anchor.user_learning.dictionary_entry %>
+              <% rel_meaning = rel_entry.flashcard_primary_meaning %>
+              <li class="text-base">
+                <div class="flex items-baseline gap-2">
+                  <span class="font-hanzi text-xl text-gray-800 dark:text-gray-200"><%= rel_entry.text %></span>
+                  <span class="text-gray-400"><%= rel_meaning&.pinyin %></span>
+                  <span class="text-gray-600 dark:text-gray-400"><%= rel_meaning&.text %></span>
+                </div>
+                <% extra_characters = anchor.matched_characters - [ character ] %>
+                <% if extra_characters.any? %>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    <% extra_characters.each do |extra_character| %>
+                      <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">Also matches <%= extra_character %></span>
+                    <% end %>
+                  </div>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
   <% else %>
     <p class="text-base text-gray-400 text-center">
       No related words in your mastered vocabulary yet.
