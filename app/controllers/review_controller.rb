@@ -40,6 +40,7 @@ class ReviewController < ApplicationController
       user: Current.user,
       dictionary_entry: @user_learning.dictionary_entry
     )
+    @stroke_order_diagrams = StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
   end
 
   def submit

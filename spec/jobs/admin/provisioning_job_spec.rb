@@ -86,6 +86,13 @@ RSpec.describe Admin::ProvisioningJob, type: :job do
     include_examples "a provisioning job", Admin::FrequencyProvisioningService
   end
 
+  describe "#perform for makemeahanzi_source" do
+    let(:task_type)      { "makemeahanzi_source" }
+    let(:summary_result) { { dictionary_bytes: 123, graphics_bytes: 456 } }
+
+    include_examples "a provisioning job", Admin::MakemeahanziSourceProvisioningService
+  end
+
   describe "#perform for unihan" do
     let(:task_type) { "unihan" }
     let(:summary_result) do
@@ -112,5 +119,18 @@ RSpec.describe Admin::ProvisioningJob, type: :job do
     end
 
     include_examples "a provisioning job", Admin::RadicalsProvisioningService
+  end
+
+  describe "#perform for stroke_order" do
+    let(:task_type) { "stroke_order" }
+    let(:summary_result) do
+      {
+        entries_processed: 10_000,
+        unmatched_entries: 500,
+        malformed_rows_skipped: 3
+      }
+    end
+
+    include_examples "a provisioning job", Admin::StrokeOrderProvisioningService
   end
 end

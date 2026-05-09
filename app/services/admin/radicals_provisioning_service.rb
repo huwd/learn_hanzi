@@ -5,12 +5,11 @@ module Admin
   class RadicalsProvisioningService
     include ImportFilesHelper
 
-    DICTIONARY_URL = "https://raw.githubusercontent.com/skishore/makemeahanzi/master/dictionary.txt"
-    GRAPHICS_URL = "https://raw.githubusercontent.com/skishore/makemeahanzi/master/graphics.txt"
-    DICTIONARY_PATH = Rails.root.join("tmp", "makemeahanzi", "dictionary.txt")
-    GRAPHICS_PATH = Rails.root.join("tmp", "makemeahanzi", "graphics.txt")
     BATCH_SIZE = 900
     INSERT_BATCH_SIZE = 150
+
+    DICTIONARY_PATH = Admin::MakemeahanziSourceProvisioningService.dictionary_path
+    GRAPHICS_PATH = Admin::MakemeahanziSourceProvisioningService.graphics_path
 
     def self.call(dictionary_path: DICTIONARY_PATH.to_s, graphics_path: GRAPHICS_PATH.to_s)
       new(dictionary_path:, graphics_path:).call
@@ -55,15 +54,23 @@ module Admin
     private
 
     def ensure_source_files!
-      ensure_source_file!(DICTIONARY_URL, @dictionary_path)
-      ensure_source_file!(GRAPHICS_URL, @graphics_path)
+      ensure_source_file!(Admin::MakemeahanziSourceProvisioningService::DICTIONARY_URL, @dictionary_path)
+      ensure_source_file!(Admin::MakemeahanziSourceProvisioningService::GRAPHICS_URL, @graphics_path)
     end
 
     def ensure_source_file!(url, path)
       return if File.exist?(path)
 
-      download_file_to_tmp(url, path)
-      confirm_file_presence(Pathname(path).basename.to_s, Pathname(path).dirname)
+      if using_default_path?(path)
+        Admin::MakemeahanziSourceProvisioningService.call(force: false)
+      else
+        download_file_to_tmp(url, path)
+        confirm_file_presence(Pathname(path).basename.to_s, Pathname(path).dirname)
+      end
+    end
+
+    def using_default_path?(path)
+      [ DICTIONARY_PATH.to_s, GRAPHICS_PATH.to_s ].include?(path.to_s)
     end
 
     def parsed_records

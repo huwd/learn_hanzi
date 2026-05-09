@@ -19,5 +19,6 @@ class DictionaryEntriesController < ApplicationController
       user: Current.user,
       dictionary_entry: @dictionary_entry
     )
+    @stroke_order_diagrams = StrokeOrderDiagramBuilder.call(dictionary_entry: @dictionary_entry)
   end
 end

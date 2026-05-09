@@ -4,7 +4,9 @@ class AdminTask < ApplicationRecord
     hsk_tags
     custom_dictionary
     frequency_data
+    makemeahanzi_source
     wiktionary
+    stroke_order
     unihan
     radicals
   ].freeze

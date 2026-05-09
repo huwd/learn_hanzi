@@ -104,6 +104,8 @@
 
       <%= render "shared/related_anchors_panel", entry: entry, related_anchors: @related_anchors %>
 
+      <%= render "shared/stroke_order_panel", stroke_order_diagrams: @stroke_order_diagrams %>
+
       <%= render "shared/radical_breakdown_panel", radical_breakdown: @radical_breakdown %>
 
       <%= button_to learn_card_path, params: { know_it: "false" },

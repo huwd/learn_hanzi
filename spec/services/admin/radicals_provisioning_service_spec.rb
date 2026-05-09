@@ -40,7 +40,7 @@ RSpec.describe Admin::RadicalsProvisioningService do
       FileUtils.rm_f(graphics_path)
 
       expect(service).to receive(:download_file_to_tmp)
-        .with(Admin::RadicalsProvisioningService::DICTIONARY_URL, dictionary_path.to_s)
+        .with(Admin::MakemeahanziSourceProvisioningService::DICTIONARY_URL, dictionary_path.to_s)
         .ordered do |_url, dest|
           File.write(dest, "{\"character\":\"语\",\"decomposition\":\"⿰讠吾\"}\n")
         end
@@ -50,7 +50,7 @@ RSpec.describe Admin::RadicalsProvisioningService do
         .ordered
 
       expect(service).to receive(:download_file_to_tmp)
-        .with(Admin::RadicalsProvisioningService::GRAPHICS_URL, graphics_path.to_s)
+        .with(Admin::MakemeahanziSourceProvisioningService::GRAPHICS_URL, graphics_path.to_s)
         .ordered do |_url, dest|
           File.write(dest, "{\"character\":\"吾\",\"strokes\":[\"a\"]}\n")
         end

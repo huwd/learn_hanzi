@@ -8,6 +8,7 @@ RSpec.describe DictionaryEntry, type: :model do
     it { should have_many(:dictionary_entry_radicals).dependent(:destroy) }
     it { should have_many(:radicals).through(:dictionary_entry_radicals) }
     it { should have_many(:user_learnings).dependent(:destroy) }
+    it { should have_one(:stroke_order_datum).dependent(:destroy) }
   end
 
   describe 'validations' do

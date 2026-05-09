@@ -7,7 +7,9 @@ module Admin
       "hsk_tags"           => Admin::HskTagsProvisioningService,
       "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
       "frequency_data"     => Admin::FrequencyProvisioningService,
+      "makemeahanzi_source" => Admin::MakemeahanziSourceProvisioningService,
       "wiktionary"         => Admin::WiktionaryProvisioningService,
+      "stroke_order"       => Admin::StrokeOrderProvisioningService,
       "unihan"             => Admin::UnihanProvisioningService,
       "radicals"           => Admin::RadicalsProvisioningService
     }.freeze
