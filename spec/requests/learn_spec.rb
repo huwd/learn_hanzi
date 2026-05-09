@@ -190,13 +190,14 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include(new_card.dictionary_entry.text)
       end
 
-      it "renders a fixed-height adaptive card container" do
+      it "renders a responsive adaptive card container" do
         get learn_card_path
         expect(response.body).to include('data-card-layout="fixed"')
         expect(response.body).to include('data-card-text-scaling="adaptive"')
         expect(response.body).to include("learn-card")
         expect(response.body).to include("adaptive-card-text")
         expect(response.body).to include("w-full max-w-xl")
+        expect(response.body).to include("min-h-[28rem] md:h-[30rem]")
       end
 
       it "shows a supplemental meanings toggle when available" do
