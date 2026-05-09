@@ -30,27 +30,42 @@ RSpec.describe RelatedAnchorBuilder do
       expect(results.second.user_learning).to eq(per_char_learning)
     end
 
-    it "applies frequency rank and then text ordering within each bucket" do
+    it "orders by matched character position, then full-token, then frequency rank, then text" do
       full_ranked_high = create(:dictionary_entry, text: "学习班", frequency_rank: 20)
       full_ranked_low = create(:dictionary_entry, text: "学习者", frequency_rank: 100)
       full_no_rank = create(:dictionary_entry, text: "学习力", frequency_rank: nil)
 
       per_ranked = create(:dictionary_entry, text: "学校", frequency_rank: 5)
-      per_no_rank_b = create(:dictionary_entry, text: "习惯", frequency_rank: nil)
-      per_no_rank_a = create(:dictionary_entry, text: "学子", frequency_rank: nil)
+      per_second_char = create(:dictionary_entry, text: "习惯", frequency_rank: nil)
+      per_first_char = create(:dictionary_entry, text: "学子", frequency_rank: nil)
 
       create(:user_learning, user: user, dictionary_entry: full_ranked_low, state: "mastered")
-      create(:user_learning, user: user, dictionary_entry: per_no_rank_b, state: "mastered")
+      create(:user_learning, user: user, dictionary_entry: per_second_char, state: "mastered")
       create(:user_learning, user: user, dictionary_entry: per_ranked, state: "mastered")
       create(:user_learning, user: user, dictionary_entry: full_ranked_high, state: "mastered")
       create(:user_learning, user: user, dictionary_entry: full_no_rank, state: "mastered")
-      create(:user_learning, user: user, dictionary_entry: per_no_rank_a, state: "mastered")
+      create(:user_learning, user: user, dictionary_entry: per_first_char, state: "mastered")
 
       results = described_class.call(user: user, target_learning: target_learning, limit: 10)
 
+      # full-token matches first (all share first char "学"), then per-char by position:
+      # 学子 shares first char "学" (pos 0) before 习惯 which only shares "习" (pos 1)
       expect(results.map { |result| result.user_learning.dictionary_entry.text }).to eq(
-        [ "学习班", "学习者", "学习力", "学校", "习惯", "学子" ]
+        [ "学习班", "学习者", "学习力", "学校", "学子", "习惯" ]
       )
+    end
+
+    it "surfaces first-character matches before later-character matches" do
+      first_char_entry = create(:dictionary_entry, text: "学校", frequency_rank: 50)
+      second_char_entry = create(:dictionary_entry, text: "习惯", frequency_rank: 1)
+
+      create(:user_learning, user: user, dictionary_entry: first_char_entry, state: "mastered")
+      create(:user_learning, user: user, dictionary_entry: second_char_entry, state: "mastered")
+
+      results = described_class.call(user: user, target_learning: target_learning, limit: 5)
+      texts = results.map { |r| r.user_learning.dictionary_entry.text }
+
+      expect(texts.index("学校")).to be < texts.index("习惯")
     end
 
     it "includes matched character metadata" do

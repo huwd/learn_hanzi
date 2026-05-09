@@ -20,7 +20,8 @@ class RelatedAnchorBuilder
     remaining = limit - results.size
     return results if remaining <= 0
 
-    results + per_character_results(excluding_ids: results.map { |result| result.user_learning.id }, limit: remaining)
+    all_results = results + per_character_results(excluding_ids: results.map { |result| result.user_learning.id }, limit: remaining)
+    sort_by_character_position(all_results)
   end
 
   private
@@ -65,6 +66,17 @@ class RelatedAnchorBuilder
           matched_characters: matching_characters_for(learning, chars)
         )
       end
+  end
+
+  def sort_by_character_position(results)
+    chars = target_characters
+    results.sort_by do |result|
+      min_pos = result.matched_characters.filter_map { |c| chars.index(c) }.min || chars.size
+      full_token_rank = result.full_token_match ? 0 : 1
+      freq = result.user_learning.dictionary_entry.frequency_rank || Float::INFINITY
+      text = result.user_learning.dictionary_entry.text
+      [min_pos, full_token_rank, freq, text]
+    end
   end
 
   def matching_characters_for(learning, chars)
