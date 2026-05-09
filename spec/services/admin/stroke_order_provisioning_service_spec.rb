@@ -55,5 +55,25 @@ RSpec.describe Admin::StrokeOrderProvisioningService do
         described_class.call(graphics_path: tmp_dir.join("missing.txt").to_s)
       }.to raise_error(/Graphics file not found/)
     end
+
+    it "auto-downloads the shared makemeahanzi source for the default path" do
+      default_path = Admin::MakemeahanziSourceProvisioningService.graphics_path
+      service = described_class.new(graphics_path: default_path.to_s)
+
+      FileUtils.rm_f(default_path)
+
+      expect(Admin::MakemeahanziSourceProvisioningService).to receive(:call).with(force: false) do
+        FileUtils.mkdir_p(default_path.dirname)
+        File.write(default_path, File.read(graphics_path))
+      end
+
+      create(:dictionary_entry, text: "语")
+
+      result = service.call
+
+      expect(result[:entries_processed]).to eq(1)
+    ensure
+      FileUtils.rm_f(default_path)
+    end
   end
 end

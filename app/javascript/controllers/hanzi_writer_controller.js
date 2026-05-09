@@ -5,19 +5,30 @@ export default class extends Controller {
   static values = { mode: String }
 
   connect() {
+    this.playbackToken = 0
     this.writerRecords = this.canvasTargets.map((element) => this.buildWriter(element))
     this.startMode()
   }
 
   disconnect() {
+    this.playbackToken += 1
     this.writerRecords.forEach(({ writer }) => writer.cancelQuiz?.())
   }
 
-  replay() {
-    this.writerRecords.forEach(({ writer }) => {
+  async replay() {
+    const token = ++this.playbackToken
+
+    for (const { writer } of this.writerRecords) {
       writer.cancelQuiz?.()
-      writer.animateCharacter()
-    })
+      writer.hideCharacter?.({ duration: 0 })
+      writer.showOutline?.({ duration: 0 })
+    }
+
+    for (const { writer } of this.writerRecords) {
+      if (token !== this.playbackToken) return
+
+      await writer.animateCharacter()
+    }
   }
 
   startMode() {
@@ -38,13 +49,17 @@ export default class extends Controller {
     }
 
     const writer = HanziWriter.create(element, element.dataset.character, {
-      width: 96,
-      height: 96,
-      padding: 8,
+      width: 192,
+      height: 192,
+      padding: 12,
       showCharacter: false,
       showOutline: true,
+      strokeColor: "#f8fafc",
+      outlineColor: "#6b7280",
+      highlightColor: "#f8fafc",
       strokeAnimationSpeed: 1.2,
       delayBetweenStrokes: 180,
+      strokeFadeDuration: 0,
       charDataLoader() {
         return payload
       }
