@@ -241,6 +241,32 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include("Char 学")
       end
 
+      it "groups related anchors by shared character" do
+        new_card.dictionary_entry.update!(text: "学习")
+
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学校", frequency_rank: 10), state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "练习", frequency_rank: 20), state: "mastered")
+
+        get learn_card_path
+
+        expect(response.body).to include("Character")
+        expect(response.body).to include("学校")
+        expect(response.body).to include("练习")
+      end
+
+      it "shows a full-token group separately from shared-character groups" do
+        new_card.dictionary_entry.update!(text: "学习")
+
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学习者", frequency_rank: 5), state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学校", frequency_rank: 10), state: "mastered")
+
+        get learn_card_path
+
+        expect(response.body).to include("Match")
+        expect(response.body).to include("Full token")
+        expect(response.body).to include("Character")
+      end
+
       it "orders related anchors by match type then frequency rank" do
         new_card.dictionary_entry.update!(text: "学习")
 
@@ -253,6 +279,16 @@ RSpec.describe "Learn", type: :request do
         get learn_card_path
 
         expect(response.body.index("学习者")).to be < response.body.index("学校")
+      end
+
+      it "shows entries under each shared character they match" do
+        new_card.dictionary_entry.update!(text: "学习")
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "习学", frequency_rank: 10), state: "mastered")
+
+        get learn_card_path
+
+        expect(response.body.scan("习学").size).to eq(2)
+        expect(response.body).to include("Also matches 习")
       end
 
       it "shows radical breakdown details in the contextual panel" do

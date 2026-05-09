@@ -248,6 +248,32 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to include("Char 学")
       end
 
+      it "groups related anchors by shared character" do
+        user_learning.dictionary_entry.update!(text: "学习")
+
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学校"), state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "练习"), state: "mastered")
+
+        get review_card_path
+
+        expect(response.body).to include("Character")
+        expect(response.body).to include("学校")
+        expect(response.body).to include("练习")
+      end
+
+      it "shows a full-token group separately from shared-character groups" do
+        user_learning.dictionary_entry.update!(text: "学习")
+
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学习者"), state: "mastered")
+        create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "学校"), state: "mastered")
+
+        get review_card_path
+
+        expect(response.body).to include("Match")
+        expect(response.body).to include("Full token")
+        expect(response.body).to include("Character")
+      end
+
       it "shows each related entry once even when matching both strategies" do
         user_learning.dictionary_entry.update!(text: "学习")
         overlap_entry = create(:dictionary_entry, text: "学习班")
@@ -256,6 +282,17 @@ RSpec.describe "Review", type: :request do
         get review_card_path
 
         expect(response.body.scan("学习班").size).to eq(1)
+      end
+
+      it "shows per-character matches under each shared character" do
+        user_learning.dictionary_entry.update!(text: "学习")
+        overlap_entry = create(:dictionary_entry, text: "习学")
+        create(:user_learning, user: user, dictionary_entry: overlap_entry, state: "mastered")
+
+        get review_card_path
+
+        expect(response.body.scan("习学").size).to eq(2)
+        expect(response.body).to include("Also matches 习")
       end
 
       it "shows radical breakdown details" do
