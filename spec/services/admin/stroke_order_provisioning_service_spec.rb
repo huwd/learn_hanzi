@@ -34,11 +34,13 @@ RSpec.describe Admin::StrokeOrderProvisioningService do
 
     it "updates existing stroke order rows" do
       entry = create(:dictionary_entry, text: "语")
-      create(:stroke_order_datum, dictionary_entry: entry, strokes: [ "old" ], medians: [ [ [ 9, 9 ] ] ])
+      datum = create(:stroke_order_datum, dictionary_entry: entry, strokes: [ "old" ], medians: [ [ [ 9, 9 ] ] ])
+      created_at = datum.created_at
 
       described_class.call(graphics_path: graphics_path.to_s)
 
       expect(entry.reload.stroke_order_datum.strokes).to eq([ "a", "b" ])
+      expect(entry.stroke_order_datum.created_at).to eq(created_at)
     end
 
     it "logs unmatched source characters" do
@@ -74,6 +76,22 @@ RSpec.describe Admin::StrokeOrderProvisioningService do
       expect(result[:entries_processed]).to eq(1)
     ensure
       FileUtils.rm_f(default_path)
+    end
+
+    it "streams imports in batches" do
+      many_rows = (1..(described_class::BATCH_SIZE + 5)).map do |index|
+        character = [ 0x4E00 + index ].pack("U")
+        create(:dictionary_entry, text: character)
+        { "character" => character, "strokes" => [ "s#{index}" ], "medians" => [ [ [ index, index ] ] ] }.to_json
+      end
+
+      File.write(graphics_path, many_rows.join("\n"))
+
+      expect(StrokeOrderDatum).to receive(:upsert_all).twice.and_call_original
+
+      result = described_class.call(graphics_path: graphics_path.to_s)
+
+      expect(result[:entries_processed]).to eq(described_class::BATCH_SIZE + 5)
     end
   end
 end

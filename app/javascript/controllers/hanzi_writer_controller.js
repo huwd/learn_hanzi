@@ -6,13 +6,22 @@ export default class extends Controller {
 
   connect() {
     this.playbackToken = 0
+    this.writerRecords = []
+
+    if (!window.HanziWriter) {
+      return
+    }
+
     this.writerRecords = this.canvasTargets.map((element) => this.buildWriter(element))
     this.startMode()
   }
 
   disconnect() {
     this.playbackToken += 1
-    this.writerRecords.forEach(({ writer }) => writer.cancelQuiz?.())
+    this.writerRecords.forEach(({ writer }) => {
+      writer.cancelQuiz?.()
+      writer.destroy?.()
+    })
   }
 
   async replay() {
