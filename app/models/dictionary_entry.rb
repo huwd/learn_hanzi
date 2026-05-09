@@ -12,6 +12,7 @@ class DictionaryEntry < ApplicationRecord
   has_many :dictionary_entry_radicals, dependent: :destroy
   has_many :radicals, through: :dictionary_entry_radicals
   has_many :user_learnings, dependent: :destroy
+  has_one :stroke_order_datum, dependent: :destroy
 
   validates :text, presence: true
   validates :frequency_rank, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true

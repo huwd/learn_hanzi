@@ -324,6 +324,15 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to include("讠")
         expect(response.body).to include("speech")
       end
+
+      it "shows stroke order details" do
+        create(:stroke_order_datum, dictionary_entry: user_learning.dictionary_entry, strokes: [ "M 0 0" ], medians: [ [ [ 0, 0 ], [ 1, 1 ] ] ])
+
+        get review_card_path
+
+        expect(response.body).to include("Stroke order:")
+        expect(response.body).to include('data-controller="hanzi-writer"')
+      end
     end
   end
 

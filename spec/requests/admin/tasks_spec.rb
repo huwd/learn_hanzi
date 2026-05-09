@@ -65,6 +65,14 @@ RSpec.describe "Admin::Tasks", type: :request do
         end
       end
 
+      context "when task_type is stroke_order" do
+        it "creates a stroke_order task" do
+          post admin_tasks_path, params: { task_type: "stroke_order" }
+
+          expect(AdminTask.last.task_type).to eq("stroke_order")
+        end
+      end
+
       context "when the task type is already locked" do
         before { create(:admin_task, task_type: "cc_cedict", state: "running") }
 

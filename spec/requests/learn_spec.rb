@@ -327,6 +327,15 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include("7 strokes")
       end
 
+      it "shows stroke order in the contextual panel when available" do
+        create(:stroke_order_datum, dictionary_entry: new_card.dictionary_entry, strokes: [ "M 0 0" ], medians: [ [ [ 0, 0 ], [ 1, 1 ] ] ])
+
+        get learn_card_path
+
+        expect(response.body).to include("Stroke order:")
+        expect(response.body).to include('data-controller="hanzi-writer"')
+      end
+
       it "marks a radical as mastered when the learner knows it" do
         radical_wu = create(:radical, character: "吾", meaning: "I", stroke_count: 7)
         radical_entry = create(:dictionary_entry, text: "吾")
@@ -438,6 +447,15 @@ RSpec.describe "Learn", type: :request do
         expect(response.body).to include("Character components")
         expect(response.body).to include("讠")
         expect(response.body).to include("speech")
+      end
+
+      it "shows stroke order in learn review when available" do
+        create(:stroke_order_datum, dictionary_entry: new_card.dictionary_entry, strokes: [ "M 0 0" ], medians: [ [ [ 0, 0 ], [ 1, 1 ] ] ])
+
+        get learn_review_path
+
+        expect(response.body).to include("Stroke order:")
+        expect(response.body).to include('data-controller="hanzi-writer"')
       end
     end
 

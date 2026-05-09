@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_08_191500) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_09_123500) do
   create_table "admin_tasks", force: :cascade do |t|
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -150,6 +150,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_08_191500) do
     t.string "url"
   end
 
+  create_table "stroke_order_data", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "dictionary_entry_id", null: false
+    t.text "medians", null: false
+    t.string "source", null: false
+    t.text "strokes", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dictionary_entry_id"], name: "index_stroke_order_data_on_dictionary_entry_id", unique: true
+  end
+
   create_table "tags", force: :cascade do |t|
     t.string "category"
     t.datetime "created_at", null: false
@@ -201,6 +211,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_08_191500) do
   add_foreign_key "meanings", "sources"
   add_foreign_key "review_logs", "user_learnings"
   add_foreign_key "sessions", "users"
+  add_foreign_key "stroke_order_data", "dictionary_entries"
   add_foreign_key "tags", "tags", column: "parent_id"
   add_foreign_key "user_learnings", "dictionary_entries"
   add_foreign_key "user_learnings", "users"

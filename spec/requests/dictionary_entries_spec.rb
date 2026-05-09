@@ -104,6 +104,37 @@ RSpec.describe "DictionaryEntries", type: :request do
         expect(response.body).to include("讠")
         expect(response.body).to include("speech")
       end
+
+      it "shows stroke order when data is available" do
+        create(:stroke_order_datum, dictionary_entry: dictionary_entry, strokes: [ "M 0 0" ], medians: [ [ [ 0, 0 ], [ 1, 1 ] ] ])
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("Stroke Order")
+        expect(response.body).to include("Stroke order:")
+        expect(response.body).to include("Replay")
+        expect(response.body).to include('data-controller="hanzi-writer"')
+      end
+
+      it "omits the stroke order section when no data is available" do
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).not_to include("Stroke Order")
+      end
+
+      it "falls back to constituent characters for multi-character words" do
+        dictionary_entry.update!(text: "学习")
+        xue = create(:dictionary_entry, text: "学")
+        xi = create(:dictionary_entry, text: "习")
+        create(:stroke_order_datum, dictionary_entry: xue, strokes: [ "M 0 0" ], medians: [ [ [ 0, 0 ], [ 1, 1 ] ] ])
+        create(:stroke_order_datum, dictionary_entry: xi, strokes: [ "M 1 1" ], medians: [ [ [ 1, 1 ], [ 2, 2 ] ] ])
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("Stroke Order")
+        expect(response.body).to include('data-character="学"')
+        expect(response.body).to include('data-character="习"')
+      end
     end
   end
 

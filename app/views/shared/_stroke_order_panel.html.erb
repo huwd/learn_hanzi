@@ -1,0 +1,32 @@
+<% stroke_order_diagrams ||= [] %>
+<% if stroke_order_diagrams.present? %>
+  <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4" data-controller="hanzi-writer" data-hanzi-writer-mode-value="animate">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <p class="text-base font-medium text-gray-600 dark:text-gray-400">
+        Stroke order:
+      </p>
+      <button type="button"
+              data-action="hanzi-writer#replay"
+              class="px-3 py-1.5 text-xs font-medium rounded-md bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-500/70 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        Replay
+      </button>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <% stroke_order_diagrams.each do |diagram| %>
+        <div class="rounded-xl border border-gray-200 dark:border-gray-500/70 overflow-hidden bg-white/80 dark:bg-gray-800/40 shadow-sm w-[7.5rem]">
+          <div class="px-3 py-2 bg-gray-100 dark:bg-gray-500/25 border-b border-gray-200 dark:border-gray-500/60 text-center">
+            <span class="font-hanzi text-2xl text-gray-800 dark:text-gray-100"><%= diagram.character %></span>
+          </div>
+          <div class="p-3 flex items-center justify-center">
+            <div data-hanzi-writer-target="canvas"
+                 data-character="<%= diagram.character %>"
+                 data-strokes="<%= json_escape(diagram.strokes.to_json) %>"
+                 data-medians="<%= json_escape(diagram.medians.to_json) %>">
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

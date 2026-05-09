@@ -1,6 +1,6 @@
 module Admin
   class DashboardController < BaseController
-    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary wiktionary unihan hsk_tags frequency_data radicals].freeze
+    TASK_TYPES_IN_ORDER = %w[cc_cedict custom_dictionary wiktionary unihan makemeahanzi_source hsk_tags frequency_data radicals stroke_order].freeze
 
     def index
       @tasks_by_type = AdminTask::VALID_TASK_TYPES.index_with do |type|
@@ -38,8 +38,13 @@ module Admin
         custom_entries:     Meaning.joins(:source).where(sources: { name: "learn_hanzi" }).select(:dictionary_entry_id).distinct.count,
         wiktionary_entries: Meaning.joins(:source).where(sources: { name: "Wiktionary" }).select(:dictionary_entry_id).distinct.count,
         unihan_entries:     Meaning.joins(:source).where(sources: { name: "Unihan" }).select(:dictionary_entry_id).distinct.count,
+        makemeahanzi_source: [
+          Admin::MakemeahanziSourceProvisioningService.dictionary_path,
+          Admin::MakemeahanziSourceProvisioningService.graphics_path
+        ].count(&:exist?),
         frequency_entries:  DictionaryEntry.where.not(frequency_rank: nil).count,
-        radical_entries:    DictionaryEntryRadical.select(:dictionary_entry_id).distinct.count
+        radical_entries:    DictionaryEntryRadical.select(:dictionary_entry_id).distinct.count,
+        stroke_order_entries: StrokeOrderDatum.count
       }
     end
   end
