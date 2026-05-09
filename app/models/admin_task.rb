@@ -5,6 +5,7 @@ class AdminTask < ApplicationRecord
     custom_dictionary
     frequency_data
     makemeahanzi_source
+    audio_pronunciations
     wiktionary
     stroke_order
     unihan

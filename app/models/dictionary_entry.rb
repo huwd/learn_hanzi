@@ -9,6 +9,7 @@ class DictionaryEntry < ApplicationRecord
   has_many :dictionary_entry_tags, dependent: :destroy
   has_many :tags, through: :dictionary_entry_tags
   has_many :meanings, dependent: :destroy
+  has_many :audio_pronunciations, -> { order(:id) }, dependent: :destroy
   has_many :dictionary_entry_radicals, dependent: :destroy
   has_many :radicals, through: :dictionary_entry_radicals
   has_many :user_learnings, dependent: :destroy
@@ -29,10 +30,16 @@ class DictionaryEntry < ApplicationRecord
   end
 
   def self.find_with_associations(id, user)
-    entry = includes(tags: :parent).find(id)
+    entry = includes(tags: :parent, audio_pronunciations: { audio_attachment: :blob }).find(id)
     meanings = entry.meanings.includes(:source)
     user_learning = entry.user_learning_for(user)
     { entry: entry, meanings: meanings, user_learning: user_learning }
+  end
+
+  def primary_audio_pronunciation
+    return audio_pronunciations.first if association(:audio_pronunciations).loaded?
+
+    audio_pronunciations.includes(audio_attachment: :blob).first
   end
 
   def flashcard_meanings

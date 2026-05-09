@@ -89,6 +89,10 @@ RSpec.describe AdminTask, type: :model do
     it "includes radicals for admin provisioning" do
       expect(AdminTask::VALID_TASK_TYPES).to include("radicals")
     end
+
+    it "includes audio_pronunciations for admin provisioning" do
+      expect(AdminTask::VALID_TASK_TYPES).to include("audio_pronunciations")
+    end
   end
 
   describe ".in_progress" do

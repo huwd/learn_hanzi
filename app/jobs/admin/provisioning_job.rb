@@ -8,6 +8,7 @@ module Admin
       "custom_dictionary"  => Admin::CustomDictionaryProvisioningService,
       "frequency_data"     => Admin::FrequencyProvisioningService,
       "makemeahanzi_source" => Admin::MakemeahanziSourceProvisioningService,
+      "audio_pronunciations" => Admin::AudioPronunciationsProvisioningService,
       "wiktionary"         => Admin::WiktionaryProvisioningService,
       "stroke_order"       => Admin::StrokeOrderProvisioningService,
       "unihan"             => Admin::UnihanProvisioningService,

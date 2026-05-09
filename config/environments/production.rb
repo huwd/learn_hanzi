@@ -64,6 +64,8 @@ Rails.application.configure do
   #   from: ENV.fetch("MAILER_FROM", "noreply@example.com")
   # }
 
+  config.active_storage.service = :local
+
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
