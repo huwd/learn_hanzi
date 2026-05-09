@@ -57,7 +57,7 @@ class DictionaryEntry < ApplicationRecord
   end
 
   def flashcard_meaning_groups
-    flashcard_meanings.group_by(&:pinyin).values
+    flashcard_meanings.group_by { |meaning| normalized_pinyin_group_key(meaning.pinyin) }.values
   end
 
   private
@@ -82,6 +82,10 @@ class DictionaryEntry < ApplicationRecord
 
   def missing_pinyin?(meaning)
     meaning.pinyin.blank? || meaning.pinyin.casecmp("unknown").zero?
+  end
+
+  def normalized_pinyin_group_key(pinyin)
+    pinyin.to_s.downcase
   end
 
   def order_meanings_within_priority(candidate_meanings)
