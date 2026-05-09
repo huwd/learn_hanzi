@@ -38,7 +38,16 @@ module Admin
     def ensure_source_file!
       return if File.exist?(@graphics_path)
 
+      if using_default_graphics_path?
+        Admin::MakemeahanziSourceProvisioningService.call(force: false)
+        return if File.exist?(@graphics_path)
+      end
+
       raise "Graphics file not found at #{@graphics_path}. Run `bin/rails makemeahanzi:download` first."
+    end
+
+    def using_default_graphics_path?
+      @graphics_path.to_s == Admin::MakemeahanziSourceProvisioningService.graphics_path.to_s
     end
 
     def parsed_rows

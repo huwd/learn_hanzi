@@ -1,5 +1,5 @@
 class StrokeOrderDiagramBuilder
-  Diagram = Data.define(:character, :strokes, :medians)
+  Diagram = Data.define(:character, :stroke_count, :strokes, :medians)
 
   def self.call(dictionary_entry:)
     new(dictionary_entry:).call
@@ -19,7 +19,7 @@ class StrokeOrderDiagramBuilder
     datum = @dictionary_entry.stroke_order_datum
     return [] unless datum&.strokes.present? && datum&.medians.present?
 
-    [ Diagram.new(character: @dictionary_entry.text, strokes: datum.strokes, medians: datum.medians) ]
+    [ build_diagram(@dictionary_entry.text, datum) ]
   end
 
   def fallback_diagrams
@@ -32,10 +32,20 @@ class StrokeOrderDiagramBuilder
       .index_by(&:text)
 
     characters.filter_map do |character|
-      datum = entries_by_text[character]&.stroke_order_datum
+      entry = entries_by_text[character]
+      datum = entry&.stroke_order_datum
       next unless datum&.strokes.present? && datum&.medians.present?
 
-      Diagram.new(character: character, strokes: datum.strokes, medians: datum.medians)
+      build_diagram(character, datum)
     end
+  end
+
+  def build_diagram(character, datum)
+    Diagram.new(
+      character: character,
+      stroke_count: datum.strokes.size,
+      strokes: datum.strokes,
+      medians: datum.medians
+    )
   end
 end

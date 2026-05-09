@@ -12,11 +12,11 @@
       </button>
     </div>
 
-    <div class="flex flex-wrap gap-3">
+    <div class="grid grid-cols-1 gap-3 justify-items-center">
       <% stroke_order_diagrams.each do |diagram| %>
-        <div class="rounded-xl border border-gray-200 dark:border-gray-500/70 overflow-hidden bg-white/80 dark:bg-gray-800/40 shadow-sm w-[7.5rem]">
+        <div class="rounded-xl border border-gray-200 dark:border-gray-500/70 overflow-hidden bg-white/80 dark:bg-gray-800/40 shadow-sm w-full max-w-xs">
           <div class="px-3 py-2 bg-gray-100 dark:bg-gray-500/25 border-b border-gray-200 dark:border-gray-500/60 text-center">
-            <span class="font-hanzi text-2xl text-gray-800 dark:text-gray-100"><%= diagram.character %></span>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-200"><%= "#{diagram.stroke_count} #{'stroke'.pluralize(diagram.stroke_count)}" %></span>
           </div>
           <div class="p-3 flex items-center justify-center">
             <div data-hanzi-writer-target="canvas"
