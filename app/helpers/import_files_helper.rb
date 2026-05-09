@@ -18,7 +18,19 @@ module ImportFilesHelper
     Zip::File.open(temp_zip_path) do |zip_file|
       zip_file.each do |entry|
         puts "Extracting #{entry.name} to #{unzip_dir}..."
-        entry.extract(destination_directory: unzip_dir) { true }
+        destination_path = File.join(unzip_dir, entry.name)
+
+        if entry.directory?
+          FileUtils.mkdir_p(destination_path)
+          next
+        end
+
+        FileUtils.mkdir_p(File.dirname(destination_path))
+        entry.get_input_stream do |input_stream|
+          File.open(destination_path, "wb") do |output_file|
+            IO.copy_stream(input_stream, output_file)
+          end
+        end
       end
     end
   end

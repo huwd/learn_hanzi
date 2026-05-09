@@ -1,0 +1,18 @@
+<% button_class = local_assigns[:button_class] || "inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-300/70 bg-white/80 text-gray-700 shadow-sm transition-colors hover:bg-white hover:text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700" %>
+<% label = local_assigns[:label] || "Play audio" %>
+
+<div data-controller="audio-player" class="inline-flex">
+  <button type="button"
+          data-action="audio-player#play"
+          class="<%= button_class %>"
+          aria-label="<%= label %>">
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path d="M6 4.75a.75.75 0 0 1 1.14-.64l8 5.25a.75.75 0 0 1 0 1.28l-8 5.25A.75.75 0 0 1 6 15.25V4.75Z" />
+    </svg>
+  </button>
+
+  <audio preload="none" data-audio-player-target="audio">
+    <source src="<%= rails_blob_path(audio_pronunciation.audio, only_path: true) %>"
+            type="<%= audio_pronunciation.audio.content_type || "audio/mpeg" %>">
+  </audio>
+</div>

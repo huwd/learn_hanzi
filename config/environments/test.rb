@@ -44,4 +44,6 @@ Rails.application.configure do
   # Restore this block if mailer is re-enabled in config/application.rb.
   # config.action_mailer.delivery_method = :test
   # config.action_mailer.default_url_options = { host: "localhost", port: 3000, from: "test@example.com" }
+
+  config.active_storage.service = :test
 end

@@ -10,6 +10,7 @@
   primary_group = meaning_groups.first || []
   primary_meaning = primary_group.first
   pinyin = primary_meaning&.pinyin
+  audio_pronunciation = entry.primary_audio_pronunciation
   supplemental_meaning_groups = []
 
   if primary_group.drop(1).any?
@@ -39,7 +40,14 @@
         </div>
 
         <div data-card-flip-target="back" class="hidden h-full overflow-y-auto pr-1">
-          <p class="text-3xl text-gray-400 mb-2"><%= pinyin %></p>
+          <div class="mb-2 flex items-center justify-center gap-3">
+            <p class="text-3xl text-gray-400"><%= pinyin %></p>
+            <% if audio_pronunciation %>
+              <%= render "shared/audio_pronunciation_button",
+                    audio_pronunciation: audio_pronunciation,
+                    label: "Play audio for #{entry.text}" %>
+            <% end %>
+          </div>
           <p data-adaptive-card-text-target="meaning" class="text-xl font-medium text-gray-800 dark:text-gray-200"><%= primary_meaning&.text %></p>
 
           <% if supplemental_meaning_groups.any? %>

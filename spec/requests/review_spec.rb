@@ -333,6 +333,20 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to include("Stroke order:")
         expect(response.body).to include('data-controller="hanzi-writer"')
       end
+
+      it "shows a play button when pronunciation audio is available" do
+        create(:audio_pronunciation, dictionary_entry: user_learning.dictionary_entry)
+
+        get review_card_path
+
+        expect(response.body).to include("Play audio for #{user_learning.dictionary_entry.text}")
+      end
+
+      it "omits the play button when pronunciation audio is unavailable" do
+        get review_card_path
+
+        expect(response.body).not_to include("Play audio for #{user_learning.dictionary_entry.text}")
+      end
     end
   end
 

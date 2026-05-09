@@ -59,7 +59,15 @@
           task:      @tasks_by_type["hsk_tags"],
           db_count:  @db_stats[:hsk_tags],
           unit:      "tags",
-          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+          blocked_reason: (@db_stats[:dictionary_entries].zero? ? "Import dictionary first" : nil) %>
+
+    <%= render "task_card",
+          label:     "Pronunciation audio",
+          task_type: "audio_pronunciations",
+          task:      @tasks_by_type["audio_pronunciations"],
+          db_count:  @db_stats[:audio_pronunciations],
+          unit:      "audio records",
+          blocked_reason: (@db_stats[:hsk_tags].zero? ? "Import HSK tags first" : nil) %>
 
     <%= render "task_card",
           label:     "Frequency data",
@@ -67,7 +75,7 @@
           task:      @tasks_by_type["frequency_data"],
           db_count:  @db_stats[:frequency_entries],
           unit:      "ranked entries",
-          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+          blocked_reason: (@db_stats[:dictionary_entries].zero? ? "Import dictionary first" : nil) %>
 
     <%= render "task_card",
           label:     "Radical breakdowns",
@@ -75,7 +83,7 @@
           task:      @tasks_by_type["radicals"],
           db_count:  @db_stats[:radical_entries],
           unit:      "entries with radicals",
-          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+          blocked_reason: (@db_stats[:dictionary_entries].zero? ? "Import dictionary first" : nil) %>
 
     <%= render "task_card",
           label:     "Stroke order",
@@ -83,7 +91,7 @@
           task:      @tasks_by_type["stroke_order"],
           db_count:  @db_stats[:stroke_order_entries],
           unit:      "entries with stroke data",
-          requires_dictionary: @db_stats[:dictionary_entries].zero? %>
+          blocked_reason: (@db_stats[:dictionary_entries].zero? ? "Import dictionary first" : nil) %>
 
   </div>
 

@@ -122,6 +122,20 @@ RSpec.describe "DictionaryEntries", type: :request do
         expect(response.body).not_to include("Stroke Order")
       end
 
+      it "shows a play button when pronunciation audio is available" do
+        create(:audio_pronunciation, dictionary_entry: dictionary_entry)
+
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).to include("Play audio for #{dictionary_entry.text}")
+      end
+
+      it "omits the play button when pronunciation audio is unavailable" do
+        get dictionary_entry_path(dictionary_entry)
+
+        expect(response.body).not_to include("Play audio for #{dictionary_entry.text}")
+      end
+
       it "falls back to constituent characters for multi-character words" do
         dictionary_entry.update!(text: "学习")
         xue = create(:dictionary_entry, text: "学")
