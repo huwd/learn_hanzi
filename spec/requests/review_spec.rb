@@ -196,13 +196,14 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to include("1 / 1")
       end
 
-      it "renders a fixed-height adaptive card" do
+      it "renders a responsive adaptive card" do
         get review_card_path
         expect(response.body).to include('data-card-layout="fixed"')
         expect(response.body).to include('data-card-text-scaling="adaptive"')
         expect(response.body).to include("card-flip")
         expect(response.body).to include("adaptive-card-text")
         expect(response.body).to include("w-full max-w-xl")
+        expect(response.body).to include("min-h-[28rem] md:h-[30rem]")
       end
 
       it "shows a supplemental meanings toggle when multiple meanings exist" do
