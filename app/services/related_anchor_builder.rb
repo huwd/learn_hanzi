@@ -31,17 +31,12 @@ class RelatedAnchorBuilder
     target = target_text
     return [] if target.blank?
 
-    ordered_mastered_scope
+    ids = ordered_mastered_scope
       .where("dictionary_entries.text LIKE ?", "%#{escape_like(target)}%")
       .limit(limit)
-      .to_a
-      .map do |learning|
-        Result.new(
-          user_learning: learning,
-          full_token_match: true,
-          matched_characters: matching_characters_for(learning, target_characters)
-        )
-      end
+      .pluck(:id)
+
+    load_with_includes(ids, target_characters, full_token_match: true)
   end
 
   def per_character_results(excluding_ids:, limit:)
@@ -51,20 +46,32 @@ class RelatedAnchorBuilder
     pattern = chars.map { "dictionary_entries.text LIKE ?" }.join(" OR ")
     values = chars.map { |char| "%#{escape_like(char)}%" }
 
-    scope = ordered_mastered_scope
-      .where(pattern, *values)
+    scope = ordered_mastered_scope.where(pattern, *values)
     scope = scope.where.not(id: excluding_ids) if excluding_ids.any?
 
-    scope
-      .limit(limit)
-      .to_a
-      .map do |learning|
-        Result.new(
-          user_learning: learning,
-          full_token_match: false,
-          matched_characters: matching_characters_for(learning, chars)
-        )
-      end
+    ids = scope.limit(limit).pluck(:id)
+    load_with_includes(ids, chars, full_token_match: false)
+  end
+
+  # Loads user_learnings by ID with full associations, preserving the given ID order.
+  # Separated from the filtering query so that LIKE + ORDER BY + LIMIT work on a
+  # simple join without Rails switching to eager_load mode (which would apply LIMIT
+  # to joined rows rather than to user_learnings).
+  def load_with_includes(ids, chars, full_token_match:)
+    return [] if ids.empty?
+
+    by_id = UserLearning.where(id: ids)
+                        .includes(dictionary_entry: { meanings: :source })
+                        .index_by(&:id)
+    ids.filter_map do |id|
+      learning = by_id[id]
+      next unless learning
+      Result.new(
+        user_learning: learning,
+        full_token_match: full_token_match,
+        matched_characters: matching_characters_for(learning, chars)
+      )
+    end
   end
 
   def matching_characters_for(learning, chars)
@@ -88,7 +95,6 @@ class RelatedAnchorBuilder
         .order(Arel.sql("CASE WHEN dictionary_entries.frequency_rank IS NULL THEN 1 ELSE 0 END"))
         .order("dictionary_entries.frequency_rank ASC")
         .order("dictionary_entries.text ASC")
-        .includes(dictionary_entry: { meanings: :source })
   end
 
   def escape_like(value)
