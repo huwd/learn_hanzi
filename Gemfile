@@ -28,7 +28,7 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "solid_cache"
 gem "solid_queue"
 gem "mission_control-jobs"
-gem "rubyzip", "~> 3.0"
+gem "rubyzip", "~> 3.3"
 
 # Observability
 gem "sentry-rails"
