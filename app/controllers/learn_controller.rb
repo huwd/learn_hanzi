@@ -2,6 +2,7 @@ class LearnController < ApplicationController
   before_action :require_learn_session, only: [ :show, :submit ]
   before_action :require_review_phase,  only: [ :review_show, :review_submit ]
   before_action :require_started_session, only: [ :summary ]
+  around_action :measure_action_performance, only: [ :show, :submit, :review_show, :review_submit ]
 
   def start
     queue_size = Current.user.new_cards_per_session
@@ -25,29 +26,37 @@ class LearnController < ApplicationController
   end
 
   def show
-    @user_learning = current_card
+    @user_learning = measure_performance("learn_show_user_learning_lookup") { current_card }
     @position      = session[:learn_index] + 1
     @total         = session[:learn_queue].size
-    @related_anchors = RelatedAnchorBuilder.call(
-      user: Current.user,
-      target_learning: @user_learning,
-      limit: 5
-    )
-    @radical_breakdown = RadicalBreakdownBuilder.call(
-      user: Current.user,
-      dictionary_entry: @user_learning.dictionary_entry
-    )
-    @stroke_order_diagrams = StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    @related_anchors = measure_performance("learn_show_related_anchors") do
+      RelatedAnchorBuilder.call(
+        user: Current.user,
+        target_learning: @user_learning,
+        limit: 5
+      )
+    end
+    @radical_breakdown = measure_performance("learn_show_radical_breakdown") do
+      RadicalBreakdownBuilder.call(
+        user: Current.user,
+        dictionary_entry: @user_learning.dictionary_entry
+      )
+    end
+    @stroke_order_diagrams = measure_performance("learn_show_stroke_order_diagrams") do
+      StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    end
   end
 
   def submit
     know_it = params[:know_it] == "true"
-    ul      = current_card
+    ul      = measure_performance("learn_submit_user_learning_lookup") { current_card }
 
-    if know_it
-      ul.update!(state: "learning", last_interval: 1, factor: 2500, next_due: 1.day.from_now)
-    else
-      ul.update!(state: "learning", last_interval: 0, factor: 2500, next_due: Time.current)
+    measure_performance("learn_submit_update_user_learning") do
+      if know_it
+        ul.update!(state: "learning", last_interval: 1, factor: 2500, next_due: 1.day.from_now)
+      else
+        ul.update!(state: "learning", last_interval: 0, factor: 2500, next_due: Time.current)
+      end
     end
 
     session[:learn_introduced] = (session[:learn_introduced] || []) + [ ul.id ]
@@ -62,42 +71,52 @@ class LearnController < ApplicationController
   end
 
   def review_show
-    @user_learning = current_review_card
+    @user_learning = measure_performance("learn_review_show_user_learning_lookup") { current_review_card }
     @position      = session[:learn_review_index] + 1
     @total         = session[:learn_introduced].size
-    @related_anchors = RelatedAnchorBuilder.call(
-      user: Current.user,
-      target_learning: @user_learning,
-      limit: 5
-    )
-    @radical_breakdown = RadicalBreakdownBuilder.call(
-      user: Current.user,
-      dictionary_entry: @user_learning.dictionary_entry
-    )
-    @stroke_order_diagrams = StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    @related_anchors = measure_performance("learn_review_show_related_anchors") do
+      RelatedAnchorBuilder.call(
+        user: Current.user,
+        target_learning: @user_learning,
+        limit: 5
+      )
+    end
+    @radical_breakdown = measure_performance("learn_review_show_radical_breakdown") do
+      RadicalBreakdownBuilder.call(
+        user: Current.user,
+        dictionary_entry: @user_learning.dictionary_entry
+      )
+    end
+    @stroke_order_diagrams = measure_performance("learn_review_show_stroke_order_diagrams") do
+      StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    end
   end
 
   def review_submit
     ease = params[:ease].to_i
     return head :unprocessable_content unless (1..4).include?(ease)
 
-    ul     = current_review_card
-    result = SpacedRepetition::SM2.call(user_learning: ul, ease: ease)
+    ul     = measure_performance("learn_review_submit_user_learning_lookup") { current_review_card }
+    result = measure_performance("learn_review_submit_sm2") do
+      SpacedRepetition::SM2.call(user_learning: ul, ease: ease)
+    end
 
-    ApplicationRecord.transaction do
-      ul.update!(
-        state:         result.new_state,
-        last_interval: result.interval,
-        factor:        result.factor,
-        next_due:      result.next_due
-      )
-      ReviewLog.create!(
-        user_learning: ul,
-        ease:          ease,
-        interval:      result.interval,
-        factor:        result.factor,
-        log_type:      0
-      )
+    measure_performance("learn_review_submit_transaction") do
+      ApplicationRecord.transaction do
+        ul.update!(
+          state:         result.new_state,
+          last_interval: result.interval,
+          factor:        result.factor,
+          next_due:      result.next_due
+        )
+        ReviewLog.create!(
+          user_learning: ul,
+          ease:          ease,
+          interval:      result.interval,
+          factor:        result.factor,
+          log_type:      0
+        )
+      end
     end
 
     session[:learn_review_index] += 1

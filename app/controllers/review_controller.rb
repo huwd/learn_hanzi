@@ -1,6 +1,7 @@
 class ReviewController < ApplicationController
   before_action :require_active_session, only: [ :show, :submit ]
   before_action :require_completed_session, only: [ :summary ]
+  around_action :measure_action_performance, only: [ :show, :submit ]
 
   def start
     Current.user.learning_sessions.in_progress.update_all(state: "abandoned")
@@ -24,51 +25,67 @@ class ReviewController < ApplicationController
   end
 
   def show
-    @learning_session = active_learning_session
-    @session_card     = @learning_session.current_card(current_position)
-    @user_learning    = UserLearning
-                          .includes(dictionary_entry: [ { meanings: :source }, { tags: :parent }, :audio_pronunciations ])
-                          .find(@session_card.user_learning_id)
+    @learning_session = measure_performance("review_show_session_lookup") { active_learning_session }
+    @session_card     = measure_performance("review_show_session_card_lookup") do
+      @learning_session.current_card(current_position)
+    end
+    @user_learning    = measure_performance("review_show_user_learning_lookup") do
+      UserLearning
+        .includes(dictionary_entry: [ { meanings: :source }, { tags: :parent }, :audio_pronunciations ])
+        .find(@session_card.user_learning_id)
+    end
     @position         = current_position + 1
     @total            = @learning_session.card_count
-    @related_anchors  = RelatedAnchorBuilder.call(
-      user: Current.user,
-      target_learning: @user_learning,
-      limit: 5
-    )
-    @radical_breakdown = RadicalBreakdownBuilder.call(
-      user: Current.user,
-      dictionary_entry: @user_learning.dictionary_entry
-    )
-    @stroke_order_diagrams = StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    @related_anchors  = measure_performance("review_show_related_anchors") do
+      RelatedAnchorBuilder.call(
+        user: Current.user,
+        target_learning: @user_learning,
+        limit: 5
+      )
+    end
+    @radical_breakdown = measure_performance("review_show_radical_breakdown") do
+      RadicalBreakdownBuilder.call(
+        user: Current.user,
+        dictionary_entry: @user_learning.dictionary_entry
+      )
+    end
+    @stroke_order_diagrams = measure_performance("review_show_stroke_order_diagrams") do
+      StrokeOrderDiagramBuilder.call(dictionary_entry: @user_learning.dictionary_entry)
+    end
   end
 
   def submit
     ease = params[:ease].to_i
     return head :unprocessable_content unless (1..4).include?(ease)
 
-    ls           = active_learning_session
-    session_card = ls.current_card(current_position)
+    ls           = measure_performance("review_submit_session_lookup") { active_learning_session }
+    session_card = measure_performance("review_submit_session_card_lookup") do
+      ls.current_card(current_position)
+    end
     user_learning = session_card.user_learning
-    result = SpacedRepetition::SM2.call(user_learning: user_learning, ease: ease)
+    result = measure_performance("review_submit_sm2") do
+      SpacedRepetition::SM2.call(user_learning: user_learning, ease: ease)
+    end
 
-    ApplicationRecord.transaction do
-      user_learning.update!(
-        state:         result.new_state,
-        last_interval: result.interval,
-        factor:        result.factor,
-        next_due:      result.next_due
-      )
+    measure_performance("review_submit_transaction") do
+      ApplicationRecord.transaction do
+        user_learning.update!(
+          state:         result.new_state,
+          last_interval: result.interval,
+          factor:        result.factor,
+          next_due:      result.next_due
+        )
 
-      ReviewLog.create!(
-        user_learning: user_learning,
-        ease:          ease,
-        interval:      result.interval,
-        factor:        result.factor,
-        log_type:      0
-      )
+        ReviewLog.create!(
+          user_learning: user_learning,
+          ease:          ease,
+          interval:      result.interval,
+          factor:        result.factor,
+          log_type:      0
+        )
 
-      session_card.update!(ease: ease, reviewed_at: Time.current)
+        session_card.update!(ease: ease, reviewed_at: Time.current)
+      end
     end
 
     next_position = current_position + 1

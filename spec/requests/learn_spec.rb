@@ -346,6 +346,25 @@ RSpec.describe "Learn", type: :request do
 
         expect(response.body).to include("Mastered")
       end
+
+      it "adds learn show performance timings to the request payload" do
+        payload = nil
+        callback = lambda do |_name, _start, _finish, _id, data|
+          payload = data if data[:controller] == "LearnController" && data[:action] == "show"
+        end
+
+        ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+          get learn_card_path
+        end
+
+        expect(payload).to include(
+          :perf_learn_show_total_ms,
+          :perf_learn_show_user_learning_lookup_ms,
+          :perf_learn_show_related_anchors_ms,
+          :perf_learn_show_radical_breakdown_ms,
+          :perf_learn_show_stroke_order_diagrams_ms
+        )
+      end
     end
 
     context "when authenticated without an active learn session" do
@@ -377,6 +396,23 @@ RSpec.describe "Learn", type: :request do
         it "adds the card to learn_introduced" do
           post learn_card_path, params: { know_it: "true" }
           expect(request.session[:learn_introduced]).to include(new_card.id)
+        end
+
+        it "adds learn submit performance timings to the request payload" do
+          payload = nil
+          callback = lambda do |_name, _start, _finish, _id, data|
+            payload = data if data[:controller] == "LearnController" && data[:action] == "submit"
+          end
+
+          ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+            post learn_card_path, params: { know_it: "true" }
+          end
+
+          expect(payload).to include(
+            :perf_learn_submit_total_ms,
+            :perf_learn_submit_user_learning_lookup_ms,
+            :perf_learn_submit_update_user_learning_ms
+          )
         end
       end
 
@@ -465,6 +501,25 @@ RSpec.describe "Learn", type: :request do
 
         expect(response.body).to include("Play audio for #{new_card.dictionary_entry.text}")
       end
+
+      it "adds learn review show performance timings to the request payload" do
+        payload = nil
+        callback = lambda do |_name, _start, _finish, _id, data|
+          payload = data if data[:controller] == "LearnController" && data[:action] == "review_show"
+        end
+
+        ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+          get learn_review_path
+        end
+
+        expect(payload).to include(
+          :perf_learn_review_show_total_ms,
+          :perf_learn_review_show_user_learning_lookup_ms,
+          :perf_learn_review_show_related_anchors_ms,
+          :perf_learn_review_show_radical_breakdown_ms,
+          :perf_learn_review_show_stroke_order_diagrams_ms
+        )
+      end
     end
 
     context "when authenticated without an active review phase" do
@@ -499,6 +554,24 @@ RSpec.describe "Learn", type: :request do
           post learn_review_path, params: { ease: 3 }
           expect(response).to redirect_to(learn_summary_path)
         end
+      end
+
+      it "adds learn review submit performance timings to the request payload" do
+        payload = nil
+        callback = lambda do |_name, _start, _finish, _id, data|
+          payload = data if data[:controller] == "LearnController" && data[:action] == "review_submit"
+        end
+
+        ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+          post learn_review_path, params: { ease: 3 }
+        end
+
+        expect(payload).to include(
+          :perf_learn_review_submit_total_ms,
+          :perf_learn_review_submit_user_learning_lookup_ms,
+          :perf_learn_review_submit_sm2_ms,
+          :perf_learn_review_submit_transaction_ms
+        )
       end
     end
 
