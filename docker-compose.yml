@@ -37,6 +37,9 @@ services:
     command: ./bin/jobs
     user: "${CONTAINER_UID:-1000}:${CONTAINER_GID:-1000}"
     restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
     environment:
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?RAILS_MASTER_KEY must be set}
       RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
