@@ -30,7 +30,7 @@ class DashboardController < ApplicationController
   def build_vocabulary_sections
     hsk_versions.map do |version_tag|
       level_tags  = version_tag.children.sort_by(&:name)
-      level_stats = hsk_level_stats
+      level_stats = hsk_level_stats.slice(*level_tags.map(&:id))
 
       aggregate = aggregate_stats(level_stats.values)
 
@@ -74,9 +74,7 @@ class DashboardController < ApplicationController
   def hsk_level_stats
     @hsk_level_stats ||= begin
       level_tags = hsk_versions.flat_map(&:children)
-      return {} if level_tags.empty?
-
-      build_level_tag_stats(level_tags)
+      level_tags.empty? ? {} : build_level_tag_stats(level_tags)
     end
   end
 

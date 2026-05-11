@@ -271,6 +271,12 @@ RSpec.describe "Dashboard", type: :request do
             expect(response.body).to include("HSK 3.0")
           end
 
+          it "keeps per-version mastered counts scoped to each version" do
+            get root_path
+            expect(response.body).to include("1 / 1 mastered")
+            expect(response.body).to include("1 / 3 mastered")
+          end
+
           it "keeps HSK 3.0 milestone calculations scoped to HSK 3.0" do
             get root_path
             expect(response.body).to include("1 word until HSK 1 mastery")
