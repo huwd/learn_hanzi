@@ -28,12 +28,9 @@ class DashboardController < ApplicationController
   private
 
   def build_vocabulary_sections
-    hsk_root = Tag.find_by(name: "HSK")
-    return [] unless hsk_root
-
-    hsk_root.children.order(:name).map do |version_tag|
-      level_tags  = version_tag.children.order(:name)
-      level_stats = level_tag_stats(level_tags)
+    hsk_versions.map do |version_tag|
+      level_tags  = version_tag.children.sort_by(&:name)
+      level_stats = hsk_level_stats
 
       aggregate = aggregate_stats(level_stats.values)
 
@@ -41,9 +38,7 @@ class DashboardController < ApplicationController
     end
   end
 
-  def level_tag_stats(level_tags)
-    return {} if level_tags.empty?
-
+  def build_level_tag_stats(level_tags)
     tag_ids = level_tags.map(&:id)
 
     entry_counts = DictionaryEntryTag
@@ -76,6 +71,23 @@ class DashboardController < ApplicationController
     end
   end
 
+  def hsk_level_stats
+    @hsk_level_stats ||= begin
+      level_tags = hsk_versions.flat_map(&:children)
+      return {} if level_tags.empty?
+
+      build_level_tag_stats(level_tags)
+    end
+  end
+
+  def hsk_root
+    @hsk_root ||= Tag.includes(children: :children).find_by(name: "HSK", parent_id: nil)
+  end
+
+  def hsk_versions
+    @hsk_versions ||= hsk_root ? hsk_root.children.sort_by(&:name) : []
+  end
+
   def aggregate_stats(stats_list)
     %i[total mastered learning new_count not_started].each_with_object({}) do |key, agg|
       agg[key] = stats_list.sum { |s| s[key] }
@@ -83,16 +95,13 @@ class DashboardController < ApplicationController
   end
 
   def build_next_hsk_milestone
-    hsk_root = Tag.find_by(name: "HSK", parent_id: nil)
-    return nil unless hsk_root
-
-    hsk3 = hsk_root.children.find_by(name: "HSK 3.0")
+    hsk3 = hsk_versions.find { |tag| tag.name == "HSK 3.0" }
     return nil unless hsk3
 
     levels = hsk3.children.sort_by { |tag| hsk_level_sort_key(tag.name) }
     return nil if levels.empty?
 
-    level_stats = level_tag_stats(levels)
+    level_stats = hsk_level_stats.slice(*levels.map(&:id))
     return nil if level_stats.values.all? { |stats| stats[:total].zero? }
 
     next_level = levels.find do |level|

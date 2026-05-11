@@ -254,6 +254,28 @@ RSpec.describe "Dashboard", type: :request do
             expect(response.body).to include("1 word until HSK 1 mastery")
           end
         end
+
+        context "when multiple HSK versions are present" do
+          let!(:hsk2_root) { create(:tag, name: "HSK 2.0", parent: hsk_root) }
+          let!(:hsk2_level) { create(:tag, name: "HSK 2", parent: hsk2_root) }
+          let!(:hsk2_version_entry) { create(:dictionary_entry, text: "额外词").tap { |e| e.tags << hsk2_level } }
+
+          before do
+            create(:user_learning, user: user, dictionary_entry: hsk2_version_entry,
+                   state: "mastered")
+          end
+
+          it "shows vocabulary progress for both versions" do
+            get root_path
+            expect(response.body).to include("HSK 2.0")
+            expect(response.body).to include("HSK 3.0")
+          end
+
+          it "keeps HSK 3.0 milestone calculations scoped to HSK 3.0" do
+            get root_path
+            expect(response.body).to include("1 word until HSK 1 mastery")
+          end
+        end
       end
 
       context "with mastered vocabulary containing overlapping characters" do
