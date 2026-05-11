@@ -347,6 +347,27 @@ RSpec.describe "Review", type: :request do
 
         expect(response.body).not_to include("Play audio for #{user_learning.dictionary_entry.text}")
       end
+
+      it "adds performance timings to the request payload" do
+        payload = nil
+        callback = lambda do |_name, _start, _finish, _id, data|
+          payload = data if data[:controller] == "ReviewController" && data[:action] == "show"
+        end
+
+        ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+          get review_card_path
+        end
+
+        expect(payload).to include(
+          :perf_review_show_total_ms,
+          :perf_review_show_session_lookup_ms,
+          :perf_review_show_session_card_lookup_ms,
+          :perf_review_show_user_learning_lookup_ms,
+          :perf_review_show_related_anchors_ms,
+          :perf_review_show_radical_breakdown_ms,
+          :perf_review_show_stroke_order_diagrams_ms
+        )
+      end
     end
   end
 
@@ -401,6 +422,25 @@ RSpec.describe "Review", type: :request do
           expect {
             post review_card_path, params: { ease: 3 }
           }.to change { user_learning.reload.last_interval }
+        end
+
+        it "adds submit performance timings to the request payload" do
+          payload = nil
+          callback = lambda do |_name, _start, _finish, _id, data|
+            payload = data if data[:controller] == "ReviewController" && data[:action] == "submit"
+          end
+
+          ActiveSupport::Notifications.subscribed(callback, "process_action.action_controller") do
+            post review_card_path, params: { ease: 3 }
+          end
+
+          expect(payload).to include(
+            :perf_review_submit_total_ms,
+            :perf_review_submit_session_lookup_ms,
+            :perf_review_submit_session_card_lookup_ms,
+            :perf_review_submit_sm2_ms,
+            :perf_review_submit_transaction_ms
+          )
         end
       end
 

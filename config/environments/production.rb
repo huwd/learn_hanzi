@@ -39,6 +39,12 @@ Rails.application.configure do
 
   # Single-line structured request logs (replaces Rails' multi-line default).
   config.lograge.enabled = true
+  config.lograge.custom_options = lambda do |event|
+    event.payload.each_with_object({}) do |(key, value), custom|
+      key = key.to_s
+      custom[key] = value if key.start_with?("perf_")
+    end
+  end
 
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
