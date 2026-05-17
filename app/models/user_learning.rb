@@ -17,4 +17,13 @@ class UserLearning < ApplicationRecord
   scope :due, -> { where("next_due <= ?", Time.current) }
   scope :overdue_learning, -> { in_progress.due }
   scope :due_mastered, -> { mastered.due }
+
+  before_save :set_mastered_at
+
+  private
+
+  def set_mastered_at
+    return if mastered_at.present?
+    self.mastered_at = Time.current if state_changed? && state == "mastered"
+  end
 end
