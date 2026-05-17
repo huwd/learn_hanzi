@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_10_230000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_17_143020) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -214,6 +214,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_10_230000) do
     t.integer "dictionary_entry_id", null: false
     t.integer "factor", default: 2500, null: false
     t.integer "last_interval"
+    t.datetime "mastered_at"
     t.datetime "next_due"
     t.string "state", null: false
     t.datetime "updated_at", null: false
