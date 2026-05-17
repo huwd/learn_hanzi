@@ -8,8 +8,10 @@
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6"
        data-controller="progress-charts"
        data-progress-charts-url-value="<%= learn_progress_chart_data_path(format: :json) %>">
-    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Vocabulary mastered over time</h2>
-    <div class="relative h-80">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Vocabulary mastered over time</h2>
+    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums"
+       data-progress-charts-target="summary"></p>
+    <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
     <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
@@ -20,8 +22,10 @@
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6"
        data-controller="progress-charts"
        data-progress-charts-url-value="<%= learn_progress_character_chart_data_path(format: :json) %>">
-    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Unique characters mastered over time</h2>
-    <div class="relative h-80">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Unique characters mastered over time</h2>
+    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums"
+       data-progress-charts-target="summary"></p>
+    <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
     <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
