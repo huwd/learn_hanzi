@@ -34,6 +34,13 @@ gem "rubyzip", "~> 3.3"
 gem "sentry-rails"
 gem "lograge"
 
+# OpenTelemetry — traces shipped to the OTel Collector; metrics derived from
+# spans via the spanmetrics connector (no separate metrics SDK needed in-app).
+gem "opentelemetry-sdk"
+gem "opentelemetry-exporter-otlp"
+gem "opentelemetry-instrumentation-rails"
+gem "opentelemetry-instrumentation-active_record"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
