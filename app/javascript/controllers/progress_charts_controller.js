@@ -73,7 +73,7 @@ export default class extends Controller {
 
   updateSummary({ tooltip }, el) {
     if (tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
-      el.textContent = ""
+      el.textContent = " "
       return
     }
     const date = tooltip.title?.[0] ?? ""

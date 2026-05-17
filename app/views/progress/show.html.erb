@@ -9,8 +9,8 @@
        data-controller="progress-charts"
        data-progress-charts-url-value="<%= learn_progress_chart_data_path(format: :json) %>">
     <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Vocabulary mastered over time</h2>
-    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums"
-       data-progress-charts-target="summary"></p>
+    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums overflow-hidden whitespace-nowrap"
+       data-progress-charts-target="summary">&nbsp;</p>
     <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
@@ -23,8 +23,8 @@
        data-controller="progress-charts"
        data-progress-charts-url-value="<%= learn_progress_character_chart_data_path(format: :json) %>">
     <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Unique characters mastered over time</h2>
-    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums"
-       data-progress-charts-target="summary"></p>
+    <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums overflow-hidden whitespace-nowrap"
+       data-progress-charts-target="summary">&nbsp;</p>
     <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
