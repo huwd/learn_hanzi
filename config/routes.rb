@@ -17,6 +17,8 @@ Rails.application.routes.draw do
   get  "learn/review",   to: "learn#review_show",  as: :learn_review
   post "learn/review",   to: "learn#review_submit"
   get  "learn/summary",  to: "learn#summary",      as: :learn_summary
+  get  "learn/progress",           to: "progress#show",       as: :learn_progress
+  get  "learn/progress/chart_data", to: "progress#chart_data", as: :learn_progress_chart_data
 
   get  "review",          to: "review#start",   as: :review
   get  "review/card",     to: "review#show",    as: :review_card
