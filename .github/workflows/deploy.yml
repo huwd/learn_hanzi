@@ -65,24 +65,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Push deploy metrics to Pushgateway
-        run: |
-          SHA="${{ github.event.workflow_run.head_sha }}"
-          SHORT_SHA="${SHA:0:7}"
-          DEPLOY_TIME=$(date +%s)
-          COMMIT_TIME=$(git log -1 --format=%ct "${SHA}")
-
-          cat <<EOF | curl --silent --fail --show-error \
-            --data-binary @- \
-            "http://192.168.178.109:9091/metrics/job/learn_hanzi/instance/production"
-          # HELP learn_hanzi_deploy_total Number of successful deploys to production.
-          # TYPE learn_hanzi_deploy_total counter
-          learn_hanzi_deploy_total{sha="${SHORT_SHA}",branch="main",outcome="success"} 1
-          # HELP learn_hanzi_deploy_timestamp_seconds Unix timestamp of this deploy.
-          # TYPE learn_hanzi_deploy_timestamp_seconds gauge
-          learn_hanzi_deploy_timestamp_seconds{sha="${SHORT_SHA}",branch="main"} ${DEPLOY_TIME}
-          # HELP learn_hanzi_commit_timestamp_seconds Unix timestamp of the deployed commit (for lead time).
-          # TYPE learn_hanzi_commit_timestamp_seconds gauge
-          learn_hanzi_commit_timestamp_seconds{sha="${SHORT_SHA}",branch="main"} ${COMMIT_TIME}
-          EOF
