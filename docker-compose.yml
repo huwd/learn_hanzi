@@ -31,25 +31,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-
-  jobs:
-    image: 127.0.0.1:5000/learn_hanzi:${IMAGE_TAG:-latest}
-    command: ./bin/jobs
-    user: "${CONTAINER_UID:-1000}:${CONTAINER_GID:-1000}"
-    restart: unless-stopped
-    depends_on:
-      app:
-        condition: service_healthy
-    environment:
-      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?RAILS_MASTER_KEY must be set}
-      RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
-      JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
-      JOB_THREADS: ${JOB_THREADS:-1}
-      BUNDLE_USER_HOME: /tmp/bundler
-      OIDC_ISSUER: ${OIDC_ISSUER:?OIDC_ISSUER must be set}
-      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?OIDC_CLIENT_ID must be set}
-      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?OIDC_CLIENT_SECRET must be set}
-      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:?OIDC_REDIRECT_URI must be set}
-      GLITCHTIP_DSN: ${GLITCHTIP_DSN}
-    volumes:
-      - ${STORAGE_PATH:?STORAGE_PATH is required}:/rails/storage

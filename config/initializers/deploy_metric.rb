@@ -2,10 +2,8 @@ require "net/http"
 require "uri"
 
 # Push deploy metrics to the Pushgateway when the web container boots in production.
-# Only fires on the web container (CONTAINER_ROLE=web) to avoid double-counting
-# when the jobs container also starts. PUSHGATEWAY_URL is provisioned to the
-# Portainer stack via rake provision:learn_hanzi and points to the observability
-# stack's pushgateway over monitoring_net.
+# PUSHGATEWAY_URL is provisioned to the Portainer stack via rake provision:learn_hanzi
+# and points to the observability stack's pushgateway over monitoring_net.
 if Rails.env.production? &&
     ENV["CONTAINER_ROLE"] == "web" &&
     ENV["PUSHGATEWAY_URL"].present?
