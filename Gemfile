@@ -30,7 +30,9 @@ gem "solid_queue"
 gem "mission_control-jobs"
 gem "rubyzip", "~> 3.3"
 
-# Observability
+# Observability — stackprof must load before sentry-ruby for profiling support
+gem "stackprof"
+gem "sentry-ruby"
 gem "sentry-rails"
 gem "lograge"
 
