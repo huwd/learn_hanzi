@@ -215,3 +215,17 @@ jobs:
               result = json.load(resp)
               print(f"Redeployed learn_hanzi stack (status={result['Status']})")
           PYEOF
+
+      - name: Push DORA deploy metrics to Pushgateway
+        env:
+          PUSHGATEWAY_URL: ${{ secrets.PUSHGATEWAY_URL }}
+        run: |
+          [ -z "$PUSHGATEWAY_URL" ] && { echo "PUSHGATEWAY_URL not set -- skipping"; exit 0; }
+          SHORT_SHA="$(echo "$GITHUB_SHA" | cut -c1-7)"
+          COMMIT_TS="$(git show -s --format=%ct "$GITHUB_SHA")"
+          DEPLOY_TS="$(date +%s)"
+          printf 'learn_hanzi_deploy_total{outcome="success",sha="%s"} 1\nlearn_hanzi_deploy_timestamp_seconds{sha="%s"} %s\nlearn_hanzi_commit_timestamp_seconds{sha="%s"} %s\n' \
+            "$SHORT_SHA" "$SHORT_SHA" "$DEPLOY_TS" "$SHORT_SHA" "$COMMIT_TS" \
+          | curl --silent --show-error --fail \
+              --data-binary @- \
+              "${PUSHGATEWAY_URL}/metrics/job/learn_hanzi/instance/github-actions"
