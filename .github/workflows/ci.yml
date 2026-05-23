@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@6aaa311d81eba98ae12eaffbcb63296ace0efcde # v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@6aaa311d81eba98ae12eaffbcb63296ace0efcde # v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@6aaa311d81eba98ae12eaffbcb63296ace0efcde # v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Ruby
-        uses: ruby/setup-ruby@6aaa311d81eba98ae12eaffbcb63296ace0efcde # v1
+        uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
@@ -110,15 +110,15 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v3
+        uses: github/codeql-action/init@e46ed2cbd01164d986452f91f178727624ae40d7 # v3
         with:
           languages: ruby
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v3
+        uses: github/codeql-action/autobuild@e46ed2cbd01164d986452f91f178727624ae40d7 # v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v3
+        uses: github/codeql-action/analyze@e46ed2cbd01164d986452f91f178727624ae40d7 # v3
 
   publish:
     name: publish
@@ -195,13 +195,20 @@ jobs:
               resp.read()
           print("Image pulled via 127.0.0.1:5000")
 
-          # Fetch env vars stored in Portainer (source of truth for secrets)
+          # Fetch env vars AND compose from Portainer — both are source of truth.
+          # The infrastructure compose (networks, OTel config, etc.) lives in the
+          # composer repo and is deployed via rake portainer:deploy. Never overwrite
+          # it here; doing so strips network config and breaks observability.
           req = urllib.request.Request(f"{PORTAINER}/api/stacks/{STACK_ID}", headers={"X-API-Key": key})
           with urllib.request.urlopen(req, timeout=30) as resp:
               stack = json.load(resp)
 
-          with open("docker-compose.yml") as f:
-              compose = f.read()
+          file_req = urllib.request.Request(
+              f"{PORTAINER}/api/stacks/{STACK_ID}/file",
+              headers={"X-API-Key": key}
+          )
+          with urllib.request.urlopen(file_req, timeout=30) as resp:
+              compose = json.load(resp)["StackFileContent"]
 
           # Image is already on the host — no pull needed during stack update
           payload = {"stackFileContent": compose, "env": stack["Env"], "pullImage": False}
@@ -224,8 +231,37 @@ jobs:
           SHORT_SHA="$(echo "$GITHUB_SHA" | cut -c1-7)"
           COMMIT_TS="$(git show -s --format=%ct "$GITHUB_SHA")"
           DEPLOY_TS="$(date +%s)"
-          printf 'learn_hanzi_deploy_total{outcome="success",sha="%s"} 1\nlearn_hanzi_deploy_timestamp_seconds{sha="%s"} %s\nlearn_hanzi_commit_timestamp_seconds{sha="%s"} %s\n' \
-            "$SHORT_SHA" "$SHORT_SHA" "$DEPLOY_TS" "$SHORT_SHA" "$COMMIT_TS" \
+          printf 'learn_hanzi_deploy_total{outcome="success"} 1\nlearn_hanzi_deploy_timestamp_seconds %s\nlearn_hanzi_commit_timestamp_seconds %s\n' \
+            "$DEPLOY_TS" "$COMMIT_TS" \
           | curl --silent --show-error --fail \
               --data-binary @- \
-              "${PUSHGATEWAY_URL}/metrics/job/learn_hanzi/instance/github-actions"
+              "${PUSHGATEWAY_URL}/metrics/job/learn_hanzi/instance/${SHORT_SHA}"
+
+  publish-failure-metric:
+    name: publish-failure-metric
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && failure()
+    needs: [publish]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4.1.2
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+
+      - name: Push DORA failure metric to Pushgateway
+        env:
+          PUSHGATEWAY_URL: ${{ secrets.PUSHGATEWAY_URL }}
+        run: |
+          [ -z "$PUSHGATEWAY_URL" ] && { echo "PUSHGATEWAY_URL not set -- skipping"; exit 0; }
+          SHORT_SHA="$(echo "$GITHUB_SHA" | cut -c1-7)"
+          COMMIT_TS="$(git show -s --format=%ct "$GITHUB_SHA")"
+          DEPLOY_TS="$(date +%s)"
+          printf 'learn_hanzi_deploy_total{outcome="failure"} 1\nlearn_hanzi_deploy_timestamp_seconds %s\nlearn_hanzi_commit_timestamp_seconds %s\n' \
+            "$DEPLOY_TS" "$COMMIT_TS" \
+          | curl --silent --show-error --fail \
+              --data-binary @- \
+              "${PUSHGATEWAY_URL}/metrics/job/learn_hanzi/instance/${SHORT_SHA}"
