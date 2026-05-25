@@ -193,7 +193,7 @@ RSpec.describe "Review", type: :request do
 
       it "wraps card content in a turbo-frame" do
         get review_card_path
-        expect(response.body).to include('<turbo-frame id="card"')
+        expect(response.body).to match(/<turbo-frame[^>]*id="card"/)
       end
 
       it "shows position and total" do

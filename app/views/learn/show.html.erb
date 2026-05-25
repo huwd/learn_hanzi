@@ -23,7 +23,7 @@
   multiple_readings = meaning_groups.filter_map { |group| group.first&.pinyin.presence }.uniq.many?
 %>
 
-<%= turbo_frame_tag "card" do %>
+<%= turbo_frame_tag "card", class: "contents" do %>
 <div class="w-full flex flex-col items-center pt-6 sm:pt-12 pb-8 sm:pb-12" data-controller="learn-card adaptive-card-text" data-card-layout="fixed" data-card-text-scaling="adaptive">
 
   <p class="text-sm text-gray-400 mb-4 sm:mb-8"><%= @position %> / <%= @total %></p>
