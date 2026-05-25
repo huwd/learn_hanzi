@@ -187,7 +187,7 @@ RSpec.describe "Learn", type: :request do
 
       it "wraps card content in a turbo-frame" do
         get learn_card_path
-        expect(response.body).to include('<turbo-frame id="card"')
+        expect(response.body).to match(/<turbo-frame[^>]*id="card"/)
       end
 
       it "includes the character in the response" do
@@ -460,7 +460,7 @@ RSpec.describe "Learn", type: :request do
 
       it "wraps card content in a turbo-frame" do
         get learn_review_path
-        expect(response.body).to include('<turbo-frame id="card"')
+        expect(response.body).to match(/<turbo-frame[^>]*id="card"/)
       end
 
       it "includes the character in the response" do
