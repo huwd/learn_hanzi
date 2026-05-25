@@ -109,6 +109,7 @@ class ReviewController < ApplicationController
     @learning_session = completed_learning_session
     @session_cards    = @learning_session.learning_session_cards.order(:position)
     @total            = @learning_session.reviewed_count
+    response.headers["Turbo-Frame"] = "_top" if turbo_frame_request?
   end
 
   def history

@@ -135,6 +135,7 @@ class LearnController < ApplicationController
                             .where(user_learnings: { user: Current.user })
                             .where(created_at: started_at..)
                             .order(:created_at)
+    response.headers["Turbo-Frame"] = "_top" if turbo_frame_request?
   end
 
   private
