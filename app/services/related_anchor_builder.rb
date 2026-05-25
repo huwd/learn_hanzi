@@ -31,10 +31,10 @@ class RelatedAnchorBuilder
     target = target_text
     return [] if target.blank?
 
-    ids = ordered_mastered_scope
-      .where("dictionary_entries.text LIKE ?", "%#{escape_like(target)}%")
-      .limit(limit)
-      .pluck(:id)
+    ids = mastered_entry_list
+      .select { |row| row[:text].include?(target) }
+      .first(limit)
+      .map { |row| row[:id] }
 
     load_with_includes(ids, target_characters, full_token_match: true)
   end
@@ -43,20 +43,20 @@ class RelatedAnchorBuilder
     chars = target_characters
     return [] if chars.empty?
 
-    pattern = chars.map { "dictionary_entries.text LIKE ?" }.join(" OR ")
-    values = chars.map { |char| "%#{escape_like(char)}%" }
+    excluded = excluding_ids.to_set
 
-    scope = ordered_mastered_scope.where(pattern, *values)
-    scope = scope.where.not(id: excluding_ids) if excluding_ids.any?
+    ids = mastered_entry_list
+      .reject { |row| excluded.include?(row[:id]) }
+      .select { |row| chars.any? { |char| row[:text].include?(char) } }
+      .first(limit)
+      .map { |row| row[:id] }
 
-    ids = scope.limit(limit).pluck(:id)
     load_with_includes(ids, chars, full_token_match: false)
   end
 
   # Loads user_learnings by ID with full associations, preserving the given ID order.
-  # Separated from the filtering query so that LIKE + ORDER BY + LIMIT work on a
-  # simple join without Rails switching to eager_load mode (which would apply LIMIT
-  # to joined rows rather than to user_learnings).
+  # Separated from the filtering step so that ORDER BY + LIMIT apply to the light
+  # pluck query rather than to the heavier includes-joined query.
   def load_with_includes(ids, chars, full_token_match:)
     return [] if ids.empty?
 
@@ -87,17 +87,18 @@ class RelatedAnchorBuilder
     target_text.to_s.each_char.uniq
   end
 
-  def ordered_mastered_scope
-    user.user_learnings
-        .mastered
-        .joins(:dictionary_entry)
-        .where.not(id: target_learning.id)
-        .order(Arel.sql("CASE WHEN dictionary_entries.frequency_rank IS NULL THEN 1 ELSE 0 END"))
-        .order("dictionary_entries.frequency_rank ASC")
-        .order("dictionary_entries.text ASC")
-  end
-
-  def escape_like(value)
-    ActiveRecord::Base.sanitize_sql_like(value)
+  # Plucks all mastered user_learning IDs + their entry text in frequency order.
+  # Both full_token_results and per_character_results filter this list in Ruby,
+  # replacing two LIKE scans (no index, full-table) with one indexed pluck.
+  def mastered_entry_list
+    @mastered_entry_list ||= user.user_learnings
+      .mastered
+      .joins(:dictionary_entry)
+      .where.not(id: target_learning.id)
+      .order(Arel.sql("CASE WHEN dictionary_entries.frequency_rank IS NULL THEN 1 ELSE 0 END"))
+      .order("dictionary_entries.frequency_rank ASC")
+      .order("dictionary_entries.text ASC")
+      .pluck("user_learnings.id", "dictionary_entries.text")
+      .map { |id, text| { id: id, text: text } }
   end
 end
