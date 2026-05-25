@@ -33,6 +33,7 @@
           <% if authenticated? %>
             <%= link_to "Learn", learn_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <%= link_to "Review", review_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
+            <%= link_to "Progress", learn_progress_path, class: "text-white hover:text-blue-300 font-medium transition-colors" %>
             <div class="relative" data-controller="dropdown" data-action="click@window->dropdown#hide">
               <button data-action="dropdown#toggle"
                       class="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300">
