@@ -4,6 +4,46 @@ RSpec.describe RadicalBreakdownBuilder do
   describe ".call" do
     let(:user) { create(:user) }
 
+    # -------------------------------------------------------------------
+    # Query count: proves eager-loading eliminates the radical DB round-trips.
+    #
+    # Without pre-loading the builder fires 2 extra queries:
+    #   1. SELECT dictionary_entry_radicals WHERE dictionary_entry_id = X
+    #   2. SELECT radicals WHERE id IN (...)
+    # plus the mastered_characters check.
+    #
+    # With pre-loading those 2 queries are eliminated; only the
+    # mastered_characters check remains.
+    # -------------------------------------------------------------------
+    describe "query count" do
+      let!(:entry) do
+        e = create(:dictionary_entry, text: "语")
+        radical = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)
+        create(:dictionary_entry_radical, dictionary_entry: e, radical: radical, position: 1)
+        e
+      end
+
+      # Force the lazy `let(:user)` to execute before the count window opens,
+      # so user-creation queries don't inflate the measurements.
+      before { user }
+
+      it "fires only 1 query (mastered_characters check) when associations are pre-loaded" do
+        preloaded_entry = DictionaryEntry.includes(dictionary_entry_radicals: :radical).find(entry.id)
+        queries = count_queries { described_class.call(user: user, dictionary_entry: preloaded_entry) }
+        expect(queries).to eq(1), "expected only the mastered_characters query, got #{queries}"
+      end
+
+      it "fires more queries when associations are not pre-loaded" do
+        fresh_entry     = DictionaryEntry.find(entry.id)
+        preloaded_entry = DictionaryEntry.includes(dictionary_entry_radicals: :radical).find(entry.id)
+
+        baseline  = count_queries { described_class.call(user: user, dictionary_entry: fresh_entry) }
+        optimised = count_queries { described_class.call(user: user, dictionary_entry: preloaded_entry) }
+
+        expect(baseline).to be > optimised
+      end
+    end
+
     it "returns direct radical rows for single-character entries" do
       entry = create(:dictionary_entry, text: "语")
       radical = create(:radical, character: "讠", meaning: "speech", stroke_count: 2)

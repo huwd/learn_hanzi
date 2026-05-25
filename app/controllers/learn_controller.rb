@@ -218,14 +218,24 @@ class LearnController < ApplicationController
   def current_card
     id = session[:learn_queue][session[:learn_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: [ { meanings: :source }, :audio_pronunciations ])
+           .includes(dictionary_entry: [
+             { meanings: :source },
+             { audio_pronunciations: { audio_attachment: :blob } },
+             :stroke_order_datum,
+             { dictionary_entry_radicals: :radical }
+           ])
            .find(id)
   end
 
   def current_review_card
     id = session[:learn_introduced][session[:learn_review_index]]
     Current.user.user_learnings
-           .includes(dictionary_entry: [ { meanings: :source }, :audio_pronunciations ])
+           .includes(dictionary_entry: [
+             { meanings: :source },
+             { audio_pronunciations: { audio_attachment: :blob } },
+             :stroke_order_datum,
+             { dictionary_entry_radicals: :radical }
+           ])
            .find(id)
   end
 end
