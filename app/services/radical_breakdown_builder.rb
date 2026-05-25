@@ -43,11 +43,15 @@ class RadicalBreakdownBuilder
   end
 
   def direct_rows
-    @dictionary_entry
-      .dictionary_entry_radicals
-      .includes(:radical)
-      .order(:position, :id)
-      .map { |row| Row.new(radical: row.radical, position: row.position, source_character: nil) }
+    rel = @dictionary_entry.dictionary_entry_radicals
+    # Use pre-loaded collection when available (controller eager-loads radical chain);
+    # fall back to DB-side includes+order when called without pre-loading.
+    rows = if rel.loaded?
+      rel.sort_by { |r| [ r.position, r.id ] }
+    else
+      rel.includes(:radical).order(:position, :id).to_a
+    end
+    rows.map { |row| Row.new(radical: row.radical, position: row.position, source_character: nil) }
   end
 
   def fallback_rows_for_multi_character_entry

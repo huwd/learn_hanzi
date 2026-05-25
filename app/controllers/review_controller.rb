@@ -31,7 +31,13 @@ class ReviewController < ApplicationController
     end
     @user_learning    = measure_performance("review_show_user_learning_lookup") do
       UserLearning
-        .includes(dictionary_entry: [ { meanings: :source }, { tags: :parent }, :audio_pronunciations ])
+        .includes(dictionary_entry: [
+          { meanings: :source },
+          { tags: :parent },
+          { audio_pronunciations: { audio_attachment: :blob } },
+          :stroke_order_datum,
+          { dictionary_entry_radicals: :radical }
+        ])
         .find(@session_card.user_learning_id)
     end
     @position         = current_position + 1
