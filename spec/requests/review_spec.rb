@@ -191,6 +191,11 @@ RSpec.describe "Review", type: :request do
         expect(response).to have_http_status(:ok)
       end
 
+      it "wraps card content in a turbo-frame" do
+        get review_card_path
+        expect(response.body).to include('<turbo-frame id="card"')
+      end
+
       it "shows position and total" do
         get review_card_path
         expect(response.body).to include("1 / 1")
@@ -531,6 +536,11 @@ RSpec.describe "Review", type: :request do
 
         it "has a link to start a new session" do
           expect(response.body).to include(review_path)
+        end
+
+        it "sets Turbo-Frame: _top to escape the card frame when requested as a frame" do
+          get review_summary_path, headers: { "Turbo-Frame" => "card" }
+          expect(response.headers["Turbo-Frame"]).to eq("_top")
         end
       end
 

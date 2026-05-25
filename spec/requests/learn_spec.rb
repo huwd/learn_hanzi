@@ -185,6 +185,11 @@ RSpec.describe "Learn", type: :request do
         expect(response).to have_http_status(:success)
       end
 
+      it "wraps card content in a turbo-frame" do
+        get learn_card_path
+        expect(response.body).to include('<turbo-frame id="card"')
+      end
+
       it "includes the character in the response" do
         get learn_card_path
         expect(response.body).to include(new_card.dictionary_entry.text)
@@ -453,6 +458,11 @@ RSpec.describe "Learn", type: :request do
         expect(response).to have_http_status(:success)
       end
 
+      it "wraps card content in a turbo-frame" do
+        get learn_review_path
+        expect(response.body).to include('<turbo-frame id="card"')
+      end
+
       it "includes the character in the response" do
         get learn_review_path
         expect(response.body).to include(new_card.dictionary_entry.text)
@@ -598,6 +608,11 @@ RSpec.describe "Learn", type: :request do
       it "returns a successful response" do
         get learn_summary_path
         expect(response).to have_http_status(:success)
+      end
+
+      it "sets Turbo-Frame: _top to escape the card frame when requested as a frame" do
+        get learn_summary_path, headers: { "Turbo-Frame" => "card" }
+        expect(response.headers["Turbo-Frame"]).to eq("_top")
       end
     end
 
