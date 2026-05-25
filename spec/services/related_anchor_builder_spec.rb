@@ -8,6 +8,26 @@ RSpec.describe RelatedAnchorBuilder do
       create(:user_learning, user: user, dictionary_entry: target_entry, state: "new")
     end
 
+    # -------------------------------------------------------------------
+    # Query count: proves one pluck replaces two LIKE scans.
+    #
+    # Before this fix, the builder fired two LIKE-scan queries per call
+    # (one for full-token matches, one for per-character matches), both
+    # doing full-table scans since leading-wildcard LIKE can't use an index.
+    #
+    # After: one pluck of (id, text) in frequency order; Ruby does the
+    # filtering. Only 1 query fires when there are no results to load.
+    # -------------------------------------------------------------------
+    describe "query count" do
+      before { user; target_learning }
+
+      it "fires 1 query (mastered-entries pluck) when no mastered entries match" do
+        queries = count_queries { described_class.call(user: user, target_learning: target_learning) }
+        expect(queries).to eq(1),
+          "expected only the mastered-entries pluck, got #{queries}"
+      end
+    end
+
     it "deduplicates entries that match both full token and characters" do
       overlapping_entry = create(:dictionary_entry, text: "学习班")
       overlapping_learning = create(:user_learning, user: user, dictionary_entry: overlapping_entry, state: "mastered")
