@@ -246,3 +246,26 @@ Authentication helpers for request specs are in `spec/support/authentication_hel
 ### Authentication
 
 Rails 8's built-in authentication generator was used (`bin/rails generate authentication`). Session management is in `app/controllers/concerns/authentication.rb`.
+
+## Deployment
+
+Production runs as a Docker container on a Synology NAS ("gismo") managed by Portainer.
+
+**Automated pipeline** (CI on push to `main`):
+1. GitHub Actions builds a Docker image and pushes it to a private registry at `gismo:5000` (reachable via Tailscale), tagged `latest` and with a CalVer tag.
+2. CI then calls the Portainer API to pull the new image and redeploy the stack.
+
+**Stack definition**: `../composer/stacks/learn-hanzi/docker-compose.yml` — this file is the source of truth for the container configuration (port mappings, env vars, volume mounts, network). The companion project lives at `~/Projects/Personal/composer`.
+
+**Manual deploy**: from the composer project, run:
+```bash
+rake provision:learn_hanzi
+```
+
+**Required environment variables** (set in Portainer stack env, not committed):
+- `RAILS_MASTER_KEY`
+- `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URI`
+- `STORAGE_PATH` — host path mounted to `/rails/storage` (holds the SQLite databases)
+- `SENTRY_DSN` (optional)
+
+The app runs on port 8037 externally, 3037 internally, with SolidQueue embedded in Puma (`SOLID_QUEUE_IN_PUMA=true`).
