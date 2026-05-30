@@ -150,6 +150,15 @@ RSpec.describe "Progress", type: :request do
           expect(mastered["values"].last).to eq(1)
         end
 
+        it "excludes lapsed cards (state: learning with mastered_at set) from mastered count" do
+          # Simulate a card that was mastered then lapsed: mastered_at is set but state is learning
+          create(:user_learning, user: user, state: "learning", mastered_at: 1.day.ago,
+                 dictionary_entry: create(:dictionary_entry))
+          get learn_progress_chart_data_path
+          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
+          expect(mastered["values"].last).to eq(1)
+        end
+
         it "counts in_progress from first review minus mastered" do
           get learn_progress_chart_data_path
           in_progress = parsed["series"].find { |s| s["label"] == "In progress" }
