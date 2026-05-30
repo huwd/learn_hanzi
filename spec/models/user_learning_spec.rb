@@ -66,6 +66,19 @@ RSpec.describe UserLearning, type: :model do
       ul.update!(factor: 2600)
       expect(ul.mastered_at).to be_within(1.second).of(original)
     end
+
+    it "clears mastered_at when state transitions away from mastered" do
+      ul = create(:user_learning, user: user, state: "mastered", mastered_at: 3.days.ago)
+      ul.update!(state: "learning")
+      expect(ul.mastered_at).to be_nil
+    end
+
+    it "sets a fresh mastered_at when re-mastered after a lapse" do
+      ul = create(:user_learning, user: user, state: "mastered", mastered_at: 3.days.ago)
+      ul.update!(state: "learning")
+      expect { ul.update!(state: "mastered") }
+        .to change { ul.mastered_at }
+    end
   end
 
   describe 'due-card scopes' do
