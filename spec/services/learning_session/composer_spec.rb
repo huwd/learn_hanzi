@@ -204,6 +204,37 @@ RSpec.describe LearningSession::Composer do
       end
     end
 
+    context "dynamic new-card suppression based on overdue backlog" do
+      before { create_list(:user_learning, 6, user: user, state: "new") }
+
+      it "applies full new_cap when there are no overdue cards" do
+        result = described_class.call(user: user, size: 10, new_cap: 3, include_new: true)
+        expect(result.count { |ul| ul.state == "new" }).to eq(3)
+      end
+
+      it "reduces new_cap proportionally when backlog is half the session" do
+        # 5 overdue out of size 10 → ratio 0.5 → effective_cap = floor(3 * 0.5) = 1
+        create_list(:user_learning, 5, user: user, state: "learning",
+                    next_due: 1.day.ago, last_interval: 1)
+        result = described_class.call(user: user, size: 10, new_cap: 3, include_new: true)
+        expect(result.count { |ul| ul.state == "new" }).to eq(1)
+      end
+
+      it "allows no new cards when overdue fills the full session" do
+        create_list(:user_learning, 10, user: user, state: "learning",
+                    next_due: 1.day.ago, last_interval: 1)
+        result = described_class.call(user: user, size: 10, new_cap: 3, include_new: true)
+        expect(result.count { |ul| ul.state == "new" }).to eq(0)
+      end
+
+      it "allows no new cards when overdue exceeds the session size" do
+        create_list(:user_learning, 15, user: user, state: "learning",
+                    next_due: 1.day.ago, last_interval: 1)
+        result = described_class.call(user: user, size: 10, new_cap: 3, include_new: true)
+        expect(result.count { |ul| ul.state == "new" }).to eq(0)
+      end
+    end
+
     context "not-yet-due learning and mastered cards" do
       before do
         create(:user_learning, user: user, state: "learning",
