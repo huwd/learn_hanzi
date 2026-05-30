@@ -23,7 +23,10 @@ class UserLearning < ApplicationRecord
   private
 
   def set_mastered_at
-    return if mastered_at.present?
-    self.mastered_at = Time.current if state_changed? && state == "mastered"
+    if state_changed? && state == "mastered" && mastered_at.nil?
+      self.mastered_at = Time.current
+    elsif state_changed? && state_was == "mastered"
+      self.mastered_at = nil
+    end
   end
 end
