@@ -21,10 +21,11 @@ class LearningSession::Composer
       queue.concat(overdue_learning_cards)
       return queue.first(@size) if queue.size >= @size
 
-      # Priority 2: new cards, capped to avoid flooding (only when explicitly requested)
+      # Priority 2: new cards, suppressed proportionally as the overdue backlog grows
       if @include_new
-        new_limit = [ @size - queue.size, @new_cap ].min
-        queue.concat(new_cards(new_limit))
+        effective_cap = (@new_cap * [ 1 - (queue.size / @size.to_f), 0 ].max).floor
+        new_limit = [ @size - queue.size, effective_cap ].min
+        queue.concat(new_cards(new_limit)) if effective_cap > 0
         return queue if queue.size >= @size
       end
 

@@ -6,12 +6,15 @@ class ReviewController < ApplicationController
   def start
     Current.user.learning_sessions.in_progress.update_all(state: "abandoned")
 
-    tag   = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
+    tag = Tag.find_by(id: params[:tag_id]) if params[:tag_id].present?
+    UserLearning::Enqueue.call(user: Current.user, tag: tag)
+
     queue = LearningSession::Composer.call(
-      user:    Current.user,
-      size:    Current.user.session_size,
-      new_cap: Current.user.new_cards_per_session,
-      tag:     tag
+      user:        Current.user,
+      size:        Current.user.session_size,
+      new_cap:     Current.user.new_cards_per_session,
+      include_new: true,
+      tag:         tag
     )
 
     if queue.empty?

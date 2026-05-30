@@ -99,32 +99,27 @@ RSpec.describe LearningSession::Composer do
       end
     end
 
-    context "new card cap enforcement" do
+    context "new card cap enforcement (no overdue backlog)" do
       before do
         create_list(:user_learning, 6, user: user, state: "new")
       end
 
-      it "limits new cards to new_cap even when session has remaining capacity" do
-        learning_cards = create_list(:user_learning, 5, user: user, state: "learning",
-                                     next_due: 1.day.ago, last_interval: 1)
+      it "limits new cards to new_cap when there is no overdue backlog" do
         result = described_class.call(user: user, size: 10, new_cap: 2, include_new: true)
         new_in_queue = result.count { |ul| ul.state == "new" }
         expect(new_in_queue).to eq(2)
       end
     end
 
-    context "new_cap is a hard ceiling on new cards" do
+    context "new_cap ceiling with no overdue backlog" do
       before do
-        create_list(:user_learning, 2, user: user, state: "learning",
-                    next_due: 1.day.ago, last_interval: 1)
         create_list(:user_learning, 6, user: user, state: "new")
       end
 
-      it "never exceeds new_cap new cards even with remaining slots" do
-        # size=10, new_cap=3: 2 learning + 3 new = 5; remaining slots are not filled
-        # with more new cards because new_cap is a hard limit
-        expect(queue.size).to eq(5)
-        expect(queue.count { |ul| ul.state == "new" }).to eq(3)
+      it "never includes more new cards than new_cap" do
+        # size=10, new_cap=3, 0 overdue: suppression ratio=0 → effective_cap=3
+        result = described_class.call(user: user, size: 10, new_cap: 3, include_new: true)
+        expect(result.count { |ul| ul.state == "new" }).to eq(3)
       end
 
       it "does not duplicate cards" do
