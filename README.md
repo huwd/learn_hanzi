@@ -132,6 +132,19 @@ bin/rubocop              # lint
 bin/brakeman --no-pager  # security scan
 ```
 
+## Deployment
+
+Production runs as a Docker container on a Synology NAS via Portainer.
+
+Pushing to `main` triggers a GitHub Actions pipeline that builds a Docker image, pushes it to a private registry at `gismo:5000` (Tailscale-accessible), and redeploys the Portainer stack automatically.
+
+The compose stack definition and deployment tooling live in the companion [`composer`](../composer) project (`stacks/learn-hanzi/docker-compose.yml`). To redeploy manually:
+
+```bash
+cd ../composer
+rake provision:learn_hanzi
+```
+
 ## Contributing
 
 Issues and pull requests welcome. See `CLAUDE.md` for development conventions (commit format, branching, TDD workflow) and `docs/DEVELOPMENT.md` for the project's early development history.
