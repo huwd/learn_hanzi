@@ -14,6 +14,7 @@ class ProgressController < ApplicationController
       .transform_values(&:count)
 
     mastered_per_day = Current.user.user_learnings
+      .where(state: "mastered")
       .where.not(mastered_at: nil)
       .group("date(mastered_at)")
       .order("date(mastered_at)")
@@ -44,6 +45,7 @@ class ProgressController < ApplicationController
 
   def character_chart_data
     mastered = Current.user.user_learnings
+      .where(state: "mastered")
       .where.not(mastered_at: nil)
       .joins(:dictionary_entry)
       .select("dictionary_entries.text, user_learnings.mastered_at")
