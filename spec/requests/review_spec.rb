@@ -73,6 +73,38 @@ RSpec.describe "Review", type: :request do
         end
       end
 
+      context "when the user has new cards" do
+        before do
+          user.update!(new_cards_per_session: 3)
+          create_list(:user_learning, 3, user: user, state: "new")
+        end
+
+        it "includes new cards in the session" do
+          get review_path
+          ls = LearningSession.last
+          new_count = ls.learning_session_cards.joins(:user_learning)
+                        .where(user_learnings: { state: "new" }).count
+          expect(new_count).to be >= 1
+        end
+      end
+
+      context "when overdue backlog suppresses new cards" do
+        before do
+          user.update!(session_size: 10, new_cards_per_session: 3)
+          create_list(:user_learning, 10, user: user, state: "learning",
+                      next_due: 1.day.ago, last_interval: 1)
+          create_list(:user_learning, 3, user: user, state: "new")
+        end
+
+        it "includes no new cards when overdue fills the session" do
+          get review_path
+          ls = LearningSession.last
+          new_count = ls.learning_session_cards.joins(:user_learning)
+                        .where(user_learnings: { state: "new" }).count
+          expect(new_count).to eq(0)
+        end
+      end
+
       context "when there is already an in_progress session" do
         let!(:existing_session) do
           ls = create(:learning_session, user: user, state: "in_progress",
@@ -137,6 +169,22 @@ RSpec.describe "Review", type: :request do
         it "redirects to the card path" do
           get review_path, params: { tag_id: tag.id }
           expect(response).to redirect_to(review_card_path)
+        end
+
+        context "when the tag has entries the user has never touched" do
+          let!(:unlearned_entry) { create(:dictionary_entry).tap { |e| e.tags << tag } }
+
+          it "creates UserLearning records for the unlearned entries" do
+            expect { get review_path, params: { tag_id: tag.id } }
+              .to change { user.user_learnings.where(dictionary_entry: unlearned_entry).count }.by(1)
+          end
+
+          it "queues the newly created card in the session" do
+            get review_path, params: { tag_id: tag.id }
+            ls = LearningSession.last
+            new_ul = user.user_learnings.find_by(dictionary_entry: unlearned_entry)
+            expect(ls.learning_session_cards.map(&:user_learning_id)).to include(new_ul.id)
+          end
         end
       end
 
