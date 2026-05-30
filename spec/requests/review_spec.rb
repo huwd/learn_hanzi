@@ -196,6 +196,11 @@ RSpec.describe "Review", type: :request do
         expect(response.body).to match(/<turbo-frame[^>]*id="card"/)
       end
 
+      it "rating buttons target _top to escape the card frame on submit" do
+        get review_card_path
+        expect(response.body).to include('data-turbo-frame="_top"').at_least(4).times
+      end
+
       it "shows position and total" do
         get review_card_path
         expect(response.body).to include("1 / 1")
