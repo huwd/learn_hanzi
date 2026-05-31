@@ -23,8 +23,8 @@ class LearningAdvisor
   LIMITS = {
     empty:       { size: 20, new_cap: 5  },
     healthy:     { size: 20, new_cap: 5  },
-    catching_up: { size: 30, new_cap: 0  },
-    lapsed:      { size: 15, new_cap: 0  },
+    catching_up: { size: 30, new_cap: 5  },
+    lapsed:      { size: 15, new_cap: 5  },
     overloaded:  { size: 20, new_cap: 10 },
     cramming:    { size: 15, new_cap: 5  },
     maintenance: { size: 20, new_cap: 5  }
@@ -36,7 +36,7 @@ class LearningAdvisor
     maintenance: "Your deck is stable and well-maintained. Most of your cards are deeply learned. Keep up the light daily check-ins to lock in those gains.",
     overloaded:  "You're adding new cards faster than you can consolidate them — the most common cause of SRS burnout. The queue will keep growing for another two weeks even if you stop adding now. Consider pausing new cards until the backlog clears.",
     cramming:    "Your sessions are intense but infrequent. Spaced repetition works best as a daily habit — even 10 minutes beats one long session a week. Try a modest daily target instead.",
-    catching_up: "You have a backlog building up. Don't try to clear it all at once. Focus on your overdue cards first and pause new cards until you're caught up.",
+    catching_up: "You have a backlog building up. Don't try to clear it all at once. Focus on your overdue cards first — new cards will be reduced automatically until the backlog clears.",
     healthy:     "You're in a good rhythm. Keep it up!"
   }.freeze
 

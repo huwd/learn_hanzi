@@ -50,7 +50,7 @@
           <%= f.label :new_cards_per_session, "New cards per session",
                 class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            How many unseen cards to introduce per session (must not exceed session size).
+            Maximum new cards per review session. Reduced automatically when overdue cards fill the queue.
           </p>
           <%= f.number_field :new_cards_per_session, min: 0,
                 class: "w-32 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700
