@@ -46,7 +46,7 @@
       <div class="flex items-baseline gap-4 mb-6">
         <h2 class="text-4xl font-extrabold text-gray-800 dark:text-gray-200"><%= label %></h2>
         <% if key == :new_entries %>
-          <%= link_to learn_path(tag_id: @entry_tag.id),
+          <%= link_to review_path(tag_id: @entry_tag.id),
                 class: "text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors" do %>
             Learn these &rarr;
           <% end %>

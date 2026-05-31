@@ -24,11 +24,6 @@ RSpec.describe "Dashboard", type: :request do
         expect(response.body).to include(review_path)
       end
 
-      it "includes a link to start learning" do
-        get root_path
-        expect(response.body).to include(learn_path)
-      end
-
       it "includes a link to the import page in the nav" do
         get root_path
         expect(response.body).to include(new_anki_import_path)
