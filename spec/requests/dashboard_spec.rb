@@ -85,7 +85,7 @@ RSpec.describe "Dashboard", type: :request do
         end
 
         context "when settings match the advisor's recommendation" do
-          before { user.update!(session_size: 15, new_cards_per_session: 0) }
+          before { user.update!(session_size: 15, new_cards_per_session: 5) }
 
           it "does not show a settings nudge" do
             get root_path
@@ -216,7 +216,7 @@ RSpec.describe "Dashboard", type: :request do
 
           it "falls back to the default learn panel copy" do
             get root_path
-            expect(response.body).to include("New words to introduce")
+            expect(response.body).to include("Unseen cards available")
           end
         end
 
@@ -230,7 +230,7 @@ RSpec.describe "Dashboard", type: :request do
 
           it "falls back to the default learn panel copy" do
             get root_path
-            expect(response.body).to include("New words to introduce")
+            expect(response.body).to include("Unseen cards available")
           end
         end
 
