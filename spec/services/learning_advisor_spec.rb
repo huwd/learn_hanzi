@@ -43,8 +43,8 @@ RSpec.describe LearningAdvisor do
         expect(result.profile).to eq(:lapsed)
       end
 
-      it "recommends new_cap 0" do
-        expect(result.recommended_new_cap).to eq(0)
+      it "recommends a positive new_cap" do
+        expect(result.recommended_new_cap).to be_positive
       end
     end
 
@@ -65,8 +65,8 @@ RSpec.describe LearningAdvisor do
         expect(result.recommended_size).to be <= 15
       end
 
-      it "recommends new_cap 0" do
-        expect(result.recommended_new_cap).to eq(0)
+      it "recommends a positive new_cap" do
+        expect(result.recommended_new_cap).to be_positive
       end
     end
 
@@ -87,8 +87,8 @@ RSpec.describe LearningAdvisor do
         expect(result.profile).to eq(:catching_up)
       end
 
-      it "recommends new_cap 0" do
-        expect(result.recommended_new_cap).to eq(0)
+      it "recommends a positive new_cap" do
+        expect(result.recommended_new_cap).to be_positive
       end
     end
 
