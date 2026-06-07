@@ -25,10 +25,6 @@ RSpec.describe LearningSession::Composer do
       it "returns UserLearning records" do
         expect(queue).to all(be_a(UserLearning))
       end
-
-      it "returns UserLearning records in some order" do
-        expect(queue).to all(be_a(UserLearning))
-      end
     end
 
     context "when the user has more new cards than new_cap" do

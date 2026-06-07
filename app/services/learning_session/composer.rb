@@ -2,6 +2,8 @@ class LearningSession::Composer
     DEFAULT_SIZE = 20
     DEFAULT_NEW_CAP = 5
 
+    HSK_LEVEL_NAMES = [ "HSK 1", "HSK 2", "HSK 3", "HSK 4", "HSK 5", "HSK 6", "HSK 7-9" ].freeze
+
     def self.call(user:, size: DEFAULT_SIZE, new_cap: DEFAULT_NEW_CAP, include_new: false, tag: nil)
       new(user, size, new_cap, include_new, tag).call
     end
@@ -43,7 +45,37 @@ class LearningSession::Composer
     end
 
     def new_cards(limit)
-      scoped_learnings.new_learnings.order(:created_at).limit(limit).to_a
+      ul      = UserLearning.arel_table
+      hsk_de  = Arel::Table.new("dictionary_entries", as: "hsk_de")
+      hsk_det = Arel::Table.new("dictionary_entry_tags", as: "hsk_det")
+      hsk_t   = Arel::Table.new("tags", as: "hsk_t")
+
+      hsk_joins = [
+        ul.join(hsk_de, Arel::Nodes::OuterJoin)
+          .on(hsk_de[:id].eq(ul[:dictionary_entry_id]))
+          .join_sources,
+        ul.join(hsk_det, Arel::Nodes::OuterJoin)
+          .on(hsk_det[:dictionary_entry_id].eq(hsk_de[:id]))
+          .join_sources,
+        ul.join(hsk_t, Arel::Nodes::OuterJoin)
+          .on(
+            hsk_t[:id].eq(hsk_det[:tag_id])
+              .and(hsk_t[:category].eq("HSK"))
+              .and(hsk_t[:name].in(HSK_LEVEL_NAMES))
+          )
+          .join_sources
+      ].flatten
+
+      scoped_learnings
+        .new_learnings
+        .joins(hsk_joins)
+        .group("user_learnings.id")
+        .order(Arel.sql("CASE WHEN MIN(hsk_t.id) IS NULL THEN 1 ELSE 0 END"))
+        .order(Arel.sql("MIN(CAST(SUBSTR(hsk_t.name, 5) AS INTEGER))"))
+        .order(Arel.sql("CASE WHEN hsk_de.frequency_rank IS NULL THEN 1 ELSE 0 END"))
+        .order(Arel.sql("hsk_de.frequency_rank ASC"))
+        .limit(limit)
+        .to_a
     end
 
     def due_mastered_cards
@@ -52,10 +84,11 @@ class LearningSession::Composer
 
     def scoped_learnings
       @scoped_learnings ||= if @tag
-        @user.user_learnings
-             .joins(dictionary_entry: :dictionary_entry_tags)
-             .where(dictionary_entry_tags: { tag_id: @tag.subtree_ids })
-             .distinct
+        entry_ids = DictionaryEntry
+          .joins(:dictionary_entry_tags)
+          .where(dictionary_entry_tags: { tag_id: @tag.subtree_ids })
+          .select(:id)
+        @user.user_learnings.where(dictionary_entry_id: entry_ids)
       else
         @user.user_learnings
       end
