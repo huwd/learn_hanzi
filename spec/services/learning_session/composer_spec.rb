@@ -26,8 +26,8 @@ RSpec.describe LearningSession::Composer do
         expect(queue).to all(be_a(UserLearning))
       end
 
-      it "orders new cards by created_at ascending (oldest first)" do
-        expect(queue.map(&:created_at)).to eq(queue.map(&:created_at).sort)
+      it "returns UserLearning records in some order" do
+        expect(queue).to all(be_a(UserLearning))
       end
     end
 
@@ -196,6 +196,56 @@ RSpec.describe LearningSession::Composer do
         it "does not include the card more than once" do
           expect(queue.count { |ul| ul.id == multi_tagged.id }).to eq(1)
         end
+      end
+    end
+
+    context "new card ordering: HSK level then frequency rank" do
+      subject(:queue) { described_class.call(user: user, size: 20, new_cap: 20, include_new: true) }
+
+      let(:hsk1_tag) { create(:tag, name: "HSK 1", category: "HSK") }
+      let(:hsk2_tag) { create(:tag, name: "HSK 2", category: "HSK") }
+
+      # Created in reverse order so that created_at ordering would give the wrong result
+      let!(:ul_untagged) do
+        entry = create(:dictionary_entry, frequency_rank: 1)
+        create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+      end
+      let!(:ul_hsk2) do
+        entry = create(:dictionary_entry, frequency_rank: 20)
+        entry.tags << hsk2_tag
+        create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+      end
+      let!(:ul_hsk1_uncommon) do
+        entry = create(:dictionary_entry, frequency_rank: 50)
+        entry.tags << hsk1_tag
+        create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+      end
+      let!(:ul_hsk1_common) do
+        entry = create(:dictionary_entry, frequency_rank: 5)
+        entry.tags << hsk1_tag
+        create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+      end
+      let!(:ul_no_frequency) do
+        entry = create(:dictionary_entry, frequency_rank: nil)
+        entry.tags << hsk1_tag
+        create(:user_learning, user: user, dictionary_entry: entry, state: "new")
+      end
+
+      it "places HSK 1 entries before HSK 2" do
+        expect(queue.index(ul_hsk1_common)).to be < queue.index(ul_hsk2)
+        expect(queue.index(ul_hsk1_uncommon)).to be < queue.index(ul_hsk2)
+      end
+
+      it "orders by frequency rank within the same HSK level, lowest rank first" do
+        expect(queue.index(ul_hsk1_common)).to be < queue.index(ul_hsk1_uncommon)
+      end
+
+      it "places entries with no frequency rank after those with a rank, within the same level" do
+        expect(queue.index(ul_hsk1_uncommon)).to be < queue.index(ul_no_frequency)
+      end
+
+      it "places untagged entries after all HSK-levelled entries" do
+        expect(queue.index(ul_untagged)).to be > queue.index(ul_hsk2)
       end
     end
 
