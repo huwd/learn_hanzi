@@ -22,37 +22,37 @@ RSpec.describe "MCP", type: :request do
       end
 
       it "returns 401 with a malformed token" do
-        post "/mcp", headers: bearer("not.a.jwt"), as: :json
+        post "/mcp", headers: cf_assertion_header("not.a.jwt"), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "returns 401 with an expired token" do
         token = cf_access_token(email: user.email_address, exp: 1.hour.ago.to_i)
-        post "/mcp", headers: bearer(token), as: :json
+        post "/mcp", headers: cf_assertion_header(token), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "returns 401 with the wrong issuer" do
         token = cf_access_token(email: user.email_address, iss: "https://evil.example.com")
-        post "/mcp", headers: bearer(token), as: :json
+        post "/mcp", headers: cf_assertion_header(token), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "returns 401 with the wrong audience" do
         token = cf_access_token(email: user.email_address, aud: "wrong-aud")
-        post "/mcp", headers: bearer(token), as: :json
+        post "/mcp", headers: cf_assertion_header(token), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "returns 401 when the email claim is absent" do
         token = cf_access_token(email: user.email_address, omit_email: true)
-        post "/mcp", headers: bearer(token), as: :json
+        post "/mcp", headers: cf_assertion_header(token), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
       it "returns 401 when the email does not match any user" do
         token = cf_access_token(email: "nobody@example.com")
-        post "/mcp", headers: bearer(token), as: :json
+        post "/mcp", headers: cf_assertion_header(token), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
@@ -62,7 +62,7 @@ RSpec.describe "MCP", type: :request do
 
       it "does not expose internal error detail on auth failure" do
         bad_token = cf_access_token(email: "nobody@example.com")
-        post "/mcp", headers: bearer(bad_token), as: :json
+        post "/mcp", headers: cf_assertion_header(bad_token), as: :json
         expect(response.body).not_to include("ActiveRecord")
         expect(response.body).not_to include("exception")
       end
@@ -82,32 +82,32 @@ RSpec.describe "MCP", type: :request do
         end
 
         it "returns a JSON-RPC 2.0 envelope with the request id" do
-          post "/mcp", params: init_params, headers: bearer(token), as: :json
+          post "/mcp", params: init_params, headers: cf_assertion_header(token), as: :json
           body = JSON.parse(response.body)
           expect(body["jsonrpc"]).to eq("2.0")
           expect(body["id"]).to eq(1)
         end
 
         it "returns the negotiated protocol version" do
-          post "/mcp", params: init_params, headers: bearer(token), as: :json
+          post "/mcp", params: init_params, headers: cf_assertion_header(token), as: :json
           body = JSON.parse(response.body)
           expect(body["result"]["protocolVersion"]).to eq("2025-03-26")
         end
 
         it "advertises resource capabilities" do
-          post "/mcp", params: init_params, headers: bearer(token), as: :json
+          post "/mcp", params: init_params, headers: cf_assertion_header(token), as: :json
           body = JSON.parse(response.body)
           expect(body["result"]["capabilities"]["resources"]).to be_present
         end
 
         it "returns server info" do
-          post "/mcp", params: init_params, headers: bearer(token), as: :json
+          post "/mcp", params: init_params, headers: cf_assertion_header(token), as: :json
           body = JSON.parse(response.body)
           expect(body["result"]["serverInfo"]["name"]).to eq("learn-hanzi")
         end
 
         it "issues a session ID in the response header" do
-          post "/mcp", params: init_params, headers: bearer(token), as: :json
+          post "/mcp", params: init_params, headers: cf_assertion_header(token), as: :json
           expect(response.headers["Mcp-Session-Id"]).to be_present
         end
       end
@@ -117,7 +117,7 @@ RSpec.describe "MCP", type: :request do
           session_id = establish_mcp_session(token)
           post "/mcp",
             params: { jsonrpc: "2.0", method: "notifications/initialized" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           expect(response).to have_http_status(:ok)
         end
@@ -125,7 +125,7 @@ RSpec.describe "MCP", type: :request do
         it "returns 404 with no session ID" do
           post "/mcp",
             params: { jsonrpc: "2.0", method: "notifications/initialized" },
-            headers: bearer(token),
+            headers: cf_assertion_header(token),
             as: :json
           expect(response).to have_http_status(:not_found)
         end
@@ -133,7 +133,7 @@ RSpec.describe "MCP", type: :request do
         it "returns 404 with an unknown session ID" do
           post "/mcp",
             params: { jsonrpc: "2.0", method: "notifications/initialized" },
-            headers: bearer(token).merge("Mcp-Session-Id" => "bogus-session-id"),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => "bogus-session-id"),
             as: :json
           expect(response).to have_http_status(:not_found)
         end
@@ -145,7 +145,7 @@ RSpec.describe "MCP", type: :request do
         it "returns a JSON-RPC 2.0 envelope" do
           post "/mcp",
             params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           body = JSON.parse(response.body)
           expect(body["jsonrpc"]).to eq("2.0")
@@ -155,7 +155,7 @@ RSpec.describe "MCP", type: :request do
         it "returns all five resources" do
           post "/mcp",
             params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           resources = JSON.parse(response.body).dig("result", "resources")
           expect(resources.length).to eq(5)
@@ -164,7 +164,7 @@ RSpec.describe "MCP", type: :request do
         it "includes all expected resource URIs" do
           post "/mcp",
             params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           uris = JSON.parse(response.body).dig("result", "resources").map { |r| r["uri"] }
           expect(uris).to contain_exactly(
@@ -179,7 +179,7 @@ RSpec.describe "MCP", type: :request do
         it "includes a name and mimeType for each resource" do
           post "/mcp",
             params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           resources = JSON.parse(response.body).dig("result", "resources")
           resources.each do |resource|
@@ -195,7 +195,7 @@ RSpec.describe "MCP", type: :request do
         def read_resource(uri)
           post "/mcp",
             params: { jsonrpc: "2.0", id: 3, method: "resources/read", params: { uri: uri } },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
             as: :json
           JSON.parse(response.body)
         end
@@ -488,7 +488,7 @@ RSpec.describe "MCP", type: :request do
           it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
             post "/mcp",
               params: "not: valid json{{",
-              headers: bearer(token).merge("Content-Type" => "application/json")
+              headers: cf_assertion_header(token).merge("Content-Type" => "application/json")
             body = JSON.parse(response.body)
             expect(body["error"]["code"]).to eq(-32700)
           end
@@ -496,14 +496,14 @@ RSpec.describe "MCP", type: :request do
           it "returns a JSON-RPC invalid request error (-32600) for a JSON array body" do
             post "/mcp",
               params: "[1, 2, 3]",
-              headers: bearer(token).merge("Content-Type" => "application/json")
+              headers: cf_assertion_header(token).merge("Content-Type" => "application/json")
             body = JSON.parse(response.body)
             expect(body["error"]["code"]).to eq(-32600)
           end
 
           it "returns 401 when JWKS fetch raises an unexpected error" do
             stub_request(:get, CfAccessHelpers::JWKS_URI).to_raise(Net::OpenTimeout)
-            post "/mcp", headers: bearer(cf_access_token(email: user.email_address)), as: :json
+            post "/mcp", headers: cf_assertion_header(cf_access_token(email: user.email_address)), as: :json
             expect(response).to have_http_status(:unauthorized)
           end
 
@@ -511,7 +511,7 @@ RSpec.describe "MCP", type: :request do
             session_id = establish_mcp_session(token)
             post "/mcp",
               params: { jsonrpc: "2.0", id: 2, method: "unknown/method" },
-              headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+              headers: cf_assertion_header(token).merge("Mcp-Session-Id" => session_id),
               as: :json
             body = JSON.parse(response.body)
             expect(body["error"]["code"]).to eq(-32601)
@@ -529,7 +529,7 @@ RSpec.describe "MCP", type: :request do
         method: "initialize",
         params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "Test", version: "1.0" } }
       },
-      headers: bearer(token),
+      headers: cf_assertion_header(token),
       as: :json
     response.headers["Mcp-Session-Id"]
   end
