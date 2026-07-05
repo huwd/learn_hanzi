@@ -332,6 +332,48 @@ RSpec.describe "MCP", type: :request do
           end
         end
 
+        describe "learn-hanzi://vocabulary/active" do
+          it "returns vocabulary as an array" do
+            body    = read_resource("learn-hanzi://vocabulary/active")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_an(Array)
+          end
+
+          it "only includes learning-state entries for the authenticated user" do
+            create(:user_learning, user: user, state: "learning", next_due: 1.day.from_now)
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: create(:user), state: "learning")
+
+            body    = read_resource("learn-hanzi://vocabulary/active")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"].length).to eq(1)
+          end
+
+          it "includes hanzi, pinyin, meaning, next_due and factor" do
+            create(:user_learning, user: user, state: "learning", next_due: 1.day.from_now)
+            body  = read_resource("learn-hanzi://vocabulary/active")
+            entry = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry).to include("hanzi", "pinyin", "meaning", "next_due", "factor")
+          end
+
+          it "orders by next_due ascending" do
+            later  = create(:user_learning, user: user, state: "learning", next_due: 7.days.from_now)
+            sooner = create(:user_learning, user: user, state: "learning", next_due: 1.day.from_now)
+
+            body    = read_resource("learn-hanzi://vocabulary/active")
+            entries = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"]
+            expect(entries.first["hanzi"]).to eq(sooner.dictionary_entry.text)
+            expect(entries.last["hanzi"]).to eq(later.dictionary_entry.text)
+          end
+
+          it "includes overdue entries (next_due in the past)" do
+            create(:user_learning, user: user, state: "learning", next_due: 2.days.ago)
+            body    = read_resource("learn-hanzi://vocabulary/active")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"].length).to eq(1)
+          end
+        end
+
         describe "learn-hanzi://vocabulary/recent" do
           it "returns vocabulary as an array" do
             body    = read_resource("learn-hanzi://vocabulary/recent")
