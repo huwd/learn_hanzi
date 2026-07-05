@@ -15,6 +15,7 @@ require_relative 'support/authentication_helpers'
 require_relative 'support/anki_helper'
 require_relative 'support/cf_access_helpers'
 require_relative 'support/query_counter'
+require_relative 'support/capybara'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -41,6 +42,7 @@ end
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include AuthenticationHelpers, type: :request
+  config.include AuthenticationHelpers, type: :system
   config.include CfAccessHelpers, type: :request
   config.include QueryCounter
 
