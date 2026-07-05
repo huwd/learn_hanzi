@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-# check=error=true,skip=InvalidDefaultArgInFrom
+# check=error=true
+# check=skip=InvalidDefaultArgInFrom
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
 # docker build -t learn_hanzi .
