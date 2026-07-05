@@ -11,7 +11,7 @@ The core idea: take a user's Anki flashcard collection and a Chinese dictionary 
 
 ## Requirements
 
-- Ruby 4.0.1 (see `.ruby-version`)
+- Ruby 4.0.5 (see `.ruby-version`)
 - SQLite3
 - An Anki collection export (`.colpkg` file) — optional, but needed for learning history
 
@@ -108,10 +108,10 @@ The test suite uses a self-contained Anki test database built from in-memory see
 
 The app uses two SQLite databases simultaneously:
 
-| Connection | Purpose | File |
-|------------|---------|------|
-| `primary` | Main app data (dictionary, users, learning records) | `storage/development.sqlite3` |
-| `anki` | Read-only connection to an Anki collection | `tmp/anki/collection.anki21` |
+| Connection | Purpose                                             | File                          |
+| ---------- | --------------------------------------------------- | ----------------------------- |
+| `primary`  | Main app data (dictionary, users, learning records) | `storage/development.sqlite3` |
+| `anki`     | Read-only connection to an Anki collection          | `tmp/anki/collection.anki21`  |
 
 ### Data model
 
