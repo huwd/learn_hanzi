@@ -332,6 +332,51 @@ RSpec.describe "MCP", type: :request do
           end
         end
 
+        describe "learn-hanzi://vocabulary/recent" do
+          it "returns vocabulary as an array" do
+            body    = read_resource("learn-hanzi://vocabulary/recent")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_an(Array)
+          end
+
+          it "includes entries mastered within the last 30 days" do
+            create(:user_learning, user: user, state: "mastered", mastered_at: 15.days.ago)
+            body    = read_resource("learn-hanzi://vocabulary/recent")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"].length).to eq(1)
+          end
+
+          it "excludes entries mastered more than 30 days ago" do
+            create(:user_learning, user: user, state: "mastered", mastered_at: 31.days.ago)
+            body    = read_resource("learn-hanzi://vocabulary/recent")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_empty
+          end
+
+          it "excludes other users' entries" do
+            create(:user_learning, user: create(:user), state: "mastered", mastered_at: 1.day.ago)
+            body    = read_resource("learn-hanzi://vocabulary/recent")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_empty
+          end
+
+          it "includes hanzi, pinyin, meaning and mastered_at" do
+            create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+            body  = read_resource("learn-hanzi://vocabulary/recent")
+            entry = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry).to include("hanzi", "pinyin", "meaning", "mastered_at")
+          end
+
+          it "orders by mastered_at descending" do
+            older = create(:user_learning, user: user, state: "mastered", mastered_at: 10.days.ago)
+            newer = create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+            body    = read_resource("learn-hanzi://vocabulary/recent")
+            entries = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"]
+            expect(entries.first["hanzi"]).to eq(newer.dictionary_entry.text)
+            expect(entries.last["hanzi"]).to eq(older.dictionary_entry.text)
+          end
+        end
+
         describe "learn-hanzi://vocabulary/struggling" do
           it "returns vocabulary as an array" do
             body    = read_resource("learn-hanzi://vocabulary/struggling")
