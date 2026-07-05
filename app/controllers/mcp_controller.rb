@@ -22,6 +22,8 @@ class McpController < ApplicationController
       case method
       when "notifications/initialized"
         head :ok
+      when "resources/list"
+        handle_resources_list(body)
       else
         render json: jsonrpc_error(body["id"], -32601, "Method not found: #{method}")
       end
@@ -59,6 +61,47 @@ class McpController < ApplicationController
 
   def session_cache_key(session_id)
     "mcp_session:#{session_id}"
+  end
+
+  RESOURCES = [
+    {
+      uri: "learn-hanzi://profile",
+      name: "Learning Profile",
+      description: "Summary of your learning state: counts by status and HSK level breakdown.",
+      mimeType: "application/json"
+    },
+    {
+      uri: "learn-hanzi://vocabulary/mastered",
+      name: "Mastered Vocabulary",
+      description: "Words you have consolidated, most recently mastered first.",
+      mimeType: "application/json"
+    },
+    {
+      uri: "learn-hanzi://vocabulary/struggling",
+      name: "Struggling Vocabulary",
+      description: "In-progress words ranked by lapse count and low ease factor — the words giving you the most trouble.",
+      mimeType: "application/json"
+    },
+    {
+      uri: "learn-hanzi://vocabulary/recent",
+      name: "Recently Mastered",
+      description: "Words graduated to mastered in the last 30 days.",
+      mimeType: "application/json"
+    },
+    {
+      uri: "learn-hanzi://vocabulary/active",
+      name: "Active Learning Queue",
+      description: "Words currently in the learning queue, ordered by next due date.",
+      mimeType: "application/json"
+    }
+  ].freeze
+
+  def handle_resources_list(body)
+    render json: {
+      jsonrpc: "2.0",
+      id: body["id"],
+      result: { resources: RESOURCES }
+    }
   end
 
   def jsonrpc_error(id, code, message)

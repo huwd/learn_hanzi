@@ -139,6 +139,56 @@ RSpec.describe "MCP", type: :request do
         end
       end
 
+      describe "resources/list" do
+        let(:session_id) { establish_mcp_session(token) }
+
+        it "returns a JSON-RPC 2.0 envelope" do
+          post "/mcp",
+            params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
+            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            as: :json
+          body = JSON.parse(response.body)
+          expect(body["jsonrpc"]).to eq("2.0")
+          expect(body["id"]).to eq(2)
+        end
+
+        it "returns all five resources" do
+          post "/mcp",
+            params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
+            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            as: :json
+          resources = JSON.parse(response.body).dig("result", "resources")
+          expect(resources.length).to eq(5)
+        end
+
+        it "includes all expected resource URIs" do
+          post "/mcp",
+            params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
+            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            as: :json
+          uris = JSON.parse(response.body).dig("result", "resources").map { |r| r["uri"] }
+          expect(uris).to contain_exactly(
+            "learn-hanzi://profile",
+            "learn-hanzi://vocabulary/mastered",
+            "learn-hanzi://vocabulary/struggling",
+            "learn-hanzi://vocabulary/recent",
+            "learn-hanzi://vocabulary/active"
+          )
+        end
+
+        it "includes a name and mimeType for each resource" do
+          post "/mcp",
+            params: { jsonrpc: "2.0", id: 2, method: "resources/list" },
+            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            as: :json
+          resources = JSON.parse(response.body).dig("result", "resources")
+          resources.each do |resource|
+            expect(resource["name"]).to be_present
+            expect(resource["mimeType"]).to eq("application/json")
+          end
+        end
+      end
+
       describe "error handling" do
         it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
           post "/mcp",
