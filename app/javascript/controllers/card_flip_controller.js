@@ -31,7 +31,7 @@ export default class extends Controller {
 
     if (revealed && ["1", "2", "3", "4"].includes(event.key)) {
       const btn = this.element.querySelector(`button[data-ease="${event.key}"]`)
-      btn?.closest("form")?.requestSubmit()
+      btn?.closest("form")?.requestSubmit(btn)
     }
   }
 }
