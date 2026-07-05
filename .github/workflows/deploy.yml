@@ -58,6 +58,10 @@ jobs:
             type=sha,prefix=,format=short
             type=raw,value=latest
 
+      - name: Read Ruby version
+        id: ruby
+        run: echo "version=$(cat .ruby-version)" >> "$GITHUB_OUTPUT"
+
       - name: Build and push image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
@@ -65,3 +69,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: RUBY_VERSION=${{ steps.ruby.outputs.version }}
