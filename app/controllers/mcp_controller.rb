@@ -1,11 +1,8 @@
-class McpController < ApplicationController
+class McpController < ActionController::API
   include CfAccessAuthentication
 
   PROTOCOL_VERSION = "2025-03-26"
   SESSION_TTL = 24.hours
-
-  skip_before_action :verify_authenticity_token
-  skip_before_action :require_authentication
 
   def handle
     body = parse_request_body
@@ -35,7 +32,12 @@ class McpController < ApplicationController
   private
 
   def parse_request_body
-    JSON.parse(request.raw_post)
+    body = JSON.parse(request.raw_post)
+    unless body.is_a?(Hash)
+      render json: jsonrpc_error(nil, -32600, "Invalid Request"), status: :bad_request
+      return nil
+    end
+    body
   rescue JSON::ParserError
     render json: jsonrpc_error(nil, -32700, "Parse error"), status: :bad_request
     nil
