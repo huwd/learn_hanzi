@@ -30,6 +30,6 @@ module CfAccessHelpers
   end
 
   def bearer(token)
-    { "Authorization" => "Bearer #{token}" }
+    { "CF-Access-Jwt-Assertion" => token }
   end
 end
