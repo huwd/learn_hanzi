@@ -112,6 +112,8 @@ class McpController < ApplicationController
     content = case uri
     when "learn-hanzi://profile"
       Mcp::ProfileResource.new(current_mcp_user).call
+    when "learn-hanzi://vocabulary/mastered"
+      Mcp::MasteredVocabularyResource.new(current_mcp_user).call
     else
       return render json: jsonrpc_error(body["id"], -32602, "Unknown resource: #{uri}")
     end

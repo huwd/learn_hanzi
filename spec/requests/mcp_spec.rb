@@ -252,6 +252,12 @@ RSpec.describe "MCP", type: :request do
             expect(payload).to have_key("hsk_breakdown")
           end
 
+          it "returns an empty hsk_breakdown array when no HSK tags exist" do
+            body    = read_resource("learn-hanzi://profile")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["hsk_breakdown"]).to eq([])
+          end
+
           context "with an HSK tag hierarchy" do
             let!(:hsk_root)  { create(:tag, name: "HSK", parent: nil) }
             let!(:hsk3)      { create(:tag, name: "HSK 3.0", parent: hsk_root) }
@@ -278,9 +284,55 @@ RSpec.describe "MCP", type: :request do
             end
           end
         end
-      end
 
-      describe "error handling" do
+        describe "learn-hanzi://vocabulary/mastered" do
+          it "returns vocabulary as an array" do
+            body    = read_resource("learn-hanzi://vocabulary/mastered")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_an(Array)
+          end
+
+          it "returns only the authenticated user's mastered entries" do
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: create(:user), state: "mastered")
+
+            body    = read_resource("learn-hanzi://vocabulary/mastered")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"].length).to eq(2)
+          end
+
+          it "excludes non-mastered entries" do
+            create(:user_learning, user: user, state: "learning")
+            body    = read_resource("learn-hanzi://vocabulary/mastered")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_empty
+          end
+
+          it "includes hanzi, pinyin, meaning and mastered_at for each entry" do
+            create(:user_learning, user: user, state: "mastered",
+                   mastered_at: 1.day.ago)
+            body    = read_resource("learn-hanzi://vocabulary/mastered")
+            entry   = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry).to include("hanzi", "pinyin", "meaning", "mastered_at")
+          end
+
+          it "orders entries by mastered_at descending" do
+            older = create(:user_learning, user: user, state: "mastered",
+                           mastered_at: 2.days.ago)
+            newer = create(:user_learning, user: user, state: "mastered",
+                           mastered_at: 1.day.ago)
+            body     = read_resource("learn-hanzi://vocabulary/mastered")
+            entries  = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"]
+            returned = entries.map { |e| e["hanzi"] }
+            expect(returned).to eq([
+              newer.dictionary_entry.text,
+              older.dictionary_entry.text
+            ])
+          end
+        end
+
+        describe "error handling" do
         it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
           post "/mcp",
             params: "not: valid json{{",
@@ -301,6 +353,7 @@ RSpec.describe "MCP", type: :request do
       end
     end
   end
+end
 
   def establish_mcp_session(token)
     post "/mcp",
