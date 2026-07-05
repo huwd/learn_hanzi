@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_30_225142) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_211906) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -229,6 +229,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_225142) do
     t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.string "mcp_service_token_id"
     t.integer "new_cards_per_session", default: 5, null: false
     t.string "provider", default: "", null: false
     t.integer "session_size", default: 20, null: false
@@ -236,6 +237,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_30_225142) do
     t.string "uid", default: "", null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["mcp_service_token_id"], name: "index_users_on_mcp_service_token_id", unique: true, where: "mcp_service_token_id IS NOT NULL"
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true
   end
 

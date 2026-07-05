@@ -22,13 +22,20 @@ module CfAccessAuthentication
     payload = decode_cf_token(token)
     return render_unauthorized unless payload
 
-    email = payload["email"].presence
-    return render_unauthorized unless email
-
-    user = User.find_by(email_address: email)
+    user = resolve_user(payload)
     return render_unauthorized unless user
 
     @current_mcp_user = user
+  end
+
+  def resolve_user(payload)
+    if payload["type"] == "app"
+      token_id = payload["common_name"]&.delete_suffix(".access")
+      User.find_by(mcp_service_token_id: token_id)
+    else
+      email = payload["email"].presence
+      User.find_by(email_address: email) if email
+    end
   end
 
   def extract_cf_assertion_token
