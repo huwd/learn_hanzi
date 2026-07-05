@@ -5,6 +5,8 @@ class User < ApplicationRecord
   has_many :learning_sessions, dependent: :destroy
 
   validates :email_address, presence: true, uniqueness: true
+  validates :mcp_service_token_id, uniqueness: true, allow_nil: true
+  normalizes :mcp_service_token_id, with: ->(v) { v.presence }
   validates :provider, presence: true
   validates :uid, presence: true, uniqueness: { scope: :provider }
   normalizes :email_address, with: ->(e) { e.strip.downcase }

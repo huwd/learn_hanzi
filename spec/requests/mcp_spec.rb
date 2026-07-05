@@ -63,7 +63,7 @@ RSpec.describe "MCP", type: :request do
           headers: cf_assertion_header(token),
           params: { jsonrpc: "2.0", id: 1, method: "initialize",
                     params: { protocolVersion: "2025-03-26", capabilities: {},
-                              clientInfo: { name: "test", version: "1" } } }.to_json,
+                              clientInfo: { name: "test", version: "1" } } },
           as: :json
         expect(response).to have_http_status(:ok)
         expect(response.headers["Mcp-Session-Id"]).to be_present
