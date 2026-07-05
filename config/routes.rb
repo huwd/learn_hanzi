@@ -4,6 +4,9 @@ Rails.application.routes.draw do
   # Returns 200 when the primary DB is reachable, 503 when the connection fails.
   get "up" => "health#show", as: :rails_health_check
 
+  # MCP server — AI agent access to learning state (OAuth 2.1 via CF Access)
+  post "mcp", to: "mcp#handle"
+
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker

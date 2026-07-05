@@ -21,6 +21,9 @@ gem "tailwindcss-rails"
 gem "omniauth_openid_connect"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
+# JWT validation for MCP server (CF Access bearer tokens)
+gem "jwt", "~> 2.10"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
