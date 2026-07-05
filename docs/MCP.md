@@ -15,6 +15,7 @@ In the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/):
 - Access → Service Tokens → Create Service Token
 - Give it a name (e.g. `claude-mcp`)
 - Copy the **Client ID** and **Client Secret** — the secret is only shown once
+- Treat the Client Secret as a password: do not commit it, share it, or store it in plaintext. If leaked, rotate immediately in the CF dashboard.
 
 **2. Add the token to the learn-hanzi Access policy**
 
@@ -57,7 +58,7 @@ Restart Claude Desktop after saving.
 Verify the server is reachable and your credentials work:
 
 ```bash
-curl -s -X POST https://xue.huwdiprose.co.uk/mcp \
+curl -sS -i -X POST https://xue.huwdiprose.co.uk/mcp \
   -H "CF-Access-Client-Id: <your-client-id>" \
   -H "CF-Access-Client-Secret: <your-client-secret>" \
   -H "Content-Type: application/json" \
