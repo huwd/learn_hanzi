@@ -29,7 +29,7 @@ module CfAccessHelpers
     JWT.encode(payload, CfAccessHelpers.private_key, "RS256", { kid: "test-kid-1" })
   end
 
-  def bearer(token)
+  def cf_assertion_header(token)
     { "CF-Access-Jwt-Assertion" => token }
   end
 end

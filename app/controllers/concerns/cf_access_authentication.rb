@@ -16,7 +16,7 @@ module CfAccessAuthentication
   attr_reader :current_mcp_user
 
   def cf_access_authenticate!
-    token = extract_bearer_token
+    token = extract_cf_assertion_token
     return render_unauthorized unless token
 
     payload = decode_cf_token(token)
@@ -31,7 +31,7 @@ module CfAccessAuthentication
     @current_mcp_user = user
   end
 
-  def extract_bearer_token
+  def extract_cf_assertion_token
     request.headers["CF-Access-Jwt-Assertion"].presence
   end
 
