@@ -32,8 +32,7 @@ module CfAccessAuthentication
   end
 
   def extract_bearer_token
-    auth = request.headers["Authorization"]
-    auth&.start_with?("Bearer ") ? auth.delete_prefix("Bearer ") : nil
+    request.headers["CF-Access-Jwt-Assertion"].presence
   end
 
   def decode_cf_token(token)
