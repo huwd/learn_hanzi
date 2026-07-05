@@ -24,6 +24,8 @@ class McpController < ApplicationController
         head :ok
       when "resources/list"
         handle_resources_list(body)
+      when "resources/read"
+        handle_resources_read(body)
       else
         render json: jsonrpc_error(body["id"], -32601, "Method not found: #{method}")
       end
@@ -101,6 +103,25 @@ class McpController < ApplicationController
       jsonrpc: "2.0",
       id: body["id"],
       result: { resources: RESOURCES }
+    }
+  end
+
+  def handle_resources_read(body)
+    uri = body.dig("params", "uri")
+
+    content = case uri
+    when "learn-hanzi://profile"
+      Mcp::ProfileResource.new(current_mcp_user).call
+    else
+      return render json: jsonrpc_error(body["id"], -32602, "Unknown resource: #{uri}")
+    end
+
+    render json: {
+      jsonrpc: "2.0",
+      id: body["id"],
+      result: {
+        contents: [ { uri: uri, mimeType: "application/json", text: content.to_json } ]
+      }
     }
   end
 

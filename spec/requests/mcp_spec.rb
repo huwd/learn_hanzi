@@ -189,6 +189,97 @@ RSpec.describe "MCP", type: :request do
         end
       end
 
+      describe "resources/read" do
+        let(:session_id) { establish_mcp_session(token) }
+
+        def read_resource(uri)
+          post "/mcp",
+            params: { jsonrpc: "2.0", id: 3, method: "resources/read", params: { uri: uri } },
+            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+            as: :json
+          JSON.parse(response.body)
+        end
+
+        it "returns -32602 for an unknown resource URI" do
+          body = read_resource("learn-hanzi://does-not-exist")
+          expect(body["error"]["code"]).to eq(-32602)
+        end
+
+        describe "learn-hanzi://profile" do
+          it "returns a JSON-RPC 2.0 envelope with contents" do
+            body = read_resource("learn-hanzi://profile")
+            expect(body["jsonrpc"]).to eq("2.0")
+            expect(body["id"]).to eq(3)
+            contents = body.dig("result", "contents")
+            expect(contents).to be_an(Array)
+            expect(contents.first["uri"]).to eq("learn-hanzi://profile")
+            expect(contents.first["mimeType"]).to eq("application/json")
+          end
+
+          it "returns a parseable JSON text payload" do
+            body = read_resource("learn-hanzi://profile")
+            text = body.dig("result", "contents", 0, "text")
+            expect { JSON.parse(text) }.not_to raise_error
+          end
+
+          it "includes state counts for the authenticated user only" do
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: user, state: "learning")
+            other = create(:user)
+            create(:user_learning, user: other, state: "mastered")
+
+            body   = read_resource("learn-hanzi://profile")
+            summary = JSON.parse(body.dig("result", "contents", 0, "text"))["summary"]
+            expect(summary["mastered"]).to eq(2)
+            expect(summary["learning"]).to eq(1)
+            expect(summary["total"]).to eq(3)
+          end
+
+          it "includes new and suspended counts" do
+            create(:user_learning, user: user, state: "new")
+            create(:user_learning, user: user, state: "suspended")
+
+            body    = read_resource("learn-hanzi://profile")
+            summary = JSON.parse(body.dig("result", "contents", 0, "text"))["summary"]
+            expect(summary["new"]).to eq(1)
+            expect(summary["suspended"]).to eq(1)
+          end
+
+          it "includes an hsk_breakdown key" do
+            body    = read_resource("learn-hanzi://profile")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload).to have_key("hsk_breakdown")
+          end
+
+          context "with an HSK tag hierarchy" do
+            let!(:hsk_root)  { create(:tag, name: "HSK", parent: nil) }
+            let!(:hsk3)      { create(:tag, name: "HSK 3.0", parent: hsk_root) }
+            let!(:hsk1)      { create(:tag, name: "HSK 1", parent: hsk3) }
+            let!(:entry)     { create(:dictionary_entry).tap { |e| e.tags << hsk1 } }
+            let!(:learning)  { create(:user_learning, user: user, dictionary_entry: entry, state: "mastered") }
+
+            it "includes the version and level names" do
+              body    = read_resource("learn-hanzi://profile")
+              payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+              version = payload["hsk_breakdown"].find { |v| v["version"] == "HSK 3.0" }
+              expect(version).to be_present
+              level = version["levels"].find { |l| l["name"] == "HSK 1" }
+              expect(level).to be_present
+            end
+
+            it "reports the correct mastered count per level" do
+              body    = read_resource("learn-hanzi://profile")
+              payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+              level = payload["hsk_breakdown"]
+                .find { |v| v["version"] == "HSK 3.0" }["levels"]
+                .find { |l| l["name"] == "HSK 1" }
+              expect(level["mastered"]).to eq(1)
+            end
+          end
+        end
+      end
+
       describe "error handling" do
         it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
           post "/mcp",
