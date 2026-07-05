@@ -12,4 +12,21 @@ module AuthenticationHelpers
     OmniAuth.config.mock_auth.delete(:oidc)
     OmniAuth.config.test_mode = false
   end
+
+  # For system specs: drives the real sign-in form in a JS-capable browser
+  # rather than posting directly, since there is no shared Rack session to
+  # forge a request against.
+  def sign_in_via_browser(user)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:oidc] = OmniAuth::AuthHash.new(
+      provider: user.provider,
+      uid: user.uid,
+      info: { email: user.email_address }
+    )
+    visit sign_in_path
+    click_button "Sign in with PocketID"
+  ensure
+    OmniAuth.config.mock_auth.delete(:oidc)
+    OmniAuth.config.test_mode = false
+  end
 end
