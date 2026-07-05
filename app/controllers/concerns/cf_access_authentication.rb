@@ -30,7 +30,10 @@ module CfAccessAuthentication
 
   def resolve_user(payload)
     if payload["type"] == "app"
-      token_id = payload["common_name"]&.delete_suffix(".access")
+      common_name = payload["common_name"]
+      return nil unless common_name&.end_with?(".access")
+      token_id = common_name.delete_suffix(".access")
+      return nil if token_id.blank?
       User.find_by(mcp_service_token_id: token_id)
     else
       email = payload["email"].presence
