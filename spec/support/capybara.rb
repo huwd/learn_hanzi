@@ -1,5 +1,6 @@
 require "capybara/rspec"
 require "json"
+require "open3"
 
 # Selenium Manager's default resolution prefers a chromedriver already on
 # PATH over downloading one that matches the installed Chrome version. Dev
@@ -7,13 +8,22 @@ require "json"
 # package), so ask Selenium Manager to ignore PATH and fetch/cache a driver
 # that actually matches the local Chrome build.
 def system_matched_chromedriver_path
-  selenium_manager = Dir.glob(
-    File.join(Gem.loaded_specs["selenium-webdriver"].full_gem_path, "bin/*/selenium-manager")
-  ).first
-  Selenium::WebDriver::Platform.assert_executable(selenium_manager)
+  @system_matched_chromedriver_path ||= begin
+    selenium_manager = Dir.glob(
+      File.join(Gem.loaded_specs["selenium-webdriver"].full_gem_path, "bin/*/selenium-manager")
+    ).first
+    Selenium::WebDriver::Platform.assert_executable(selenium_manager)
 
-  output = `#{selenium_manager} --browser chrome --skip-driver-in-path --output json`
-  JSON.parse(output).dig("result", "driver_path")
+    stdout, stderr, status = Open3.capture3(
+      selenium_manager, "--browser", "chrome", "--skip-driver-in-path", "--output", "json"
+    )
+    raise "Selenium Manager failed to resolve a chromedriver: #{stderr}" unless status.success?
+
+    driver_path = JSON.parse(stdout).dig("result", "driver_path")
+    raise "Selenium Manager did not return a chromedriver path: #{stdout}" if driver_path.blank?
+
+    driver_path
+  end
 end
 
 Capybara.register_driver :selenium_chrome_headless do |app|
