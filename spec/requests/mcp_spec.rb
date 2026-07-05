@@ -80,6 +80,18 @@ RSpec.describe "MCP", type: :request do
         post "/mcp", headers: cf_assertion_header(expired), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
+
+      it "returns 401 when common_name is absent" do
+        token_without_common_name = cf_service_token(common_name: nil)
+        post "/mcp", headers: cf_assertion_header(token_without_common_name), as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "returns 401 when common_name lacks the .access suffix" do
+        token_bad_format = cf_service_token(common_name: "abc123def456")
+        post "/mcp", headers: cf_assertion_header(token_bad_format), as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
     end
 
     context "when authenticated" do

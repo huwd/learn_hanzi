@@ -6,7 +6,7 @@ class User < ApplicationRecord
 
   validates :email_address, presence: true, uniqueness: true
   validates :mcp_service_token_id, uniqueness: true, allow_nil: true
-  normalizes :mcp_service_token_id, with: ->(v) { v.presence }
+  normalizes :mcp_service_token_id, with: ->(v) { v&.strip.presence }
   validates :provider, presence: true
   validates :uid, presence: true, uniqueness: { scope: :provider }
   normalizes :email_address, with: ->(e) { e.strip.downcase }
