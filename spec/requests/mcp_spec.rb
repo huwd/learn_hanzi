@@ -11,13 +11,8 @@ RSpec.describe "MCP", type: :request do
 
   describe "POST /mcp" do
     context "when unauthenticated" do
-      it "returns 401 with no Authorization header" do
+      it "returns 401 when CF-Access-Jwt-Assertion header is absent" do
         post "/mcp", as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 with a non-Bearer Authorization scheme" do
-        post "/mcp", headers: { "Authorization" => "Basic dXNlcjpwYXNz" }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
 
