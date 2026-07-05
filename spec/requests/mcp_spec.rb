@@ -332,6 +332,71 @@ RSpec.describe "MCP", type: :request do
           end
         end
 
+        describe "learn-hanzi://vocabulary/struggling" do
+          it "returns vocabulary as an array" do
+            body    = read_resource("learn-hanzi://vocabulary/struggling")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"]).to be_an(Array)
+          end
+
+          it "only includes learning-state entries for the authenticated user" do
+            create(:user_learning, user: user, state: "learning")
+            create(:user_learning, user: user, state: "mastered")
+            create(:user_learning, user: create(:user), state: "learning")
+
+            body    = read_resource("learn-hanzi://vocabulary/struggling")
+            payload = JSON.parse(body.dig("result", "contents", 0, "text"))
+            expect(payload["vocabulary"].length).to eq(1)
+          end
+
+          it "includes hanzi, pinyin, meaning, lapse_count and factor for each entry" do
+            create(:user_learning, user: user, state: "learning")
+            body  = read_resource("learn-hanzi://vocabulary/struggling")
+            entry = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry).to include("hanzi", "pinyin", "meaning", "lapse_count", "factor")
+          end
+
+          it "returns lapse_count 0 for an entry with no lapses" do
+            create(:user_learning, user: user, state: "learning")
+            body  = read_resource("learn-hanzi://vocabulary/struggling")
+            entry = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry["lapse_count"]).to eq(0)
+          end
+
+          it "orders by lapse_count descending" do
+            low  = create(:user_learning, user: user, state: "learning")
+            high = create(:user_learning, user: user, state: "learning")
+            create(:review_log, user_learning: high, ease: 1)
+            create(:review_log, user_learning: high, ease: 1)
+            create(:review_log, user_learning: low,  ease: 1)
+
+            body    = read_resource("learn-hanzi://vocabulary/struggling")
+            entries = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"]
+            expect(entries.first["lapse_count"]).to eq(2)
+            expect(entries.last["lapse_count"]).to eq(1)
+          end
+
+          it "uses factor ascending as a tiebreaker" do
+            lower_factor = create(:user_learning, user: user, state: "learning", factor: 1800)
+            higher_factor = create(:user_learning, user: user, state: "learning", factor: 2500)
+
+            body    = read_resource("learn-hanzi://vocabulary/struggling")
+            entries = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"]
+            expect(entries.first["hanzi"]).to eq(lower_factor.dictionary_entry.text)
+          end
+
+          it "counts only ease=1 logs as lapses, not other ease values" do
+            ul = create(:user_learning, user: user, state: "learning")
+            create(:review_log, user_learning: ul, ease: 1)
+            create(:review_log, user_learning: ul, ease: 3)
+            create(:review_log, user_learning: ul, ease: 4)
+
+            body  = read_resource("learn-hanzi://vocabulary/struggling")
+            entry = JSON.parse(body.dig("result", "contents", 0, "text"))["vocabulary"].first
+            expect(entry["lapse_count"]).to eq(1)
+          end
+        end
+
         describe "error handling" do
         it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
           post "/mcp",
