@@ -29,6 +29,11 @@ module CfAccessHelpers
     JWT.encode(payload, CfAccessHelpers.private_key, "RS256", { kid: "test-kid-1" })
   end
 
+  def cf_service_token(common_name:, aud: CfAccessHelpers::AUD, iss: CfAccessHelpers::ISSUER, exp: 1.hour.from_now.to_i)
+    payload = { type: "app", iss: iss, sub: "", aud: [ aud ], exp: exp, iat: Time.current.to_i, common_name: common_name }
+    JWT.encode(payload, CfAccessHelpers.private_key, "RS256", { kid: "test-kid-1" })
+  end
+
   def cf_assertion_header(token)
     { "CF-Access-Jwt-Assertion" => token }
   end

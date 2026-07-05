@@ -78,6 +78,18 @@ RSpec.describe "Settings", type: :request do
           expect(response).to redirect_to(settings_path)
         end
 
+        it "saves mcp_service_token_id and redirects back to settings" do
+          patch settings_path, params: { user: { mcp_service_token_id: "abc123def456" } }
+          expect(user.reload.mcp_service_token_id).to eq("abc123def456")
+          expect(response).to redirect_to(settings_path)
+        end
+
+        it "clears mcp_service_token_id when blank" do
+          user.update!(mcp_service_token_id: "abc123def456")
+          patch settings_path, params: { user: { mcp_service_token_id: "" } }
+          expect(user.reload.mcp_service_token_id).to be_nil
+        end
+
         it "disables telemetry_enabled" do
           user.update!(telemetry_enabled: true)
           patch settings_path, params: { user: { telemetry_enabled: false } }

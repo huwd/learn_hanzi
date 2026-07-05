@@ -52,6 +52,36 @@ RSpec.describe "MCP", type: :request do
       end
     end
 
+    context "when authenticated via service token" do
+      let(:common_name) { "abc123def456.access" }
+      let(:token) { cf_service_token(common_name: common_name) }
+
+      before { user.update!(mcp_service_token_id: "abc123def456") }
+
+      it "authenticates and returns an MCP session" do
+        post "/mcp",
+          headers: cf_assertion_header(token),
+          params: { jsonrpc: "2.0", id: 1, method: "initialize",
+                    params: { protocolVersion: "2025-03-26", capabilities: {},
+                              clientInfo: { name: "test", version: "1" } } }.to_json,
+          as: :json
+        expect(response).to have_http_status(:ok)
+        expect(response.headers["Mcp-Session-Id"]).to be_present
+      end
+
+      it "returns 401 when no user has a matching mcp_service_token_id" do
+        user.update!(mcp_service_token_id: nil)
+        post "/mcp", headers: cf_assertion_header(token), as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it "returns 401 when the service token is expired" do
+        expired = cf_service_token(common_name: common_name, exp: 1.hour.ago.to_i)
+        post "/mcp", headers: cf_assertion_header(expired), as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+
     context "when authenticated" do
       let(:token) { cf_access_token(email: user.email_address) }
 
