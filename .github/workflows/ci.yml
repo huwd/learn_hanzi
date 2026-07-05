@@ -152,6 +152,10 @@ jobs:
           commit_date="$(TZ=UTC git show -s --format=%cd --date=format-local:%Y.%m.%d "$GITHUB_SHA")"
           echo "tag=${commit_date}-$(echo "$GITHUB_SHA" | cut -c1-7)" >> "$GITHUB_OUTPUT"
 
+      - name: Read Ruby version
+        id: ruby
+        run: echo "version=$(cat .ruby-version)" >> "$GITHUB_OUTPUT"
+
       - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
@@ -159,6 +163,7 @@ jobs:
           tags: |
             gismo:5000/learn_hanzi:latest
             gismo:5000/learn_hanzi:${{ steps.calver.outputs.tag }}
+          build-args: RUBY_VERSION=${{ steps.ruby.outputs.version }}
 
       - name: Redeploy on Portainer
         env:
