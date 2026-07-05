@@ -485,27 +485,41 @@ RSpec.describe "MCP", type: :request do
         end
 
         describe "error handling" do
-        it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
-          post "/mcp",
-            params: "not: valid json{{",
-            headers: bearer(token).merge("Content-Type" => "application/json")
-          body = JSON.parse(response.body)
-          expect(body["error"]["code"]).to eq(-32700)
-        end
+          it "returns a JSON-RPC parse error (-32700) for invalid JSON" do
+            post "/mcp",
+              params: "not: valid json{{",
+              headers: bearer(token).merge("Content-Type" => "application/json")
+            body = JSON.parse(response.body)
+            expect(body["error"]["code"]).to eq(-32700)
+          end
 
-        it "returns a JSON-RPC method-not-found error (-32601) for unknown methods" do
-          session_id = establish_mcp_session(token)
-          post "/mcp",
-            params: { jsonrpc: "2.0", id: 2, method: "unknown/method" },
-            headers: bearer(token).merge("Mcp-Session-Id" => session_id),
-            as: :json
-          body = JSON.parse(response.body)
-          expect(body["error"]["code"]).to eq(-32601)
+          it "returns a JSON-RPC invalid request error (-32600) for a JSON array body" do
+            post "/mcp",
+              params: "[1, 2, 3]",
+              headers: bearer(token).merge("Content-Type" => "application/json")
+            body = JSON.parse(response.body)
+            expect(body["error"]["code"]).to eq(-32600)
+          end
+
+          it "returns 401 when JWKS fetch raises an unexpected error" do
+            stub_request(:get, CfAccessHelpers::JWKS_URI).to_raise(Net::OpenTimeout)
+            post "/mcp", headers: bearer(cf_access_token(email: user.email_address)), as: :json
+            expect(response).to have_http_status(:unauthorized)
+          end
+
+          it "returns a JSON-RPC method-not-found error (-32601) for unknown methods" do
+            session_id = establish_mcp_session(token)
+            post "/mcp",
+              params: { jsonrpc: "2.0", id: 2, method: "unknown/method" },
+              headers: bearer(token).merge("Mcp-Session-Id" => session_id),
+              as: :json
+            body = JSON.parse(response.body)
+            expect(body["error"]["code"]).to eq(-32601)
+          end
         end
       end
     end
   end
-end
 
   def establish_mcp_session(token)
     post "/mcp",

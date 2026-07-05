@@ -1,3 +1,6 @@
+require "net/http"
+require "uri"
+
 module CfAccessAuthentication
   extend ActiveSupport::Concern
 
@@ -45,6 +48,9 @@ module CfAccessAuthentication
     ).first
   rescue JWT::DecodeError => e
     Rails.logger.warn("CF Access JWT rejected: #{e.message}")
+    nil
+  rescue StandardError => e
+    Rails.logger.error("CF Access JWT validation error: #{e.class}: #{e.message}")
     nil
   end
 
