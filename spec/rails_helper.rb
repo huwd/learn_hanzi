@@ -64,8 +64,15 @@ RSpec.configure do |config|
   config.before(:each, real_oidc: true) do
     require "swd"
     require "openid_connect"
+    @original_swd_url_builder = SWD.url_builder
+    @original_validate_discovery_issuer = OpenIDConnect.validate_discovery_issuer
     SWD.url_builder = URI::HTTP
     OpenIDConnect.validate_discovery_issuer = false
+  end
+
+  config.after(:each, real_oidc: true) do
+    SWD.url_builder = @original_swd_url_builder
+    OpenIDConnect.validate_discovery_issuer = @original_validate_discovery_issuer
   end
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
