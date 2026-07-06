@@ -1,44 +1,25 @@
 require "net/http"
 require "uri"
 
+# JWT-mechanics for the transitional Cloudflare Access service-token fallback
+# on /mcp. Deliberately has no before_action of its own — McpAuthentication
+# calls these methods explicitly as one of two auth strategies it tries.
 module CfAccessAuthentication
   extend ActiveSupport::Concern
 
   ISSUER   = "https://susurrant.cloudflareaccess.com"
   JWKS_URI = "#{ISSUER}/cdn-cgi/access/certs"
 
-  included do
-    before_action :cf_access_authenticate!
-  end
-
   private
 
-  attr_reader :current_mcp_user
+  def resolve_user_via_cf_service_token(payload)
+    return nil unless payload["type"] == "app"
 
-  def cf_access_authenticate!
-    token = extract_cf_assertion_token
-    return render_unauthorized unless token
-
-    payload = decode_cf_token(token)
-    return render_unauthorized unless payload
-
-    user = resolve_user(payload)
-    return render_unauthorized unless user
-
-    @current_mcp_user = user
-  end
-
-  def resolve_user(payload)
-    if payload["type"] == "app"
-      common_name = payload["common_name"]
-      return nil unless common_name&.end_with?(".access")
-      token_id = common_name.delete_suffix(".access")
-      return nil if token_id.blank?
-      User.find_by(mcp_service_token_id: token_id)
-    else
-      email = payload["email"].presence
-      User.find_by(email_address: email) if email
-    end
+    common_name = payload["common_name"]
+    return nil unless common_name&.end_with?(".access")
+    token_id = common_name.delete_suffix(".access")
+    return nil if token_id.blank?
+    User.find_by(mcp_service_token_id: token_id)
   end
 
   def extract_cf_assertion_token
@@ -70,9 +51,5 @@ module CfAccessAuthentication
       raise "JWKS fetch failed (#{response.code})" unless response.is_a?(Net::HTTPSuccess)
       JSON.parse(response.body)
     end
-  end
-
-  def render_unauthorized
-    render json: { error: "Unauthorized" }, status: :unauthorized
   end
 end
