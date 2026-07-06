@@ -120,6 +120,32 @@
   </div>
 
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-8">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-6">Connected apps</h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      AI tools that have completed OAuth sign-in and can access your learning data via the MCP server.
+    </p>
+
+    <% if @connected_apps.any? %>
+      <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+        <% @connected_apps.each do |application, tokens| %>
+          <li class="py-4 flex items-center justify-between gap-4">
+            <div>
+              <p class="font-medium text-gray-800 dark:text-gray-200"><%= application.name %></p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Connected <%= tokens.map(&:created_at).min.to_date %>
+              </p>
+            </div>
+            <%= button_to "Revoke", revoke_connected_app_path(application.id), method: :delete,
+                  class: "text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-500 bg-transparent border-0 p-0 cursor-pointer" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-gray-500 dark:text-gray-400">No AI tools are currently connected.</p>
+    <% end %>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 mt-8">
     <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Your data</h2>
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
       Export all your learning progress as a JSON file, or restore from a previous export.

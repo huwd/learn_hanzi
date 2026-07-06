@@ -46,6 +46,7 @@ Rails.application.routes.draw do
   get  "auth/failure",       to: "omniauth_callbacks#failure",                as: :auth_failure
 
   resource :settings, only: %i[show update]
+  delete "settings/connected_apps/:id", to: "settings#revoke_connected_app", as: :revoke_connected_app
   get "sign_in", to: "sessions#new", as: :sign_in
   resource :session, only: %i[destroy]
   resources :tags, only: [ :index, :show ]
