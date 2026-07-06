@@ -119,6 +119,9 @@ jobs:
     continue-on-error: true
 
     steps:
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y curl libjemalloc2 sqlite3
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
@@ -127,6 +130,9 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+
+      - name: Build assets
+        run: bin/rails tailwindcss:build
 
       - name: Install Imposter CLI and oidc-server plugin
         run: |
