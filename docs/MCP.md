@@ -4,9 +4,15 @@ learn-hanzi exposes a read-only [Model Context Protocol](https://modelcontextpro
 
 ## Authentication
 
-The `/mcp` endpoint sits behind Cloudflare Access. Authentication uses a **Cloudflare Access service token** — a static client ID + secret pair that you create once and embed in your AI client's config.
+The `/mcp` endpoint is an OAuth 2.1 resource server: `learn-hanzi` is its own authorization server for MCP clients (Doorkeeper), with self-service client identification via [OAuth Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document) rather than a manual registration step. A compliant MCP client discovers everything it needs from `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server` and drives a normal browser-based authorization-code + PKCE flow — there's nothing to create or paste in ahead of time.
 
-### One-time setup
+Signing in during that flow uses your existing learn-hanzi account (PocketID), and you'll see a consent screen naming the client before access is granted. Revoke access at any time from **Settings → Connected apps**.
+
+See `docs/threat_assessments/MCP_OAUTH_DOORKEEPER.md` for the design rationale and threat model.
+
+### Legacy: Cloudflare Access service token
+
+A transitional fallback still exists for clients that only support a static bearer credential. This path is being phased out — see the threat assessment for the sunset plan — and requires the `/mcp` endpoint to still sit behind a Cloudflare Access policy that has vetted the caller:
 
 **1. Create a service token**
 
@@ -39,42 +45,25 @@ Add the following to your Claude Desktop config (`~/Library/Application Support/
   "mcpServers": {
     "learn-hanzi": {
       "type": "http",
-      "url": "https://xue.huwdiprose.co.uk/mcp",
-      "headers": {
-        "CF-Access-Client-Id": "<your-client-id>",
-        "CF-Access-Client-Secret": "<your-client-secret>"
-      }
+      "url": "https://xue.huwdiprose.co.uk/mcp"
     }
   }
 }
 ```
 
-Restart Claude Desktop after saving.
+Restart Claude Desktop after saving — it will open a browser window to complete sign-in and consent on first connection.
 
 ---
 
 ## Smoke test
 
-Verify the server is reachable and your credentials work:
+Verify the discovery endpoints are reachable:
 
 ```bash
-curl -sS -i -X POST https://xue.huwdiprose.co.uk/mcp \
-  -H "CF-Access-Client-Id: <your-client-id>" \
-  -H "CF-Access-Client-Secret: <your-client-secret>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2025-03-26",
-      "capabilities": {},
-      "clientInfo": { "name": "test", "version": "1" }
-    }
-  }'
+curl -sS https://xue.huwdiprose.co.uk/.well-known/oauth-authorization-server
 ```
 
-A successful response returns HTTP 200 with a `Mcp-Session-Id` header and a JSON body describing the server's capabilities.
+A successful response is a JSON document listing `authorization_endpoint`, `token_endpoint`, and `client_id_metadata_document_supported: true`.
 
 ---
 
