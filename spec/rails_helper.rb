@@ -16,6 +16,7 @@ require_relative 'support/anki_helper'
 require_relative 'support/query_counter'
 require_relative 'support/capybara'
 require_relative 'support/doorkeeper_helpers'
+require_relative 'support/real_oidc_helpers'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -44,7 +45,28 @@ RSpec.configure do |config|
   config.include AuthenticationHelpers, type: :request
   config.include AuthenticationHelpers, type: :system
   config.include DoorkeeperHelpers, type: :request
+  config.include RealOidcHelpers, type: :system
   config.include QueryCounter
+
+  # Exercises the real omniauth_openid_connect strategy against a stub OIDC
+  # server (see docs/testing/real_oidc_stub.md) — opt-in since it needs that
+  # stub running locally/in CI, unlike every other spec here.
+  config.filter_run_excluding real_oidc: true unless ENV["REAL_OIDC"]
+
+  # The openid_connect gem's discovery step always builds an https:// URL
+  # (OpenIDConnect::Discovery::Provider::Config::Resource#endpoint discards
+  # the issuer's actual scheme entirely), and validates the discovery
+  # document's issuer against what we configured. Both are real production
+  # safeguards we want everywhere else — scoped here to real_oidc specs only,
+  # since the stub is plain HTTP and (see the upstream PR referenced in
+  # docs/testing/real_oidc_stub.md) currently reports its issuer without its
+  # own path prefix.
+  config.before(:each, real_oidc: true) do
+    require "swd"
+    require "openid_connect"
+    SWD.url_builder = URI::HTTP
+    OpenIDConnect.validate_discovery_issuer = false
+  end
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
