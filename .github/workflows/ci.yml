@@ -113,6 +113,10 @@ jobs:
   # doesn't, promote it to a required check.
   real_oidc_test:
     runs-on: ubuntu-latest
+    # Not just "not required" — without this, the job's expected failure
+    # still turns the overall workflow run red, which is noise on every PR
+    # and can confuse tooling that keys off run-level (not job-level) status.
+    continue-on-error: true
 
     steps:
       - name: Checkout code
