@@ -23,12 +23,6 @@ module CfAccessHelpers
       )
   end
 
-  def cf_access_token(email:, aud: CfAccessHelpers::AUD, iss: CfAccessHelpers::ISSUER, exp: 1.hour.from_now.to_i, omit_email: false)
-    payload = { iss: iss, sub: email, aud: [ aud ], exp: exp, iat: Time.current.to_i }
-    payload[:email] = email unless omit_email
-    JWT.encode(payload, CfAccessHelpers.private_key, "RS256", { kid: "test-kid-1" })
-  end
-
   def cf_service_token(common_name:, aud: CfAccessHelpers::AUD, iss: CfAccessHelpers::ISSUER, exp: 1.hour.from_now.to_i)
     payload = { type: "app", iss: iss, sub: "", aud: [ aud ], exp: exp, iat: Time.current.to_i }
     payload[:common_name] = common_name unless common_name.nil?
