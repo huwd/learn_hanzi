@@ -97,6 +97,54 @@ jobs:
           path: coverage/
           if-no-files-found: ignore
 
+  # Exercises the real omniauth_openid_connect strategy (discovery, JWKS,
+  # redirect_uri, authorization-code + PKCE exchange) against a stub OIDC
+  # server, rather than the OmniAuth test-mode mock every other spec uses.
+  # See docs/testing/real_oidc_stub.md.
+  #
+  # Expected to fail right now: the published oidc-server plugin has a known
+  # issuer bug (discovery document and issued ID tokens omit path_prefix from
+  # their issuer, which our strict-by-default openid_connect gem rejects).
+  # Fix prepared upstream, not yet merged — see
+  # docs/testing/real_oidc_stub.md for tracking. Deliberately NOT in
+  # `publish`'s needs: below, so this failing job doesn't block deploys while
+  # it's red for a reason outside this repo. Once the upstream fix ships,
+  # this job should start passing with no changes needed here — if it
+  # doesn't, promote it to a required check.
+  real_oidc_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Install Imposter CLI and oidc-server plugin
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/imposter-project/imposter-cli/main/install/install_imposter.sh -o /tmp/install_imposter.sh
+          sudo bash /tmp/install_imposter.sh
+          imposter plugin install -d oidc-server -t native
+
+      - name: Start OIDC stub
+        run: |
+          imposter up spec/support/imposter/config -t native -p 8080 --log-level info &
+          timeout 30 bash -c 'until curl -sf http://localhost:8080/oidc/.well-known/openid-configuration; do sleep 1; done'
+
+      - name: Run real-OIDC specs
+        env:
+          RAILS_ENV: test
+          REAL_OIDC: "1"
+          OIDC_ISSUER: "http://localhost:8080/oidc"
+          OIDC_CLIENT_ID: "dev-client-id"
+          OIDC_CLIENT_SECRET: "dev-client-secret"
+          OIDC_REDIRECT_URI: "http://localhost:31337/auth/oidc/callback"
+        run: bin/rails db:test:prepare && bundle exec rspec --tag real_oidc
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
