@@ -34,6 +34,25 @@ In the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/):
 
 Go to **Settings → API access (MCP)** in the app and paste your **Client ID**. This associates the service token with your user account so the MCP server knows whose data to return.
 
+**4. Configure your client**
+
+The OAuth-based config shown in "Connecting Claude Desktop" below doesn't apply to this path — a legacy client needs the service token's headers instead:
+
+```json
+{
+  "mcpServers": {
+    "learn-hanzi": {
+      "type": "http",
+      "url": "https://xue.huwdiprose.co.uk/mcp",
+      "headers": {
+        "CF-Access-Client-Id": "<your-client-id>",
+        "CF-Access-Client-Secret": "<your-client-secret>"
+      }
+    }
+  }
+}
+```
+
 ---
 
 ## Connecting Claude Desktop
