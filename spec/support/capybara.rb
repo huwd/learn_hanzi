@@ -38,6 +38,12 @@ Capybara.register_driver :selenium_chrome_headless do |app|
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: options, service: service)
 end
 
+# Fixed rather than random so the real-OIDC spec tier's client redirect_uri
+# (registered with the stub OIDC server ahead of time) is deterministic.
+# See spec/support/real_oidc_helpers.rb and docs/testing/real_oidc_stub.md.
+Capybara.server_host = "localhost"
+Capybara.server_port = 31337
+
 RSpec.configure do |config|
   config.before(:each, type: :system) do
     WebMock.disable_net_connect!(allow_localhost: true)
