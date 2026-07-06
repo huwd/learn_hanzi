@@ -1,0 +1,71 @@
+# OIDC stub for the "real OIDC" spec tier — proves the real
+# omniauth_openid_connect integration (discovery, JWKS, redirect_uri,
+# authorization-code + PKCE exchange) works end to end, using a fixed canned
+# test user rather than PocketID. See docs/testing/real_oidc_stub.md.
+#
+# The RS256 keypair below is a throwaway generated solely for this stub —
+# never used by any real environment, and not a secret worth rotating if
+# exposed. Not RS256 in place of HS256 because JWKS-based validation is the
+# path real PocketID and CF Access already exercise elsewhere in this app.
+plugin: oidc-server
+resources: []
+
+config:
+  path_prefix: ""
+
+  users:
+    - username: "test-user"
+      password: "test-password"
+      claims:
+        sub: "test-user"
+        email: "oidc-stub@learn-hanzi.test"
+        name: "OIDC Stub User"
+
+  clients:
+    - client_id: "dev-client-id"
+      client_secret: "dev-client-secret"
+      redirect_uris:
+        - "http://localhost:31337/auth/oidc/callback"
+
+  jwt:
+    algorithm: "RS256"
+    key_id: "stub-key-1"
+    private_key: |
+      -----BEGIN PRIVATE KEY-----
+      MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCYkYmMrlPsD8fu
+      3bcs21mYTviJK8XSgN8KGiEAkJfmV26y04O8TpSX7Uc0pGxshwrNK3vQgCJlyLBe
+      RYcMZjAoUDhTthuKFRPms+FXhtN+AZqgb8GdsZvYXl02lWv68ex+fBeK/48785Rp
+      zdiI6tgodRzngFoCnEOApxJMSny3j+dnNYMdFhnrDjVf/7k9V9E0eesT2Lo3DEE+
+      ee3CYezilTPrAj1No0ebVJcsBQO6BrS36Ecwv3QPKih/rStQ60ZxDWcmuQoBzOgc
+      FQ7aThryNgePnmzhFyOG6F/CCSd3eS1HW6BOQEQGFKs0sXNGg+6tBihz2b5D29UR
+      fofYlnY1AgMBAAECggEAEUesl1c4UJyR9cM9Z7J5YZeSLUEcsQShHm0Kr1xxI+jj
+      tBPiUA3rZRC+F5+G2zzpU4cZCSq2GqaiGS9RRi19x1ccphiSYm+UNzVI8MenxRYL
+      7B90Q7bV0qoPbyr51ayYb1QBO6BJ2g2y0c/7djh5Ho3zJeJC75hAyf3CRAtMuGKC
+      d6URNbEN1/TXsfnZDvy9bnisCRLIqPsl2kY6SQKGIuxj0K6WA4IFMaLeJlTWLqYu
+      ECong8RHFJ66HeKgfu4yg4ge6QBopE/LQOgEkYpXX++l1G/gYvIG2iVam2Z2Pwmw
+      T6T749wKVQOS1GV9ZZHcq6mcD6nX2LBpvltI5qJ1kQKBgQDV8PMAHnMb4WQSVnpx
+      h2XJwLBJc05iQlky6bxxV7Id8Wm8Pk4BGCaWN5f0mkusIgYjeK6P50pbWksEwlZS
+      XECmvDWWzRzNVskJv7InG3ror69ir7ks9LBriaD56InhH86kMsvtZWhX33CCH0EW
+      xpBKWvIdaFOz1ZeywOpLk2d8xQKBgQC2j+AACFyrP2H7RzOyO/3/24aRb1TaNcTM
+      Jm+/KUKI8NLxwMeg1a9vlrELrvq5MDJGeyrucgyKg4IFXCRec0sRC5GJa4q/D8r8
+      b8bc0+jDYwWjlkOQlMKabT0py9ZadTmgB5MnuBZvXF57UqC65JkBmkva7I5gxZCj
+      /+0yzBuKsQKBgD3e7del9rIkb7Vh7w0wE/7Ry+miABQojfVMZWP98ZP5QhPfjN2C
+      J36f20Ew8ht4x3+wogMZ54Ydyb45mY8+ALB3k6Pl86Nqqr84AgSPTO9IB5eprArV
+      RMQEzFoZpu5FLZSM4C7qec+X3ciz0zYL/KSUQprAlhxW9AUNB3UNzwrlAoGAUu5a
+      uEkUJ6q8TNSUdFPyV2cW4zwq1JF2W7LeMn2Avwp/GNkVFkfb0RooRQFw3e05+XB8
+      GSNv9QA2cU7hKpK/N/gEXeOffJmlATWZpbkR1KhH6H8bJDOfj10uWq1BK4hy6/Jk
+      87cZYe8Y8HahkyTDKMo5yTKKnwVAZm+dBeVYYZECgYAt7kfyn8r5m8ptY+Km072X
+      44coDbt/3Xm0oI31nNK37u2Rbv9UwyZQcCe9wyUGwlhnTxTrXLcdBiIvHYLQmMQ8
+      GoRSrD/kOmqcQW7kRhetS3O76Nm4suABJVSVSJtiDH22wGpYRUur8ETaeTCngiun
+      TW0Fgkm+0jC7JR4azbbPZQ==
+      -----END PRIVATE KEY-----
+    public_key: |
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmJGJjK5T7A/H7t23LNtZ
+      mE74iSvF0oDfChohAJCX5ldustODvE6Ul+1HNKRsbIcKzSt70IAiZciwXkWHDGYw
+      KFA4U7YbihUT5rPhV4bTfgGaoG/BnbGb2F5dNpVr+vHsfnwXiv+PO/OUac3YiOrY
+      KHUc54BaApxDgKcSTEp8t4/nZzWDHRYZ6w41X/+5PVfRNHnrE9i6NwxBPnntwmHs
+      4pUz6wI9TaNHm1SXLAUDuga0t+hHML90Dyoof60rUOtGcQ1nJrkKAczoHBUO2k4a
+      8jYHj55s4Rcjhuhfwgknd3ktR1ugTkBEBhSrNLFzRoPurQYoc9m+Q9vVEX6H2JZ2
+      NQIDAQAB
+      -----END PUBLIC KEY-----
