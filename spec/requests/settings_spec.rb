@@ -47,6 +47,32 @@ RSpec.describe "Settings", type: :request do
           expect(response.body).not_to include("Advisor suggestion")
         end
       end
+
+      context "connected apps" do
+        it "shows a message when no apps are connected" do
+          get settings_path
+          expect(response.body).to include("No AI tools are currently connected")
+        end
+
+        it "lists an application with an active access token" do
+          token = doorkeeper_access_token_for(user)
+          get settings_path
+          expect(response.body).to include(token.application.name)
+        end
+
+        it "does not list another user's connected apps" do
+          other_token = doorkeeper_access_token_for(create(:user))
+          get settings_path
+          expect(response.body).not_to include(other_token.application.name)
+        end
+
+        it "does not list an application whose token has been revoked" do
+          token = doorkeeper_access_token_for(user)
+          token.revoke
+          get settings_path
+          expect(response.body).not_to include(token.application.name)
+        end
+      end
     end
   end
 
@@ -107,6 +133,36 @@ RSpec.describe "Settings", type: :request do
           patch settings_path, params: { user: { session_size: 5, new_cards_per_session: 10 } }
           expect(response).to have_http_status(:unprocessable_content)
         end
+      end
+    end
+  end
+
+  # -------------------------------------------------------------------------
+  # DELETE /settings/connected_apps/:id
+  # -------------------------------------------------------------------------
+  describe "DELETE /settings/connected_apps/:id" do
+    context "when unauthenticated" do
+      it "redirects to login" do
+        delete revoke_connected_app_path(1)
+        expect(response).to redirect_to("/sign_in")
+      end
+    end
+
+    context "when authenticated" do
+      before { sign_in user }
+
+      it "revokes the access token and redirects back to settings" do
+        token = doorkeeper_access_token_for(user)
+        delete revoke_connected_app_path(token.application_id)
+        expect(token.reload).to be_revoked
+        expect(response).to redirect_to(settings_path)
+      end
+
+      it "does not revoke another user's access token for that application" do
+        other_user  = create(:user)
+        other_token = doorkeeper_access_token_for(other_user)
+        delete revoke_connected_app_path(other_token.application_id)
+        expect(other_token.reload).not_to be_revoked
       end
     end
   end
