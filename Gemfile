@@ -27,6 +27,12 @@ gem "jwt", "~> 3.2"
 # OAuth 2.1 authorization server for MCP clients (auth code + PKCE + refresh)
 gem "doorkeeper", "~> 5.9"
 
+# SSRF-safe HTTP fetch for CIMD client metadata documents (arbitrary
+# client-supplied URLs) — pins connections to the resolved IP it validated,
+# closing the DNS-rebinding TOCTOU gap a hand-rolled resolve-then-connect
+# check would have.
+gem "ssrf_filter", "~> 1.5"
+
 # Rate limiting for OAuth authorize/token endpoints
 gem "rack-attack"
 

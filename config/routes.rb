@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   # :applications/:authorized_applications are skipped rather than left open.
   use_doorkeeper do
     skip_controllers :applications, :authorized_applications
+    # Resolves CIMD clients (client_id as an https:// metadata URL) before
+    # Doorkeeper's own client lookup runs.
+    controllers authorizations: "oauth/authorizations"
   end
 
   # MCP server — Doorkeeper OAuth 2.1 bearer tokens, with a transitional CF
