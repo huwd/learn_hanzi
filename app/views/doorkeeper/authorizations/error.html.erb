@@ -1,0 +1,12 @@
+<% content_for :title, "Authorization error" %>
+
+<div class="max-w-md mx-auto w-full py-16">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
+    <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+      <%= t("doorkeeper.authorizations.error.title") %>
+    </h2>
+    <p class="text-sm text-red-600 dark:text-red-400">
+      <%= (local_assigns[:error_response] ? error_response : @pre_auth.error_response).body[:error_description] %>
+    </p>
+  </div>
+</div>
