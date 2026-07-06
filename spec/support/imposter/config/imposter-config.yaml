@@ -11,7 +11,12 @@ plugin: oidc-server
 resources: []
 
 config:
-  path_prefix: ""
+  # The plugin has no way to configure a genuinely empty/root prefix — an
+  # empty string here silently falls back to "/oidc" anyway (see the
+  # upstream fix referenced in docs/testing/real_oidc_stub.md) — so this is
+  # written explicitly to match what actually happens at runtime, rather
+  # than implying an empty prefix was deliberately chosen and honored.
+  path_prefix: "/oidc"
 
   users:
     - username: "test-user"
