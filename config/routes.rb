@@ -4,7 +4,15 @@ Rails.application.routes.draw do
   # Returns 200 when the primary DB is reachable, 503 when the connection fails.
   get "up" => "health#show", as: :rails_health_check
 
-  # MCP server — AI agent access to learning state (OAuth 2.1 via CF Access)
+  # OAuth 2.1 authorization server for MCP clients. No self-service application
+  # management UI is exposed — CIMD clients are resolved automatically, so
+  # :applications/:authorized_applications are skipped rather than left open.
+  use_doorkeeper do
+    skip_controllers :applications, :authorized_applications
+  end
+
+  # MCP server — Doorkeeper OAuth 2.1 bearer tokens, with a transitional CF
+  # Access service-token fallback while existing clients migrate.
   post "mcp", to: "mcp#handle"
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)

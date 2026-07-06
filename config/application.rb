@@ -45,5 +45,8 @@ module LearnHanzi
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Throttles OAuth authorize/token endpoints (see config/initializers/rack_attack.rb).
+    config.middleware.use Rack::Attack
   end
 end
