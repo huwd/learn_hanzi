@@ -41,7 +41,7 @@ RSpec.describe "Well-known OAuth discovery endpoints", type: :request do
       expect(body["revocation_endpoint"]).to eq(oauth_revoke_url(host: "www.example.com"))
     end
 
-    it "advertises authorization_code as the only supported grant type" do
+    it "advertises authorization_code and refresh_token as the supported grant types" do
       get "/.well-known/oauth-authorization-server"
       body = JSON.parse(response.body)
       expect(body["grant_types_supported"]).to eq([ "authorization_code", "refresh_token" ])
