@@ -296,7 +296,12 @@ Doorkeeper.configure do
   # Check out https://github.com/doorkeeper-gem/doorkeeper/wiki/Changing-how-clients-are-authenticated
   # for more information on customization
   #
-  # access_token_methods :from_bearer_authorization, :from_access_token_param, :from_bearer_param
+  # Header only — never accept a bearer token via a query/body param (avoids
+  # tokens leaking into logs/referrers) and avoids Rails eagerly parsing the
+  # request body as params just to check for one, which would otherwise blow
+  # up on malformed JSON before McpController's own parser gets a chance to
+  # render a proper JSON-RPC error for it.
+  access_token_methods :from_bearer_authorization
 
   # Forces the usage of the HTTPS protocol in non-native redirect uris (enabled
   # by default in non-development environments). OAuth2 delegates security in

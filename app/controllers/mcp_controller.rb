@@ -1,5 +1,5 @@
 class McpController < ActionController::API
-  include CfAccessAuthentication
+  include McpAuthentication
 
   PROTOCOL_VERSION = "2025-03-26"
   SESSION_TTL = 24.hours
