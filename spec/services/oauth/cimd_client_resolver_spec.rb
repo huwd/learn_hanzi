@@ -38,6 +38,11 @@ RSpec.describe Oauth::CimdClientResolver do
       expect { resolver.resolve! }.to raise_error(described_class::InvalidMetadata, /userinfo/)
     end
 
+    it "rejects a client_id with an explicit default port" do
+      resolver = described_class.new("https://good.example.com:443/client.json")
+      expect { resolver.resolve! }.to raise_error(described_class::InvalidMetadata, /port/)
+    end
+
     context "when the hostname resolves to a private/loopback address" do
       before do
         allow(Resolv).to receive(:getaddresses).with("evil.example.com").and_return([ "127.0.0.1" ])

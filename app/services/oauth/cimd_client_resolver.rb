@@ -44,6 +44,12 @@ module Oauth
       raise InvalidMetadata, "client_id must have a path" if uri.path.blank?
       raise InvalidMetadata, "client_id must not include a fragment" if uri.fragment.present?
       raise InvalidMetadata, "client_id must not include userinfo" if uri.userinfo.present?
+      # uri.port is normalized to 443 whether or not it was written explicitly,
+      # so check the literal string — an explicit `:443` is a second, spurious
+      # representation of the same origin the spec asks us to reject.
+      if client_id_url.match?(%r{\Ahttps://[^/]*:443(/|\z)})
+        raise InvalidMetadata, "client_id must not specify the default port explicitly"
+      end
     rescue URI::InvalidURIError
       raise InvalidMetadata, "client_id is not a valid URL"
     end
