@@ -14,6 +14,9 @@ Rails.application.routes.draw do
     controllers authorizations: "oauth/authorizations"
   end
 
+  get "/.well-known/oauth-protected-resource",   to: "well_known#oauth_protected_resource"
+  get "/.well-known/oauth-authorization-server", to: "well_known#oauth_authorization_server"
+
   # MCP server — Doorkeeper OAuth 2.1 bearer tokens, with a transitional CF
   # Access service-token fallback while existing clients migrate.
   post "mcp", to: "mcp#handle"
