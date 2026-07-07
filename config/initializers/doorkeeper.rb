@@ -196,6 +196,7 @@ Doorkeeper.configure do
   # Every application this server creates is a public client (CIMD-resolved MCP
   # clients are always confidential: false), so PKCE is mandatory, not optional.
   force_pkce
+  pkce_code_challenge_methods %w[S256]
 
   # Hash access and refresh tokens before persisting them.
   # This will disable the possibility to use +reuse_access_token+
