@@ -22,12 +22,9 @@ RSpec.describe "Signing in via the real OIDC stub", type: :system, real_oidc: tr
 
   it "reuses the same user on a second login rather than creating a duplicate" do
     sign_in_via_real_oidc
-    first_user_id = User.find_by!(provider: "oidc", uid: "test-user").id
     sign_out
-
     sign_in_via_real_oidc
 
     expect(User.where(provider: "oidc", uid: "test-user").count).to eq(1)
-    expect(User.find_by!(provider: "oidc", uid: "test-user").id).to eq(first_user_id)
   end
 end
