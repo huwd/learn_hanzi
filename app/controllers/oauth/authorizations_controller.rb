@@ -32,7 +32,7 @@ module Oauth
 
       Oauth::CimdClientResolver.new(client_id).resolve!
     rescue Oauth::CimdClientResolver::InvalidMetadata, Oauth::CimdClientResolver::FetchError => e
-      Rails.logger.warn("CIMD resolution failed for #{client_id}: #{e.message}")
+      Rails.logger.warn("CIMD resolution failed for #{client_id.truncate(200).inspect}: #{e.message}")
     end
   end
 end
