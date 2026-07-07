@@ -25,7 +25,7 @@ Doorkeeper.configure do
   # an unauthenticated visitor is bounced through the existing PocketID-backed
   # sign-in flow and lands back here afterwards.
   resource_owner_authenticator do
-    Current.session ||= Session.find_by(id: cookies.signed[:session_id])
+    Current.session ||= (Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id])
     Current.user || (session[:return_to_after_authenticating] = request.url if request.get? || request.head?
                       redirect_to(sign_in_path))
   end
