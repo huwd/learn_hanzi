@@ -64,12 +64,21 @@ is not yet submitted/merged upstream. Until it ships in a published
 
 ## Running locally
 
-One-time setup:
+One-time setup — a pinned-version tarball, not `curl | bash` from `main`, to
+keep this auditable/reproducible (same approach `.github/workflows/ci.yml`
+uses):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/imposter-project/imposter-cli/main/install/install_imposter.sh | bash -
+IMPOSTER_CLI_VERSION="1.10.0"
+curl -fsSL -o /tmp/imposter-cli.tar.gz "https://github.com/imposter-project/imposter-cli/releases/download/v${IMPOSTER_CLI_VERSION}/imposter-cli_linux_amd64.tar.gz"
+tar xf /tmp/imposter-cli.tar.gz -C /tmp
+sudo mv /tmp/imposter /usr/local/bin/imposter
 imposter plugin install -d oidc-server -t native
 ```
+
+(On macOS, replace `imposter-cli_linux_amd64.tar.gz` with
+`imposter-cli_darwin_amd64.tar.gz` or `imposter-cli_darwin_arm64.tar.gz` as
+appropriate — see the [imposter-cli releases page](https://github.com/imposter-project/imposter-cli/releases).)
 
 Start the stub (leave running in its own terminal):
 
