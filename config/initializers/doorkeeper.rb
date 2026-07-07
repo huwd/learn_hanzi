@@ -26,7 +26,7 @@ Doorkeeper.configure do
   # sign-in flow and lands back here afterwards.
   resource_owner_authenticator do
     Current.session ||= Session.find_by(id: cookies.signed[:session_id])
-    Current.user || (session[:return_to_after_authenticating] = request.url
+    Current.user || (session[:return_to_after_authenticating] = request.url if request.get? || request.head?
                       redirect_to(sign_in_path))
   end
 
