@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_06_071255) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_105039) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -302,7 +302,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_06_071255) do
   add_foreign_key "meanings", "dictionary_entries"
   add_foreign_key "meanings", "sources"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_grants", "users", column: "resource_owner_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
+  add_foreign_key "oauth_access_tokens", "users", column: "resource_owner_id"
   add_foreign_key "review_logs", "user_learnings"
   add_foreign_key "sessions", "users"
   add_foreign_key "stroke_order_data", "dictionary_entries"
