@@ -266,6 +266,12 @@ rake provision:learn_hanzi
 - `RAILS_MASTER_KEY`
 - `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URI`
 - `STORAGE_PATH` — host path mounted to `/rails/storage` (holds the SQLite databases)
+- `APP_HOST` — the public hostname (no protocol), e.g. `learn-hanzi.example.com`.
+  Required at boot as of the MCP OAuth pentest remediation: `config.hosts` in
+  `config/environments/production.rb` now rejects any other Host header,
+  closing a gap where a spoofed Host was reflected into OAuth discovery
+  metadata. **Must be set in the Portainer stack before deploying this
+  change**, or the app will fail to boot (`ENV.fetch` with no default).
 - `SENTRY_DSN` (optional)
 
 The app runs on port 8037 externally, 3037 internally, with SolidQueue embedded in Puma (`SOLID_QUEUE_IN_PUMA=true`).

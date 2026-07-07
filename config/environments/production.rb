@@ -78,12 +78,17 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # Enable DNS rebinding protection and other `Host` header attacks. Required
+  # (not defaulted) — an unset APP_HOST should fail loudly at boot rather
+  # than silently leave every Host header accepted, which is what happened
+  # before this line existed: the OAuth discovery endpoints reflected an
+  # arbitrary Host/X-Forwarded-Host straight into `issuer`/
+  # `authorization_endpoint` (see security/pentests/2026-07-MCP_OAuth.md,
+  # F-003).
+  config.hosts << ENV.fetch("APP_HOST")
+
+  # Skip DNS rebinding protection for the default health check endpoint —
+  # container health checks hit this over localhost/the container IP, not
+  # APP_HOST.
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end
