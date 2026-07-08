@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+# One-time install of the Imposter CLI and oidc-server plugin used by the
+# "real OIDC" spec tier — see docs/testing/real_oidc_stub.md. Shared by CI
+# and local setup so there's one place that pins versions, instead of the
+# same curl/tar/install sequence hand-copied in both places.
+#
+# Both the CLI tarball and its release checksums.txt come from the same
+# pinned GitHub release, so the download is verified against a published
+# hash rather than trusted on faith. The plugin is pinned to a specific
+# Imposter engine version (imposter plugin install -v) for the same reason
+# the CLI is pinned: `imposter up` also targets this version below, so
+# install and runtime always agree instead of drifting apart on whatever
+# "latest" happens to resolve to on a given day.
+set -e
+
+IMPOSTER_CLI_VERSION="1.10.0"
+IMPOSTER_ENGINE_VERSION="5.19.0"
+
+os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+arch="$(uname -m)"
+case "$arch" in
+  x86_64) arch="amd64" ;;
+  aarch64|arm64) arch="arm64" ;;
+esac
+case "$os" in
+  linux|darwin) ;;
+  *) echo "Unsupported OS: $os" >&2; exit 1 ;;
+esac
+asset="imposter-cli_${os}_${arch}.tar.gz"
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+release_url="https://github.com/imposter-project/imposter-cli/releases/download/v${IMPOSTER_CLI_VERSION}"
+
+curl -fsSL -o "$tmp/$asset" "$release_url/$asset"
+curl -fsSL -o "$tmp/checksums.txt" "$release_url/checksums.txt"
+
+( cd "$tmp" && grep " $asset\$" checksums.txt | sha256sum -c - )
+
+tar xf "$tmp/$asset" -C "$tmp"
+sudo mv "$tmp/imposter" /usr/local/bin/imposter
+
+imposter plugin install -d oidc-server -t native -v "$IMPOSTER_ENGINE_VERSION"

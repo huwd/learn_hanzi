@@ -135,17 +135,11 @@ jobs:
         run: bin/rails tailwindcss:build
 
       - name: Install Imposter CLI and oidc-server plugin
-        env:
-          IMPOSTER_CLI_VERSION: "1.10.0"
-        run: |
-          curl -fsSL -o /tmp/imposter-cli.tar.gz "https://github.com/imposter-project/imposter-cli/releases/download/v${IMPOSTER_CLI_VERSION}/imposter-cli_linux_amd64.tar.gz"
-          tar xf /tmp/imposter-cli.tar.gz -C /tmp
-          sudo mv /tmp/imposter /usr/local/bin/imposter
-          imposter plugin install -d oidc-server -t native
+        run: bin/oidc_stub_setup
 
       - name: Start OIDC stub
         run: |
-          imposter up spec/support/imposter/config -t native -p 8080 --log-level info &
+          bin/oidc_stub &
           timeout 30 bash -c 'until curl -sf http://localhost:8080/oidc/.well-known/openid-configuration; do sleep 1; done'
 
       - name: Run real-OIDC specs
