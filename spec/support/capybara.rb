@@ -44,7 +44,7 @@ end
 # keeps Capybara's normal dynamic port selection, so a stray process already
 # holding 31337 can't break the whole suite for specs that don't need this.
 # See spec/support/real_oidc_helpers.rb and docs/testing/real_oidc_stub.md.
-if ENV["REAL_OIDC"]
+if ENV["REAL_OIDC"] == "1"
   Capybara.server_host = "localhost"
   Capybara.server_port = 31337
 end
