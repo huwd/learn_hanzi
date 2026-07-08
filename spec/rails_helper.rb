@@ -51,7 +51,7 @@ RSpec.configure do |config|
   # Exercises the real omniauth_openid_connect strategy against a stub OIDC
   # server (see docs/testing/real_oidc_stub.md) — opt-in since it needs that
   # stub running locally/in CI, unlike every other spec here.
-  config.filter_run_excluding real_oidc: true unless ENV["REAL_OIDC"]
+  config.filter_run_excluding real_oidc: true unless ENV["REAL_OIDC"] == "1"
 
   # The openid_connect gem's discovery step always builds an https:// URL
   # (OpenIDConnect::Discovery::Provider::Config::Resource#endpoint discards
