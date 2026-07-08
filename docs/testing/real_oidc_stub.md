@@ -64,21 +64,18 @@ is not yet submitted/merged upstream. Until it ships in a published
 
 ## Running locally
 
-One-time setup — a pinned-version tarball, not `curl | bash` from `main`, to
-keep this auditable/reproducible (same approach `.github/workflows/ci.yml`
-uses):
+One-time setup — `bin/oidc_stub_setup` (the same script `.github/workflows/ci.yml`
+runs) downloads a pinned-version Imposter CLI release tarball, verifies it
+against that release's published `checksums.txt` before extracting anything,
+installs it to `/usr/local/bin`, then installs the `oidc-server` plugin
+pinned to a specific Imposter engine version — not `curl | bash` from `main`,
+and not "whatever `latest` resolves to today", so this stays auditable and
+reproducible on both a laptop and a CI runner (Linux and macOS, amd64 and
+arm64):
 
 ```bash
-IMPOSTER_CLI_VERSION="1.10.0"
-curl -fsSL -o /tmp/imposter-cli.tar.gz "https://github.com/imposter-project/imposter-cli/releases/download/v${IMPOSTER_CLI_VERSION}/imposter-cli_linux_amd64.tar.gz"
-tar xf /tmp/imposter-cli.tar.gz -C /tmp
-sudo mv /tmp/imposter /usr/local/bin/imposter
-imposter plugin install -d oidc-server -t native
+bin/oidc_stub_setup
 ```
-
-(On macOS, replace `imposter-cli_linux_amd64.tar.gz` with
-`imposter-cli_darwin_amd64.tar.gz` or `imposter-cli_darwin_arm64.tar.gz` as
-appropriate — see the [imposter-cli releases page](https://github.com/imposter-project/imposter-cli/releases).)
 
 Start the stub (leave running in its own terminal):
 

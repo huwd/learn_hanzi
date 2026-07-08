@@ -1,8 +1,14 @@
 #!/usr/bin/env sh
 # Runs the stub OIDC server used by the "real OIDC" spec tier — see
-# docs/testing/real_oidc_stub.md. Requires the Imposter CLI and the
-# oidc-server plugin installed once (see that doc for setup).
+# docs/testing/real_oidc_stub.md. Requires bin/oidc_stub_setup to have been
+# run once first.
+#
+# Pinned to the same engine version bin/oidc_stub_setup installs the
+# oidc-server plugin for — otherwise `imposter up` would resolve "latest"
+# itself and could run a different engine than the plugin was built against.
 set -e
 
+IMPOSTER_ENGINE_VERSION="5.19.0"
+
 cd "$(dirname "$0")/.."
-exec imposter up spec/support/imposter/config -t native -p 8080 --log-level info
+exec imposter up spec/support/imposter/config -t native -v "$IMPOSTER_ENGINE_VERSION" -p 8080 --log-level info
