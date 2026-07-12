@@ -11,6 +11,16 @@ module Mastery
   # request never touches the Developing rows (and its bounded
   # recent-eases query), and a Stalled request never touches Established
   # rows -- only Stable pays for both.
+  #
+  # Sorting and pagination both happen against lightweight [UserLearning,
+  # coverage] candidates -- every sortable column except word/meaning
+  # lives directly on user_learnings, so no join is needed to rank the
+  # whole bucket. dictionary_entry/meanings are only ever hydrated for the
+  # current page's ids, after pagination has already picked them, so a
+  # large bucket costs no more per-request than a small one. Sorting by
+  # word/meaning is the one case that needs text for the whole bucket
+  # before ranking; that's a single lightweight lookup query (no
+  # association hydration), not a switch back to loading everything.
   class TrajectoryEntries
     Entry = Data.define(:id, :text, :pinyin, :meaning, :coverage, :factor, :graduation_count, :since, :next_due)
     Result = Data.define(:entries, :total, :page, :per_page)
@@ -18,16 +28,7 @@ module Mastery
     PER_PAGE = 50
     MAX_PER_PAGE = 200
 
-    SORT_KEYS = {
-      "word"        => ->(entry) { entry.text },
-      "meaning"     => ->(entry) { entry.meaning.to_s },
-      "ease"        => ->(entry) { entry.factor },
-      "graduations" => ->(entry) { entry.graduation_count },
-      "since"       => ->(entry) { entry.since || Time.at(0) },
-      "next_due"    => ->(entry) { entry.next_due || Time.at(0) }
-    }.freeze
-
-    SORTABLE_COLUMNS = SORT_KEYS.keys.freeze
+    SORTABLE_COLUMNS = %w[word meaning ease graduations since next_due].freeze
 
     def self.call(user:, bucket:, sort: nil, direction: nil, page: 1, per_page: PER_PAGE)
       new(user, bucket, sort, direction, page, per_page).call
@@ -43,11 +44,10 @@ module Mastery
     end
 
     def call
-      entries = hydrate(filtered_ids_with_coverage)
-      ordered = @sort ? sort_explicit(entries) : sort_default(entries)
+      ordered = @sort ? sort_explicit(filtered_candidates) : sort_default(filtered_candidates)
 
       Result.new(
-        entries: paginate(ordered),
+        entries: hydrate(paginate(ordered)),
         total: ordered.size,
         page: @page,
         per_page: @per_page
@@ -56,15 +56,15 @@ module Mastery
 
     private
 
-    def filtered_ids_with_coverage
+    def filtered_candidates
       case @bucket
       when Trajectory::CHRONIC, Trajectory::RECOVERING
-        classified_established.filter_map { |ul, t| [ ul.id, Coverage::ESTABLISHED ] if t == @bucket }
+        classified_established.filter_map { |ul, t| [ ul, Coverage::ESTABLISHED ] if t == @bucket }
       when Trajectory::STALLED
-        classified_developing.filter_map { |ul, t| [ ul.id, Coverage::DEVELOPING ] if t == @bucket }
+        classified_developing.filter_map { |ul, t| [ ul, Coverage::DEVELOPING ] if t == @bucket }
       when Trajectory::STABLE
-        established = classified_established.filter_map { |ul, t| [ ul.id, Coverage::ESTABLISHED ] if t == Trajectory::STABLE }
-        developing  = classified_developing.filter_map  { |ul, t| [ ul.id, Coverage::DEVELOPING ]  if t == Trajectory::STABLE }
+        established = classified_established.filter_map { |ul, t| [ ul, Coverage::ESTABLISHED ] if t == Trajectory::STABLE }
+        developing  = classified_developing.filter_map  { |ul, t| [ ul, Coverage::DEVELOPING ]  if t == Trajectory::STABLE }
         established + developing
       else
         raise ArgumentError, "unknown trajectory bucket: #{@bucket.inspect}"
@@ -86,7 +86,7 @@ module Mastery
     def established_records
       @established_records ||= @user.user_learnings
         .where.not(first_mastered_at: nil)
-        .select(:id, :state, :graduation_count)
+        .select(:id, :state, :graduation_count, :factor, :first_mastered_at, :next_due)
         .to_a
     end
 
@@ -100,64 +100,12 @@ module Mastery
     def developing_records
       @developing_records ||= @user.user_learnings
         .where(id: developing_ids)
-        .select(:id, :state, :graduation_count)
+        .select(:id, :state, :graduation_count, :factor, :developing_at, :next_due)
         .to_a
     end
 
     def recent_eases
       @recent_eases ||= RecentEases.call(user_learning_ids: developing_ids)
-    end
-
-    # One rich fetch for exactly the filtered ids, regardless of how many
-    # the bucket holds -- query count stays fixed as bucket size grows,
-    # same guarantee TrajectorySnapshot already gives.
-    def hydrate(ids_with_coverage)
-      coverage_by_id = ids_with_coverage.to_h
-      return [] if coverage_by_id.empty?
-
-      @user.user_learnings
-        .where(id: coverage_by_id.keys)
-        .includes(dictionary_entry: :meanings)
-        .map do |ul|
-          entry   = ul.dictionary_entry
-          meaning = entry.meanings.first
-          coverage = coverage_by_id.fetch(ul.id)
-
-          Entry.new(
-            id: ul.id,
-            text: entry.text,
-            pinyin: meaning&.pinyin,
-            meaning: meaning&.text,
-            coverage: coverage,
-            factor: ul.factor,
-            graduation_count: ul.graduation_count,
-            since: coverage == Coverage::ESTABLISHED ? ul.first_mastered_at : ul.developing_at,
-            next_due: ul.next_due
-          )
-        end
-    end
-
-    def sort_explicit(entries)
-      raise ArgumentError, "unsupported sort column: #{@sort.inspect}" unless SORTABLE_COLUMNS.include?(@sort)
-
-      key = SORT_KEYS.fetch(@sort)
-      sorted = entries.sort_by { |entry| key.call(entry) }
-      @direction == "desc" ? sorted.reverse : sorted
-    end
-
-    def sort_default(entries)
-      case @bucket
-      when Trajectory::CHRONIC
-        entries.sort_by { |e| -e.graduation_count }
-      when Trajectory::RECOVERING
-        entries.sort_by { |e| -e.factor }
-      when Trajectory::STALLED
-        entries.sort_by { |e| recent_average_ease(e.id) }
-      when Trajectory::STABLE
-        entries.sort_by { |e| [ e.coverage == Coverage::ESTABLISHED ? 0 : 1, -e.factor ] }
-      else
-        entries
-      end
     end
 
     def recent_average_ease(user_learning_id)
@@ -167,9 +115,117 @@ module Mastery
       eases.sum.to_f / eases.size
     end
 
-    def paginate(entries)
+    def since_for(user_learning, coverage)
+      coverage == Coverage::ESTABLISHED ? user_learning.first_mastered_at : user_learning.developing_at
+    end
+
+    def sort_default(candidates)
+      case @bucket
+      when Trajectory::CHRONIC
+        candidates.sort_by { |ul, _coverage| -ul.graduation_count }
+      when Trajectory::RECOVERING
+        candidates.sort_by { |ul, _coverage| -ul.factor }
+      when Trajectory::STALLED
+        candidates.sort_by { |ul, _coverage| recent_average_ease(ul.id) }
+      when Trajectory::STABLE
+        candidates.sort_by { |ul, coverage| [ coverage == Coverage::ESTABLISHED ? 0 : 1, -ul.factor ] }
+      else
+        candidates
+      end
+    end
+
+    def sort_explicit(candidates)
+      raise ArgumentError, "unsupported sort column: #{@sort.inspect}" unless SORTABLE_COLUMNS.include?(@sort)
+
+      sorted = case @sort
+      when "word"
+        lookup = word_lookup(candidates.map { |ul, _coverage| ul.id })
+        candidates.sort_by { |ul, _coverage| lookup.fetch(ul.id, "") }
+      when "meaning"
+        lookup = meaning_lookup(candidates.map { |ul, _coverage| ul.id })
+        candidates.sort_by { |ul, _coverage| lookup.fetch(ul.id, "").to_s }
+      when "ease"
+        candidates.sort_by { |ul, _coverage| ul.factor }
+      when "graduations"
+        candidates.sort_by { |ul, _coverage| ul.graduation_count }
+      when "since"
+        candidates.sort_by { |ul, coverage| since_for(ul, coverage) || Time.at(0) }
+      when "next_due"
+        candidates.sort_by { |ul, _coverage| ul.next_due || Time.at(0) }
+      end
+
+      @direction == "desc" ? sorted.reverse : sorted
+    end
+
+    # Text only, no association hydration -- used purely to rank the whole
+    # bucket by word when that's the explicit sort. dictionary_entry
+    # itself is still only ever loaded for the final page, in #hydrate.
+    def word_lookup(ids)
+      return {} if ids.empty?
+
+      @user.user_learnings.where(id: ids).joins(:dictionary_entry).pluck(:id, "dictionary_entries.text").to_h
+    end
+
+    # Mirrors what `dictionary_entry.meanings.first` returns elsewhere in
+    # the app (Rails adds an implicit `ORDER BY id ASC` to an unscoped
+    # `#first`) -- the lowest-id meaning per entry, fetched in one query
+    # rather than N+1ing meanings per candidate.
+    def meaning_lookup(ids)
+      return {} if ids.empty?
+
+      sql = Meaning.sanitize_sql_array([ <<~SQL, ids ])
+        SELECT ul.id AS user_learning_id, m.text AS meaning_text
+        FROM user_learnings ul
+        JOIN meanings m ON m.id = (
+          SELECT MIN(m2.id) FROM meanings m2 WHERE m2.dictionary_entry_id = ul.dictionary_entry_id
+        )
+        WHERE ul.id IN (?)
+      SQL
+
+      Meaning.connection.select_all(sql).each_with_object({}) do |row, memo|
+        memo[row["user_learning_id"]] = row["meaning_text"]
+      end
+    end
+
+    def paginate(candidates)
       offset = (@page - 1) * @per_page
-      entries[offset, @per_page] || []
+      candidates[offset, @per_page] || []
+    end
+
+    # One rich fetch for exactly the current page's ids, regardless of how
+    # many the bucket holds -- both query count and data volume stay fixed
+    # as bucket size grows. `where(id:)` doesn't preserve the order of
+    # `ids`, so results are re-keyed and walked back out in the order
+    # already decided by sort_default/sort_explicit above.
+    def hydrate(page_candidates)
+      return [] if page_candidates.empty?
+
+      coverage_by_id = page_candidates.to_h { |ul, coverage| [ ul.id, coverage ] }
+      ordered_ids = page_candidates.map { |ul, _coverage| ul.id }
+
+      records_by_id = @user.user_learnings
+        .where(id: ordered_ids)
+        .includes(dictionary_entry: :meanings)
+        .index_by(&:id)
+
+      ordered_ids.map do |id|
+        ul      = records_by_id.fetch(id)
+        entry   = ul.dictionary_entry
+        meaning = entry.meanings.first
+        coverage = coverage_by_id.fetch(id)
+
+        Entry.new(
+          id: ul.id,
+          text: entry.text,
+          pinyin: meaning&.pinyin,
+          meaning: meaning&.text,
+          coverage: coverage,
+          factor: ul.factor,
+          graduation_count: ul.graduation_count,
+          since: since_for(ul, coverage),
+          next_due: ul.next_due
+        )
+      end
     end
   end
 end

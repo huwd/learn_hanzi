@@ -199,5 +199,47 @@ RSpec.describe Mastery::TrajectoryEntries do
 
       expect(big_count).to eq(small_count)
     end
+
+    it "keeps the query count bounded when sorting explicitly by word" do
+      # word_lookup adds one lightweight text-only query, not a switch
+      # back to hydrating (and thus loading dictionary_entry/meanings for)
+      # the whole bucket -- query count must still stay flat.
+      5.times { |n| stable_established(text: "small_#{n}") }
+      small_count = count_queries do
+        described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, sort: "word", direction: "asc", page: 1, per_page: 2)
+      end
+
+      15.times { |n| stable_established(text: "big_#{n}") }
+      big_count = count_queries do
+        described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, sort: "word", direction: "asc", page: 1, per_page: 2)
+      end
+
+      expect(big_count).to eq(small_count)
+    end
+
+    it "keeps the query count bounded when sorting explicitly by meaning" do
+      5.times { |n| stable_established(text: "small_#{n}") }
+      small_count = count_queries do
+        described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, sort: "meaning", direction: "asc", page: 1, per_page: 2)
+      end
+
+      15.times { |n| stable_established(text: "big_#{n}") }
+      big_count = count_queries do
+        described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, sort: "meaning", direction: "asc", page: 1, per_page: 2)
+      end
+
+      expect(big_count).to eq(small_count)
+    end
+
+    it "sorts explicitly by meaning ascending when requested" do
+      first = stable_established(text: "aaa")
+      first.dictionary_entry.meanings.first.update!(text: "aardvark")
+      second = stable_established(text: "bbb")
+      second.dictionary_entry.meanings.first.update!(text: "zebra")
+
+      result = described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, sort: "meaning", direction: "asc")
+
+      expect(result.entries.map(&:text)).to eq([ "aaa", "bbb" ])
+    end
   end
 end
