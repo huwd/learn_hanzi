@@ -50,8 +50,11 @@ module Mastery
         # label ("Jan 1") -- otherwise an item touched later the same day
         # as `start` would be missing from this bucket for no visible
         # reason. Capped at end_date so this can't push a bucket past the
-        # final (also end_date) one.
-        buckets << [ d.end_of_day, @end_date ].min
+        # final (also end_date) one -- and skipped entirely when the cap
+        # lands exactly on end_date (start and end_date share a calendar
+        # day), since the unconditional push below already adds it once.
+        capped = [ d.end_of_day, @end_date ].min
+        buckets << capped if capped < @end_date
         d += 7.days
       end
       buckets << @end_date

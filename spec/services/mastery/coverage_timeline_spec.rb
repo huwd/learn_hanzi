@@ -84,6 +84,22 @@ RSpec.describe Mastery::CoverageTimeline do
       expect(result[:series][:emerging].first).to eq(2)
     end
 
+    it "does not duplicate the final bucket when start and end_date share a calendar day" do
+      # A new user starting today: start (09:00) and end_date (15:00) are
+      # the same day. end_of_day-capping start's bucket lands it exactly
+      # on end_date -- the unconditional final push must not add it twice.
+      milestones = { 1 => { emerging: Time.zone.parse("2026-01-15 09:00") } }
+
+      result = described_class.call(
+        milestones: milestones,
+        tiers: [ :emerging ],
+        end_date: Time.zone.parse("2026-01-15 15:00")
+      )
+
+      expect(result[:labels]).to eq([ "Jan 15" ])
+      expect(result[:series][:emerging]).to eq([ 1 ])
+    end
+
     it "caps the final bucket exactly at end_date rather than overshooting" do
       milestones = { 1 => { emerging: Time.zone.parse("2026-01-01") } }
 
