@@ -21,8 +21,14 @@ class ProgressController < ApplicationController
     developing_at = Current.user.user_learnings.where.not(developing_at: nil).pluck(:id, :developing_at).to_h
     established_at = Current.user.user_learnings.where.not(first_mastered_at: nil).pluck(:id, :first_mastered_at).to_h
 
-    milestones = emerging_at.each_with_object({}) do |(id, t), memo|
-      memo[id] = { established: established_at[id], developing: developing_at[id], emerging: t }
+    # Union of ids across all three, not just emerging_at's -- every
+    # current code path only ever sets first_mastered_at/developing_at
+    # alongside review history, but Mastery::Coverage treats
+    # first_mastered_at as authoritative regardless of review count, so
+    # this must not silently disagree if that invariant ever drifts.
+    all_ids = emerging_at.keys | developing_at.keys | established_at.keys
+    milestones = all_ids.index_with do |id|
+      { established: established_at[id], developing: developing_at[id], emerging: emerging_at[id] }
     end
 
     timeline = Mastery::CoverageTimeline.call(
@@ -53,18 +59,28 @@ class ProgressController < ApplicationController
       .group(:user_learning_id)
       .minimum(:created_at)
 
-    # Scoped to touched words only -- most users have far more Unseen
-    # (never-reviewed) words than touched ones (74% in the real dataset
-    # behind #391), and an Unseen word can never contribute a character.
+    established_ids = Current.user.user_learnings.where.not(first_mastered_at: nil).pluck(:id)
+
+    # Scoped to touched-or-established words only -- most users have far
+    # more Unseen (never-reviewed) words than touched ones (74% in the
+    # real dataset behind #391), and an Unseen word can never contribute
+    # a character. established_ids is unioned in defensively: every
+    # current code path only ever sets first_mastered_at alongside review
+    # history, but this must not silently drop a word's characters if
+    # that invariant ever drifts.
     words = Current.user.user_learnings
-      .where(id: emerging_at.keys)
+      .where(id: emerging_at.keys | established_ids)
       .joins(:dictionary_entry)
       .pluck(:id, "dictionary_entries.text", :first_mastered_at)
 
     char_touched = {}
     char_established = {}
     words.each do |id, text, established_at|
-      touched_at = emerging_at[id]
+      # Falls back to established_at (the best still-known date) when a
+      # word's review history is missing -- it must have been touched at
+      # or before its own establishment.
+      touched_at = emerging_at[id] || established_at
+      next unless touched_at
 
       text.chars.each do |char|
         char_touched[char] = touched_at if char_touched[char].nil? || touched_at < char_touched[char]
