@@ -62,11 +62,28 @@ module Mastery
         .to_a
     end
 
+    # Bounded to (at most) STALLED_LOOKBACK_REVIEWS rows per Developing
+    # word via a window function, rather than loading every review_log a
+    # word has ever had (some in the real data have 40+) just to keep the
+    # last few.
     def recent_eases
-      @recent_eases ||= ReviewLog.where(user_learning_id: developing_ids)
-        .order(:user_learning_id, created_at: :desc, time: :desc, id: :desc)
-        .group_by(&:user_learning_id)
-        .transform_values { |logs| logs.first(3).map(&:ease) }
+      return @recent_eases ||= {} if developing_ids.empty?
+
+      sql = ReviewLog.sanitize_sql_array([ <<~SQL, developing_ids ])
+        SELECT user_learning_id, ease FROM (
+          SELECT user_learning_id, ease,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY user_learning_id
+                   ORDER BY created_at DESC, time DESC, id DESC
+                 ) AS rn
+          FROM review_logs
+          WHERE user_learning_id IN (?)
+        ) ranked WHERE rn <= #{Thresholds::STALLED_LOOKBACK_REVIEWS}
+      SQL
+
+      @recent_eases ||= ReviewLog.connection.select_all(sql).each_with_object(Hash.new { |h, k| h[k] = [] }) do |row, memo|
+        memo[row["user_learning_id"]] << row["ease"]
+      end
     end
   end
 end
