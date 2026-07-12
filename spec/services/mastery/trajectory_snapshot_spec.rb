@@ -79,6 +79,20 @@ RSpec.describe Mastery::TrajectorySnapshot do
       expect(bucket_for(result, Mastery::Trajectory::STABLE).count).to eq(1)
     end
 
+    it "uses the 3 MOST RECENT eases, not the oldest 3" do
+      # 2 old good reviews followed by 3 recent bad ones, exactly at
+      # threshold. Last-3 (correct): [1,1,1], avg 1.0 -> Stalled.
+      # First-3 (wrong direction): [4,4,1], avg 3.0 -> would read Stable.
+      ul = create(:user_learning, user: user, state: "learning")
+      create(:review_log, user_learning: ul, ease: 4)
+      create(:review_log, user_learning: ul, ease: 4)
+      3.times { create(:review_log, user_learning: ul, ease: 1) }
+
+      result = described_class.call(user: user)
+      expect(bucket_for(result, Mastery::Trajectory::STALLED).count).to eq(1)
+      expect(bucket_for(result, Mastery::Trajectory::STABLE).count).to eq(0)
+    end
+
     it "excludes words below the Developing threshold entirely" do
       ul = create(:user_learning, user: user, state: "learning")
       create(:review_log, user_learning: ul, ease: 1)
