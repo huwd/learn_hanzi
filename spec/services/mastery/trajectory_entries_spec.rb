@@ -12,8 +12,8 @@ RSpec.describe Mastery::TrajectoryEntries do
   end
 
   def word(text:)
-    entry = create(:dictionary_entry, text: text, meanings_count: 0)
-    create(:meaning, dictionary_entry: entry, pinyin: "#{text}-pinyin", text: "#{text}-meaning")
+    entry = create(:dictionary_entry, text: text)
+    entry.meanings.first.update!(pinyin: "#{text}-pinyin", text: "#{text}-meaning")
     entry
   end
 
