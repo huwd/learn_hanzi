@@ -40,6 +40,12 @@ RSpec.shared_examples "an authenticated MCP session" do
       expect(body["result"]["capabilities"]["resources"]).to be_present
     end
 
+    it "advertises tool capabilities" do
+      post "/mcp", params: init_params, headers: auth_headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body["result"]["capabilities"]["tools"]).to be_present
+    end
+
     it "returns server info" do
       post "/mcp", params: init_params, headers: auth_headers, as: :json
       body = JSON.parse(response.body)
@@ -125,6 +131,183 @@ RSpec.shared_examples "an authenticated MCP session" do
       resources.each do |resource|
         expect(resource["name"]).to be_present
         expect(resource["mimeType"]).to eq("application/json")
+      end
+    end
+  end
+
+  describe "tools/list" do
+    let(:session_id) { establish_mcp_session(auth_headers) }
+
+    it "returns a JSON-RPC 2.0 envelope" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      body = JSON.parse(response.body)
+      expect(body["jsonrpc"]).to eq("2.0")
+      expect(body["id"]).to eq(2)
+    end
+
+    it "returns all five tools" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      tools = JSON.parse(response.body).dig("result", "tools")
+      expect(tools.length).to eq(5)
+    end
+
+    it "includes all expected tool names" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      names = JSON.parse(response.body).dig("result", "tools").map { |t| t["name"] }
+      expect(names).to contain_exactly(
+        "get_learning_profile",
+        "list_mastered_vocabulary",
+        "list_struggling_vocabulary",
+        "list_recent_vocabulary",
+        "list_active_vocabulary"
+      )
+    end
+
+    it "includes a description and inputSchema for each tool" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      tools = JSON.parse(response.body).dig("result", "tools")
+      tools.each do |tool|
+        expect(tool["description"]).to be_present
+        expect(tool["inputSchema"]["type"]).to eq("object")
+      end
+    end
+
+    it "declares limit and offset arguments on the list_* tools" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      tool = JSON.parse(response.body).dig("result", "tools").find { |t| t["name"] == "list_mastered_vocabulary" }
+      expect(tool["inputSchema"]["properties"].keys).to contain_exactly("limit", "offset")
+    end
+
+    it "declares no arguments on get_learning_profile" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 2, method: "tools/list" },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      tool = JSON.parse(response.body).dig("result", "tools").find { |t| t["name"] == "get_learning_profile" }
+      expect(tool["inputSchema"]["properties"]).to eq({})
+    end
+  end
+
+  describe "tools/call" do
+    let(:session_id) { establish_mcp_session(auth_headers) }
+
+    def call_tool(name, arguments = {})
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: name, arguments: arguments } },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      JSON.parse(response.body)
+    end
+
+    it "returns -32602 for an unknown tool name" do
+      body = call_tool("does_not_exist")
+      expect(body["error"]["code"]).to eq(-32602)
+    end
+
+    describe "get_learning_profile" do
+      it "returns a JSON-RPC 2.0 envelope with text content and structuredContent" do
+        body = call_tool("get_learning_profile")
+        expect(body["jsonrpc"]).to eq("2.0")
+        expect(body["id"]).to eq(3)
+        content = body.dig("result", "content")
+        expect(content).to be_an(Array)
+        expect(content.first["type"]).to eq("text")
+        expect(content.first["text"]).to be_present
+      end
+
+      it "returns the same data as the profile resource" do
+        create(:user_learning, user: user, state: "mastered")
+        body = call_tool("get_learning_profile")
+        summary = body.dig("result", "structuredContent", "summary")
+        expect(summary["mastered"]).to eq(1)
+      end
+
+      it "scopes results to the authenticated user" do
+        create(:user_learning, user: create(:user), state: "mastered")
+        body = call_tool("get_learning_profile")
+        summary = body.dig("result", "structuredContent", "summary")
+        expect(summary["total"]).to eq(0)
+      end
+    end
+
+    describe "list_mastered_vocabulary" do
+      it "returns the same data as the mastered vocabulary resource" do
+        create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+        body = call_tool("list_mastered_vocabulary")
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(1)
+      end
+
+      it "applies a default limit" do
+        6.times { create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago) }
+        body = call_tool("list_mastered_vocabulary")
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to be <= 50
+      end
+
+      it "honours a supplied limit" do
+        3.times { create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago) }
+        body = call_tool("list_mastered_vocabulary", limit: 2)
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(2)
+      end
+
+      it "honours a supplied offset" do
+        older = create(:user_learning, user: user, state: "mastered", mastered_at: 2.days.ago)
+        newer = create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+        body = call_tool("list_mastered_vocabulary", limit: 1, offset: 1)
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.first["hanzi"]).to eq(older.dictionary_entry.text)
+      end
+    end
+
+    describe "list_recent_vocabulary" do
+      it "returns the same data as the recent vocabulary resource" do
+        create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+        body = call_tool("list_recent_vocabulary")
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(1)
+      end
+    end
+
+    describe "list_active_vocabulary" do
+      it "returns the same data as the active vocabulary resource" do
+        create(:user_learning, user: user, state: "learning", next_due: 1.day.from_now)
+        body = call_tool("list_active_vocabulary")
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(1)
+      end
+    end
+
+    describe "list_struggling_vocabulary" do
+      it "returns the same data as the struggling vocabulary resource" do
+        ul = create(:user_learning, user: user, state: "learning")
+        create(:review_log, user_learning: ul, ease: 1)
+        body = call_tool("list_struggling_vocabulary")
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.first["lapse_count"]).to eq(1)
+      end
+
+      it "honours a supplied limit" do
+        3.times { create(:user_learning, user: user, state: "learning") }
+        body = call_tool("list_struggling_vocabulary", limit: 1)
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(1)
       end
     end
   end
