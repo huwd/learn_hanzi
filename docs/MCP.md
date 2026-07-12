@@ -12,49 +12,6 @@ Signing in during that flow uses your existing learn-hanzi account (PocketID), a
 
 See `docs/threat_assessments/MCP_OAUTH_DOORKEEPER.md` for the design rationale and threat model.
 
-### Legacy: Cloudflare Access service token
-
-A transitional fallback still exists for clients that only support a static bearer credential. This path is being phased out — see the threat assessment for the sunset plan — and requires the `/mcp` endpoint to still sit behind a Cloudflare Access policy that has vetted the caller:
-
-**1. Create a service token**
-
-In the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/):
-
-- Access → Service Tokens → Create Service Token
-- Give it a name (e.g. `claude-mcp`)
-- Copy the **Client ID** and **Client Secret** — the secret is only shown once
-- Treat the Client Secret as a password: do not commit it, share it, or store it in plaintext. If leaked, rotate immediately in the CF dashboard.
-
-**2. Add the token to the learn-hanzi Access policy**
-
-- Access → Applications → learn-hanzi → Edit
-- Policies → edit your Allow policy
-- Add an include rule: **Service Token** → select your token
-- Save
-
-**3. Link the token to your account**
-
-Go to **Settings → API access (MCP)** in the app and paste your **Client ID**. This associates the service token with your user account so the MCP server knows whose data to return.
-
-**4. Configure your client**
-
-The OAuth-based config shown in "Connecting Claude Desktop" below doesn't apply to this path — a legacy client needs the service token's headers instead:
-
-```json
-{
-  "mcpServers": {
-    "learn-hanzi": {
-      "type": "http",
-      "url": "https://xue.huwdiprose.co.uk/mcp",
-      "headers": {
-        "CF-Access-Client-Id": "<your-client-id>",
-        "CF-Access-Client-Secret": "<your-client-secret>"
-      }
-    }
-  }
-}
-```
-
 ---
 
 ## Connecting Claude Desktop
