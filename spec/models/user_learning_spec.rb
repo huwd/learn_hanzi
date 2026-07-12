@@ -118,6 +118,34 @@ RSpec.describe UserLearning, type: :model do
     end
   end
 
+  describe 'graduation_count' do
+    it "increments graduation_count when state transitions to mastered" do
+      ul = create(:user_learning, user: user, state: "learning")
+      expect { ul.update!(state: "mastered") }
+        .to change { ul.graduation_count }.from(0).to(1)
+    end
+
+    it "does not increment graduation_count for non-mastered state transitions" do
+      ul = create(:user_learning, user: user, state: "new")
+      ul.update!(state: "learning")
+      expect(ul.graduation_count).to eq(0)
+    end
+
+    it "does not increment graduation_count on saves that don't change state" do
+      ul = create(:user_learning, user: user, state: "mastered")
+      expect { ul.update!(factor: 2600) }
+        .not_to change { ul.graduation_count }
+    end
+
+    it "increments again on each re-mastery after a lapse, unlike first_mastered_at" do
+      ul = create(:user_learning, user: user, state: "learning")
+      ul.update!(state: "mastered")
+      ul.update!(state: "learning")
+      expect { ul.update!(state: "mastered") }
+        .to change { ul.graduation_count }.from(1).to(2)
+    end
+  end
+
   describe 'due-card scopes' do
     let!(:overdue_learning) do
       create(:user_learning, user: user, state: 'learning', next_due: 2.days.ago)
