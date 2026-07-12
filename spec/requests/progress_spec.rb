@@ -86,6 +86,16 @@ RSpec.describe "Progress", type: :request do
           get learn_progress_character_chart_data_path
           expect(parsed["series"].first["values"].last).to eq(2)
         end
+
+        it "keeps a lapsed word's characters counted (does not retroactively rewrite history)" do
+          lapsed_entry = create(:dictionary_entry, text: "学")
+          lapsed = create(:user_learning, user: user, state: "learning", dictionary_entry: lapsed_entry)
+          lapsed.update!(state: "mastered")
+          lapsed.update!(state: "learning")
+
+          get learn_progress_character_chart_data_path
+          expect(parsed["series"].first["values"].last).to eq(3)
+        end
       end
     end
   end
@@ -150,8 +160,22 @@ RSpec.describe "Progress", type: :request do
           expect(mastered["values"].last).to eq(1)
         end
 
-        it "excludes lapsed cards (state: learning with mastered_at set) from mastered count" do
-          # Simulate a card that was mastered then lapsed: mastered_at is set but state is learning
+        it "keeps a lapsed card in the mastered count (does not retroactively rewrite history)" do
+          # A card that graduated then lapsed still has first_mastered_at set,
+          # even though mastered_at (the live field) is cleared and state is
+          # no longer "mastered". The chart must not drop it. See #391.
+          lapsed = create(:user_learning, user: user, state: "learning")
+          lapsed.update!(state: "mastered")
+          lapsed.update!(state: "learning")
+
+          get learn_progress_chart_data_path
+          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
+          expect(mastered["values"].last).to eq(2)
+        end
+
+        it "excludes stale records with a leftover mastered_at but no first_mastered_at" do
+          # Data written before first_mastered_at existed, bypassing the
+          # model callback entirely — not a case the fix is expected to cover.
           create(:user_learning, user: user, state: "learning", mastered_at: 1.day.ago,
                  dictionary_entry: create(:dictionary_entry))
           get learn_progress_chart_data_path

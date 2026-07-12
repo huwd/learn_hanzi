@@ -13,11 +13,13 @@ class ProgressController < ApplicationController
       .group_by { |dt| dt.to_date.to_s }
       .transform_values(&:count)
 
+    # Keyed on first_mastered_at (durable, never cleared on lapse) rather
+    # than state/mastered_at, so a later lapse doesn't retroactively lower
+    # this count at every date since the original mastery. See #391.
     mastered_per_day = Current.user.user_learnings
-      .where(state: "mastered")
-      .where.not(mastered_at: nil)
-      .group("date(mastered_at)")
-      .order("date(mastered_at)")
+      .where.not(first_mastered_at: nil)
+      .group("date(first_mastered_at)")
+      .order("date(first_mastered_at)")
       .count
 
     all_dates = (learning_per_day.keys + mastered_per_day.keys).uniq.sort
@@ -44,16 +46,18 @@ class ProgressController < ApplicationController
   end
 
   def character_chart_data
+    # Keyed on first_mastered_at (durable, never cleared on lapse) rather
+    # than state/mastered_at, so a later lapse doesn't drop the word's
+    # characters out of this count. See #391.
     mastered = Current.user.user_learnings
-      .where(state: "mastered")
-      .where.not(mastered_at: nil)
+      .where.not(first_mastered_at: nil)
       .joins(:dictionary_entry)
-      .select("dictionary_entries.text, user_learnings.mastered_at")
+      .select("dictionary_entries.text, user_learnings.first_mastered_at")
 
     # For each character find the earliest date it appeared in a mastered word
     char_first_mastered = {}
     mastered.each do |ul|
-      date = ul.mastered_at.to_date.to_s
+      date = ul.first_mastered_at.to_date.to_s
       ul.text.chars.each do |char|
         char_first_mastered[char] = date if char_first_mastered[char].nil? || date < char_first_mastered[char]
       end
