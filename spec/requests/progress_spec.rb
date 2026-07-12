@@ -276,4 +276,114 @@ RSpec.describe "Progress", type: :request do
       end
     end
   end
+
+  describe "GET /learn/progress/trajectory/:bucket" do
+    context "when unauthenticated" do
+      it "redirects to the login page" do
+        get learn_progress_trajectory_path(bucket: "stable")
+        expect(response).to redirect_to("/sign_in")
+      end
+    end
+
+    context "when authenticated" do
+      before { sign_in user }
+
+      def word_cells
+        Nokogiri::HTML(response.body).css("[data-word]").map { |el| el["data-word"] }
+      end
+
+      def graduate!(text:)
+        ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry, text: text))
+        create(:review_log, user_learning: ul, ease: 3)
+        ul.update!(state: "mastered")
+        ul
+      end
+
+      it "returns a successful response for each valid bucket" do
+        %w[stable recovering chronic stalled].each do |bucket|
+          get learn_progress_trajectory_path(bucket: bucket)
+          expect(response).to have_http_status(:success)
+        end
+      end
+
+      it "404s on an unknown bucket" do
+        get learn_progress_trajectory_path(bucket: "not_a_real_bucket")
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "404s on the not_applicable bucket (not a real drill-down)" do
+        get learn_progress_trajectory_path(bucket: Mastery::Trajectory::NOT_APPLICABLE)
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "lists the words classified into the requested bucket" do
+        graduate!(text: "established_word")
+
+        get learn_progress_trajectory_path(bucket: "stable")
+        expect(word_cells).to include("established_word")
+      end
+
+      it "excludes words from other buckets" do
+        threshold = Mastery::Thresholds::EMERGING_TO_DEVELOPING_REVIEW_COUNT
+        stalled_ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry, text: "stalled_word"))
+        threshold.times { create(:review_log, user_learning: stalled_ul, ease: 1) }
+
+        get learn_progress_trajectory_path(bucket: "chronic")
+        expect(word_cells).not_to include("stalled_word")
+      end
+
+      it "only shows the current user's words" do
+        other_user = create(:user)
+        other_ul = create(:user_learning, user: other_user, state: "learning", dictionary_entry: create(:dictionary_entry, text: "not_mine"))
+        create(:review_log, user_learning: other_ul, ease: 3)
+        other_ul.update!(state: "mastered")
+
+        get learn_progress_trajectory_path(bucket: "stable")
+        expect(word_cells).not_to include("not_mine")
+      end
+
+      it "renders clickable, sortable column headers" do
+        graduate!(text: "established_word")
+
+        get learn_progress_trajectory_path(bucket: "stable")
+        doc = Nokogiri::HTML(response.body)
+        sort_links = doc.css("th a[href]")
+        expect(sort_links.map(&:text)).to include("Word", "Meaning", "Ease", "Graduations", "Since", "Next due")
+        expect(sort_links.first["href"]).to include("sort=")
+      end
+
+      it "honours explicit sort and direction query params" do
+        graduate!(text: "zzz_word")
+        graduate!(text: "aaa_word")
+
+        get learn_progress_trajectory_path(bucket: "stable", sort: "word", direction: "asc")
+        expect(word_cells).to eq([ "aaa_word", "zzz_word" ])
+
+        get learn_progress_trajectory_path(bucket: "stable", sort: "word", direction: "desc")
+        expect(word_cells).to eq([ "zzz_word", "aaa_word" ])
+      end
+
+      it "paginates and links to the next page" do
+        3.times { |n| graduate!(text: "word_#{n}") }
+
+        get learn_progress_trajectory_path(bucket: "stable", sort: "word", direction: "asc", per_page: 2)
+        expect(word_cells).to eq([ "word_0", "word_1" ])
+        doc = Nokogiri::HTML(response.body)
+        expect(doc.at_css('a[href*="page=2"]')).to be_present
+
+        get learn_progress_trajectory_path(bucket: "stable", sort: "word", direction: "asc", per_page: 2, page: 2)
+        expect(word_cells).to eq([ "word_2" ])
+      end
+
+      it "keeps the query count bounded regardless of bucket size" do
+        graduate!(text: "single_word")
+        count_with_few = count_queries { get learn_progress_trajectory_path(bucket: "stable") }
+
+        15.times { |n| graduate!(text: "extra_#{n}") }
+        count_with_many = count_queries { get learn_progress_trajectory_path(bucket: "stable") }
+
+        expect(count_with_many).to eq(count_with_few)
+      end
+    end
+  end
 end
