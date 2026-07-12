@@ -101,6 +101,17 @@ module AnkiSeedData
       flds:    "90#{SEP}爱#{SEP}愛#{SEP}ài#{SEP}ai4#{SEP}to love#{SEP}verb#{SEP}",
       purpose: "REGRESSION ANCHOR: card homed in target deck but currently in a filtered deck " \
                "(did=FILTERED_DECK_ID, odid=DECK_ID) — import must include it via odid"
+    },
+    {
+      id:      10,
+      guid:    "note010",
+      sfld:    "谢谢",
+      flds:    "100#{SEP}谢谢#{SEP}謝謝#{SEP}xièxie#{SEP}xie4xie5#{SEP}thank you#{SEP}phrase#{SEP}",
+      purpose: "REGRESSION ANCHOR: two revlogs (ease 3, 3) so replaying this card's review " \
+               "history actually graduates it -- proves AnkiImportService's post-import " \
+               "Mastery::MilestoneReplay backfill (#391) sets first_mastered_at/" \
+               "graduation_count from real history, not just leaves them at insert_all's " \
+               "nil/0 defaults the way every other single-revlog card in this fixture would"
     }
   ].freeze
   # rubocop:enable Layout/ExtraSpacing
@@ -130,9 +141,17 @@ module AnkiSeedData
     # REGRESSION ANCHOR: card homed in target deck but currently in a filtered deck.
     # did=FILTERED_DECK_ID means the current migration query (WHERE did=target) misses it.
     # odid=DECK_ID is the only signal that it belongs to the target deck.
-    { id: 9, nid: 9, queue: 2, due: 300, did: FILTERED_DECK_ID, odid: DECK_ID }
+    { id: 9, nid: 9, queue: 2, due: 300, did: FILTERED_DECK_ID, odid: DECK_ID },
+    { id: 10, nid: 10, queue: 2, due: 300 } # mastered — see note010's revlogs below
   ].freeze
 
-  # One review event per card — enough to verify ReviewLog creation.
-  REVLOGS = CARDS.map { |c| { id: c[:id], cid: c[:id] } }.freeze
+  # One review event per card by default — enough to verify ReviewLog
+  # creation. Card 10 gets two explicit revlogs instead (ease 3, then 3):
+  # id=10's default single revlog only takes new -> learning, so a second,
+  # later revlog (higher id, sorted after it) is needed to actually reach
+  # "mastered" when replayed. See note010's :purpose above.
+  REVLOGS = (CARDS.reject { |c| c[:id] == 10 }.map { |c| { id: c[:id], cid: c[:id] } } + [
+    { id: 10, cid: 10, ease: 3 },
+    { id: 100, cid: 10, ease: 3 }
+  ]).freeze
 end

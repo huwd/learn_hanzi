@@ -128,6 +128,8 @@ class AnkiImportService
 
     ReviewLog.insert_all(revlog_rows) if revlog_rows.any?
 
+    backfill_mastery_milestones(ul_id_map.values)
+
     {
       cards_imported:       ul_rows.size,
       review_logs_imported: revlog_rows.size,
@@ -145,6 +147,22 @@ class AnkiImportService
     when 1, 3   then Time.zone.at(card["due"].to_i)
     when 2      then Time.zone.at(col_crt + card["due"].to_i * 86_400)
     else             nil
+    end
+  end
+
+  # UserLearning.insert_all and ReviewLog.insert_all above bypass every
+  # ActiveRecord callback, so first_mastered_at/graduation_count/
+  # developing_at are never set for imported data without this. See #391.
+  def backfill_mastery_milestones(user_learning_ids)
+    return if user_learning_ids.empty?
+
+    UserLearning.where(id: user_learning_ids).includes(:review_logs).find_each do |ul|
+      result = Mastery::MilestoneReplay.call(ul.review_logs)
+      ul.update_columns(
+        first_mastered_at: result.first_mastered_at,
+        graduation_count:  result.graduation_count,
+        developing_at:     result.developing_at
+      )
     end
   end
 end
