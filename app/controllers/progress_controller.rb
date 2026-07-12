@@ -1,6 +1,5 @@
 class ProgressController < ApplicationController
   DRILLDOWN_BUCKETS = (Mastery::Trajectory::ALL - [ Mastery::Trajectory::NOT_APPLICABLE ]).freeze
-  MAX_PER_PAGE = 200
 
   def show
     # Rendered directly (no JSON endpoint/chart library needed) -- a live
@@ -26,7 +25,7 @@ class ProgressController < ApplicationController
       sort: @sort,
       direction: @direction,
       page: params[:page].presence&.to_i || 1,
-      per_page: params[:per_page].presence&.to_i&.clamp(1, MAX_PER_PAGE) || Mastery::TrajectoryEntries::PER_PAGE
+      per_page: params[:per_page].presence&.to_i || Mastery::TrajectoryEntries::PER_PAGE
     )
   end
 
