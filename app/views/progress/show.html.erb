@@ -7,29 +7,48 @@
 
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6"
        data-controller="progress-charts"
-       data-progress-charts-url-value="<%= learn_progress_chart_data_path(format: :json) %>">
-    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Vocabulary mastered over time</h2>
+       data-progress-charts-url-value="<%= learn_progress_coverage_chart_data_path(format: :json) %>">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Vocabulary coverage over time</h2>
     <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums overflow-hidden whitespace-nowrap"
        data-progress-charts-target="summary">&nbsp;</p>
     <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
     <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
-      "In progress" counts words from their first review; "Mastered" counts from when they reached mastered state.
+      Established is keyed on a durable "first ever mastered" date, so a later lapse never pulls a word
+      back out of this count or rewrites earlier dates. Developing/Emerging can shrink week to week as
+      words graduate onward — that's the funnel draining, not a bug.
+    </p>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Trajectory</h2>
+    <p class="mb-3 text-sm text-gray-500 dark:text-gray-400">
+      Of <%= number_with_delimiter(@trajectory[:total]) %> Developing + Established words — a live snapshot, not a trend
+    </p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <%= render partial: "trajectory_tile", collection: @trajectory[:buckets], as: :bucket %>
+    </div>
+    <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
+      Restricted to words with enough history to say anything — Unseen and Emerging words don't get a
+      trajectory yet.
     </p>
   </div>
 
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6"
        data-controller="progress-charts"
        data-progress-charts-url-value="<%= learn_progress_character_chart_data_path(format: :json) %>">
-    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Unique characters mastered over time</h2>
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Character coverage over time</h2>
     <p class="h-5 mb-3 text-sm text-gray-500 dark:text-gray-400 tabular-nums overflow-hidden whitespace-nowrap"
        data-progress-charts-target="summary">&nbsp;</p>
     <div class="relative h-[640px]">
       <canvas data-progress-charts-target="canvas"></canvas>
     </div>
     <p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
-      Counts unique characters across all mastered words — 你好 and 你 together contribute 2 distinct characters.
+      Only two tiers — characters aren't reviewed directly, and the real data behind this chart showed no
+      natural Emerging/Developing split at the character level. A character counts as Established the
+      moment any word containing it graduates — your outside-the-app comparator for character literacy,
+      independent of vocabulary progress.
     </p>
   </div>
 </div>
