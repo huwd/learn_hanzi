@@ -60,6 +60,9 @@ en:
         actions: 'Actions'
         not_defined: 'Not defined'
 
+    scopes:
+      mcp: 'View your Chinese vocabulary progress, HSK level breakdown, and review history (read-only, no changes to your data)'
+
     authorizations:
       buttons:
         authorize: 'Authorize'
