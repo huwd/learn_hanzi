@@ -24,7 +24,11 @@ class BackfillGraduationCountFromReviewLogs < ActiveRecord::Migration[8.1]
   def graduation_count(user_learning)
     state = "new"
     count = 0
-    user_learning.review_logs.order(:created_at).each do |log|
+    # created_at alone isn't a stable order: Anki-imported logs from the
+    # same import batch commonly share one created_at, with the actual
+    # review order captured in `time` (an Anki epoch-ms timestamp) instead.
+    # `id` is a final tiebreaker for the rare case both are equal.
+    user_learning.review_logs.order(:created_at, :time, :id).each do |log|
       new_state = TRANSITIONS.dig(state, log.ease)
       next if new_state.nil?
 
