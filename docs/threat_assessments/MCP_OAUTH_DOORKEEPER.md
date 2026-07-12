@@ -265,10 +265,10 @@ plan to close this out.
   policy to "allow anyone" happens in the Cloudflare dashboard, not this
   repo, and should happen only after the Doorkeeper flow is confirmed working
   end-to-end against a real MCP client (Claude Desktop or equivalent).
-- **CF service-token fallback sunset.** No forced expiry exists yet. Once the
-  Doorkeeper flow is proven in production, open a dated follow-up issue to
-  delete `user_from_cf_service_token` and the `include CfAccessAuthentication`
-  line in `McpAuthentication` — by design a one-line-deletion blast radius.
+- **CF service-token fallback sunset — done.** Removed in #401 once the
+  Doorkeeper flow was confirmed working end-to-end in production. The
+  `CF_ACCESS_AUD` env var and the Cloudflare Access policy in front of `/mcp`
+  can now be retired from the deployment stack.
 - **CIMD garbage collection.** Not built in this change; track as a follow-up
   if `oauth_applications` grows unexpectedly large in practice.
 
