@@ -16,7 +16,11 @@ class ProgressController < ApplicationController
     @bucket = params[:bucket]
     raise ActionController::RoutingError, "Not Found" unless DRILLDOWN_BUCKETS.include?(@bucket)
 
-    @sort = params[:sort]
+    # An invalid sort is a bookmarked/hand-edited query string, not a
+    # missing resource -- fall back to the bucket's default ranking rather
+    # than 500ing (Mastery::TrajectoryEntries itself still raises for any
+    # other caller that skips this filtering).
+    @sort = params[:sort] if Mastery::TrajectoryEntries::SORTABLE_COLUMNS.include?(params[:sort])
     @direction = params[:direction]
 
     @result = Mastery::TrajectoryEntries.call(
