@@ -46,22 +46,6 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "mcp_service_token_id" do
-    it "is optional" do
-      expect(build(:user, mcp_service_token_id: nil)).to be_valid
-    end
-
-    it "must be unique when present" do
-      create(:user, mcp_service_token_id: "abc123")
-      expect(build(:user, mcp_service_token_id: "abc123")).not_to be_valid
-    end
-
-    it "allows multiple users with nil" do
-      create(:user, mcp_service_token_id: nil)
-      expect(build(:user, mcp_service_token_id: nil)).to be_valid
-    end
-  end
-
   describe "admin flag" do
     it "defaults to false" do
       expect(create(:user).admin).to be false

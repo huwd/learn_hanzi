@@ -13,7 +13,6 @@ require 'webmock/rspec'
 # Add additional requires below this line. Rails is not loaded until this point!
 require_relative 'support/authentication_helpers'
 require_relative 'support/anki_helper'
-require_relative 'support/cf_access_helpers'
 require_relative 'support/query_counter'
 require_relative 'support/capybara'
 require_relative 'support/doorkeeper_helpers'
@@ -44,7 +43,6 @@ RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
   config.include AuthenticationHelpers, type: :request
   config.include AuthenticationHelpers, type: :system
-  config.include CfAccessHelpers, type: :request
   config.include DoorkeeperHelpers, type: :request
   config.include QueryCounter
 
