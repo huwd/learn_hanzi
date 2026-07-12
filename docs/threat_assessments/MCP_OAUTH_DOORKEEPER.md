@@ -2,9 +2,11 @@
 
 ## Status
 
-Accepted — implementation may proceed. A live pentest against this flow is
-planned before Cloudflare Access is opened to "allow anyone" and the CF
-service-token fallback is fully removed (see "Outstanding configuration").
+Accepted — implementation may proceed. The CF service-token fallback
+described below has since been fully removed (#401); `/mcp` is Doorkeeper-only
+as of that change. A live pentest against this flow is still planned before
+Cloudflare Access is opened to "allow anyone" (see "Outstanding
+configuration").
 
 ## Context
 
@@ -35,13 +37,16 @@ MCP clients:
   Doorkeeper initializer) reuses the app's existing session (the same
   PocketID-backed login every other page uses) — there is no second identity
   system.
-- `McpController` (via `McpAuthentication`) accepts a Doorkeeper bearer token
-  **or** the pre-existing CF Access service-token branch, as a transitional
-  fallback while existing clients migrate. The CF Access **email-match**
-  branch has already been deleted (see commit history on this branch) — it
-  relied on Cloudflare Access's own policy having vetted who could get a JWT
-  in the first place, and that assumption breaks the moment the Access policy
-  is loosened to "allow anyone" (planned, see Outstanding configuration).
+- `McpController` (via `McpAuthentication`) originally accepted a Doorkeeper
+  bearer token **or** the pre-existing CF Access service-token branch, as a
+  transitional fallback while existing clients migrated. The CF Access
+  **email-match** branch was deleted first (see commit history on this
+  branch) — it relied on Cloudflare Access's own policy having vetted who
+  could get a JWT in the first place, an assumption that would have broken
+  the moment the Access policy was loosened to "allow anyone." The
+  **service-token** branch was removed in full afterwards (#401), once the
+  Doorkeeper flow was confirmed working end-to-end in production — `/mcp` is
+  now Doorkeeper-only.
 
 ## What the specs say
 
@@ -203,24 +208,28 @@ match the `code_challenge` presented at authorize time.
 
 **Verdict: Mitigated.**
 
-### 8. CF Access transitional exposure
+### 8. CF Access transitional exposure — resolved
 
-**Description:** The service-token fallback in `McpAuthentication` remains
-active. Huw intends to loosen the Cloudflare Access edge policy to "allow
-anyone" once this ships, at which point Access provides no identity gating at
-all for anything it fronts — it becomes pass-through infrastructure, same as
-Cloudflare Tunnel already is for ingress.
+**Description:** At the time this assessment was written, the service-token
+fallback in `McpAuthentication` remained active, and Huw intended to loosen
+the Cloudflare Access edge policy to "allow anyone" once Doorkeeper shipped —
+at which point Access would provide no identity gating at all for anything it
+fronts, becoming pass-through infrastructure, same as Cloudflare Tunnel
+already is for ingress.
 
-**Analysis:** The service-token branch's security does **not** depend on the
-Access policy — a service token is a possession-based secret Cloudflare merely
-passes through as a header, unrelated to who Access lets past its own login
-challenge. It remains as safe after the policy change as before. This is
-exactly why the *email-match* branch (which did depend on the policy) was
-deleted outright rather than kept as part of this same transition.
+**Analysis (at the time):** The service-token branch's security did **not**
+depend on the Access policy — a service token is a possession-based secret
+Cloudflare merely passes through as a header, unrelated to who Access lets
+past its own login challenge. It would have remained as safe after the
+policy change as before. This is exactly why the *email-match* branch (which
+did depend on the policy) was deleted outright rather than kept as part of
+that same transition.
 
-**Verdict: Accepted as a deliberate, time-boxed transition.** No forced
-expiry exists yet on the CF fallback — see Outstanding configuration for the
-plan to close this out.
+**Resolution:** The service-token fallback itself was removed outright in
+#401 rather than left running under a loosened Access policy — `/mcp` is now
+Doorkeeper-only, so this exposure no longer exists in any form.
+
+**Verdict: Resolved.** No further action needed; superseded by #401.
 
 ## What we are not doing, and why
 
@@ -248,8 +257,8 @@ plan to close this out.
    identity system, no credentials this app doesn't already manage.
 5. `/oauth/authorize` and `/oauth/token` are throttled via `rack-attack`,
    sharing state across workers via `solid_cache`.
-6. `McpController` accepts a Doorkeeper bearer token or the CF Access
-   service-token fallback; the email-match branch is deleted.
+6. `McpController` accepts a Doorkeeper bearer token only — both the
+   email-match and service-token CF Access branches have been deleted (#401).
 7. Every MCP resource read is scoped to the resolved token's resource owner,
    with an explicit cross-user regression test.
 
