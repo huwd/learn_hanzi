@@ -47,21 +47,24 @@ class ProgressController < ApplicationController
   # graduates; Touched from its earliest containing word's first review.
   # See #391, app/services/mastery/README.md.
   def character_chart_data
-    words = Current.user.user_learnings
-      .joins(:dictionary_entry)
-      .pluck(:id, "dictionary_entries.text", :first_mastered_at)
-
     emerging_at = ReviewLog
       .joins(:user_learning)
       .where(user_learnings: { user: Current.user })
       .group(:user_learning_id)
       .minimum(:created_at)
 
+    # Scoped to touched words only -- most users have far more Unseen
+    # (never-reviewed) words than touched ones (74% in the real dataset
+    # behind #391), and an Unseen word can never contribute a character.
+    words = Current.user.user_learnings
+      .where(id: emerging_at.keys)
+      .joins(:dictionary_entry)
+      .pluck(:id, "dictionary_entries.text", :first_mastered_at)
+
     char_touched = {}
     char_established = {}
     words.each do |id, text, established_at|
       touched_at = emerging_at[id]
-      next unless touched_at
 
       text.chars.each do |char|
         char_touched[char] = touched_at if char_touched[char].nil? || touched_at < char_touched[char]
