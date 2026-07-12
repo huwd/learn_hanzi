@@ -143,13 +143,14 @@ class McpController < ActionController::API
   end
 
   DEFAULT_LIST_LIMIT = 50
+  MAX_LIST_LIMIT = 200
 
   PAGINATION_SCHEMA = {
     type: "object",
     properties: {
       limit: {
         type: "integer",
-        description: "Maximum number of entries to return. Defaults to #{DEFAULT_LIST_LIMIT}.",
+        description: "Maximum number of entries to return. Defaults to #{DEFAULT_LIST_LIMIT}, capped at #{MAX_LIST_LIMIT}.",
         minimum: 1
       },
       offset: {
@@ -228,7 +229,24 @@ class McpController < ActionController::API
   end
 
   def pagination_args(arguments)
-    { limit: arguments["limit"] || DEFAULT_LIST_LIMIT, offset: arguments["offset"] || 0 }
+    { limit: coerce_limit(arguments["limit"]), offset: coerce_offset(arguments["offset"]) }
+  end
+
+  # Tool arguments are client-controlled JSON, so a non-integer or
+  # out-of-range value must not reach ActiveRecord's limit/offset or
+  # StrugglingVocabularyResource's Array#drop/#first — both raise on
+  # invalid input (SQL error or ArgumentError/TypeError) rather than
+  # coercing it themselves.
+  def coerce_limit(value)
+    integer = Integer(value, exception: false)
+    return DEFAULT_LIST_LIMIT unless integer
+    integer.clamp(1, MAX_LIST_LIMIT)
+  end
+
+  def coerce_offset(value)
+    integer = Integer(value, exception: false)
+    return 0 unless integer
+    [ integer, 0 ].max
   end
 
   def tool_summary_text(name, content)
