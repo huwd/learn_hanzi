@@ -79,5 +79,27 @@ RSpec.describe Mastery::Trajectory do
       result = described_class.call(user_learning: ul, coverage: Mastery::Coverage::DEVELOPING, recent_eases: eases)
       expect(result).to eq(Mastery::Trajectory::STABLE)
     end
+
+    context "when coverage is Established but graduation_count is inconsistently zero" do
+      # Established comes from first_mastered_at, graduation_count is a
+      # separate column — they should never disagree, but Stalled must not
+      # fire for Established regardless, since Stalled only makes sense for
+      # a word that has never graduated.
+      let(:ul) { user_learning(state: "mastered", graduation_count: 0) }
+      let(:coverage) { Mastery::Coverage::ESTABLISHED }
+      let(:recent_eases) { [ 1, 1, 1 ] }
+
+      it { is_expected.to eq(Mastery::Trajectory::STABLE) }
+    end
+
+    context "when never graduated but fewer than STALLED_LOOKBACK_REVIEWS eases are supplied" do
+      let(:ul) { user_learning(state: "learning", graduation_count: 0) }
+      let(:coverage) { Mastery::Coverage::DEVELOPING }
+      let(:recent_eases) { [ 1, 1 ] }
+
+      it "does not classify Stalled from a single bad rating" do
+        expect(trajectory).to eq(Mastery::Trajectory::STABLE)
+      end
+    end
   end
 end

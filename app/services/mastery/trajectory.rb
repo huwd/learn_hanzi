@@ -29,7 +29,7 @@ module Mastery
       return NOT_APPLICABLE unless ELIGIBLE_COVERAGE.include?(@coverage)
       return CHRONIC if @user_learning.graduation_count >= Thresholds::CHRONIC_MIN_GRADUATIONS
       return RECOVERING if @user_learning.graduation_count == 1 && @user_learning.state != "mastered"
-      return STALLED if @user_learning.graduation_count.zero? && stalled?
+      return STALLED if @coverage == Coverage::DEVELOPING && stalled?
 
       STABLE
     end
@@ -37,7 +37,7 @@ module Mastery
     private
 
     def stalled?
-      return false if @recent_eases.empty?
+      return false if @recent_eases.size < Thresholds::STALLED_LOOKBACK_REVIEWS
 
       recent = @recent_eases.last(Thresholds::STALLED_LOOKBACK_REVIEWS)
       (recent.sum.to_f / recent.size) <= Thresholds::STALLED_MAX_RECENT_AVERAGE_EASE
