@@ -140,6 +140,20 @@ RSpec.describe "Progress", type: :request do
           expect(series("Established")["values"].last).to eq(1)
         end
 
+        it "still counts an established word's characters even with no review history" do
+          # Not reachable via any current code path in this app --
+          # first_mastered_at can only be set alongside review history --
+          # but Mastery::Coverage treats first_mastered_at as authoritative
+          # regardless of review count, so this chart shouldn't silently
+          # disagree if that ever drifts (e.g. reviews deleted after the
+          # fact, a future import format). See #391 review discussion.
+          ghost = create(:user_learning, user: user, dictionary_entry: create(:dictionary_entry, text: "谢"), state: "learning")
+          ghost.update_column(:first_mastered_at, 3.days.ago)
+
+          get learn_progress_character_chart_data_path
+          expect(series("Established")["values"].last).to eq(1)
+        end
+
         it "keeps the query count bounded regardless of word count" do
           graduate!(text: "你")
           count_with_few = count_queries { get learn_progress_character_chart_data_path }
@@ -222,6 +236,20 @@ RSpec.describe "Progress", type: :request do
           get learn_progress_coverage_chart_data_path
           series = parsed["series"].index_by { |s| s["label"] }
           expect(series["Established"]["values"].last).to eq(1)
+        end
+
+        it "still counts an established word even with no review history" do
+          # Not reachable via any current code path in this app --
+          # first_mastered_at can only be set alongside review history --
+          # but Mastery::Coverage treats first_mastered_at as authoritative
+          # regardless of review count, so this chart shouldn't silently
+          # disagree if that ever drifts. See #391 review discussion.
+          ghost = create(:user_learning, user: user, state: "learning")
+          ghost.update_column(:first_mastered_at, 3.days.ago)
+
+          get learn_progress_coverage_chart_data_path
+          series = parsed["series"].index_by { |s| s["label"] }
+          expect(series["Established"]["values"].last).to eq(2)
         end
 
         it "only returns data for the current user" do
