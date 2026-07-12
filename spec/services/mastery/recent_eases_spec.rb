@@ -23,7 +23,7 @@ RSpec.describe Mastery::RecentEases do
 
     it "bounds the result to STALLED_LOOKBACK_REVIEWS per word" do
       ul = create(:user_learning, user: user, state: "learning")
-      5.times { |n| create(:review_log, user_learning: ul, ease: n + 1, created_at: (5 - n).days.ago) }
+      5.times { |n| create(:review_log, user_learning: ul, ease: (n % 4) + 1, created_at: (5 - n).days.ago) }
 
       result = described_class.call(user_learning_ids: [ ul.id ])
       expect(result[ul.id].size).to eq(Mastery::Thresholds::STALLED_LOOKBACK_REVIEWS)
