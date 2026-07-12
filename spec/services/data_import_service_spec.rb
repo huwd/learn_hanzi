@@ -313,5 +313,86 @@ RSpec.describe DataImportService do
         end
       end
     end
+
+    context "when imported review_logs graduate the word on replay" do
+      # ReviewLog.insert_all bypasses every callback, so first_mastered_at/
+      # graduation_count only get set by the explicit post-import
+      # Mastery::MilestoneReplay backfill. See #391.
+      let!(:ul) do
+        create(:user_learning, user:, dictionary_entry: entry_ni, state: "learning",
+               updated_at: Time.zone.parse("2026-01-01T00:00:00Z"))
+      end
+
+      let(:export_data) do
+        base_export.merge("user_learnings" => [
+          {
+            "character" => "你",
+            "state" => "mastered",
+            "next_due" => nil,
+            "last_interval" => 30,
+            "factor" => 2500,
+            "created_at" => ul.created_at.iso8601,
+            "updated_at" => "2026-04-01T00:00:00Z",
+            "review_logs" => [
+              {
+                "id" => 301, "ease" => 3, "interval" => 1, "time_spent" => 1000,
+                "factor" => 2500, "log_type" => 0, "time" => nil,
+                "created_at" => "2026-01-10T09:00:00Z"
+              },
+              {
+                "id" => 302, "ease" => 3, "interval" => 5, "time_spent" => 1000,
+                "factor" => 2500, "log_type" => 1, "time" => nil,
+                "created_at" => "2026-01-12T09:00:00Z"
+              }
+            ]
+          }
+        ])
+      end
+
+      it "sets first_mastered_at from the replayed graduating review, not import time" do
+        result
+        expect(ul.reload.first_mastered_at)
+          .to be_within(1.second).of(Time.zone.parse("2026-01-12T09:00:00Z"))
+      end
+
+      it "sets graduation_count to 1" do
+        result
+        expect(ul.reload.graduation_count).to eq(1)
+      end
+    end
+
+    context "when imported review_logs never graduate the word" do
+      let!(:ul) do
+        create(:user_learning, user:, dictionary_entry: entry_ni, state: "learning",
+               updated_at: Time.zone.parse("2026-01-01T00:00:00Z"))
+      end
+
+      let(:export_data) do
+        base_export.merge("user_learnings" => [
+          {
+            "character" => "你",
+            "state" => "learning",
+            "next_due" => nil,
+            "last_interval" => 1,
+            "factor" => 2300,
+            "created_at" => ul.created_at.iso8601,
+            "updated_at" => "2026-04-01T00:00:00Z",
+            "review_logs" => [
+              {
+                "id" => 401, "ease" => 1, "interval" => 1, "time_spent" => 1000,
+                "factor" => 2300, "log_type" => 0, "time" => nil,
+                "created_at" => "2026-01-10T09:00:00Z"
+              }
+            ]
+          }
+        ])
+      end
+
+      it "leaves first_mastered_at nil" do
+        result
+        expect(ul.reload.first_mastered_at).to be_nil
+        expect(ul.reload.graduation_count).to eq(0)
+      end
+    end
   end
 end

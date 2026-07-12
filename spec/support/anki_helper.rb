@@ -129,8 +129,8 @@ module AnkiHelper
     AnkiSeedData::REVLOGS.each do |revlog|
       db.execute(
         "INSERT INTO revlog (id, cid, usn, ease, ivl, lastIvl, factor, time, type) " \
-        "VALUES (?, ?, -1, 2, 250, 100, 2500, 5000, 1)",
-        [ revlog[:id], revlog[:cid] ]
+        "VALUES (?, ?, -1, ?, 250, 100, 2500, 5000, 1)",
+        [ revlog[:id], revlog[:cid], revlog[:ease] || 2 ]
       )
     end
 

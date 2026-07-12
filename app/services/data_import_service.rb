@@ -32,14 +32,16 @@ class DataImportService
       learnings_upserted += 1 if updated
 
       rl_rows = build_review_log_rows(ul, Array(ul_data["review_logs"]))
-      next if rl_rows.empty?
+      if rl_rows.any?
+        result = ReviewLog.insert_all(
+          rl_rows,
+          unique_by: :index_review_logs_on_ul_and_source_export_id,
+          returning: [ :id ]
+        )
+        review_logs_inserted += result.length
+      end
 
-      result = ReviewLog.insert_all(
-        rl_rows,
-        unique_by: :index_review_logs_on_ul_and_source_export_id,
-        returning: [ :id ]
-      )
-      review_logs_inserted += result.length
+      backfill_mastery_milestones(ul)
     end
 
     { learnings_upserted:, review_logs_inserted: }
@@ -102,5 +104,19 @@ class DataImportService
         updated_at:       now
       }
     end
+  end
+
+  # ReviewLog.insert_all above bypasses every ActiveRecord callback, and
+  # upsert_user_learning's ul.save! (when it runs) sets first_mastered_at/
+  # graduation_count from Time.current rather than the imported history's
+  # actual dates -- replay is authoritative here regardless of which path
+  # ran. See #391.
+  def backfill_mastery_milestones(ul)
+    result = Mastery::MilestoneReplay.call(ReviewLog.where(user_learning_id: ul.id))
+    ul.update_columns(
+      first_mastered_at: result.first_mastered_at,
+      graduation_count:  result.graduation_count,
+      developing_at:     result.developing_at
+    )
   end
 end

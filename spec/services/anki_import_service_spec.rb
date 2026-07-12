@@ -15,6 +15,7 @@ RSpec.describe AnkiImportService do
   let!(:entry_wen)  { create(:dictionary_entry, text: "文") }
   let!(:entry_guo)  { create(:dictionary_entry, text: "国") }
   let!(:entry_ai)   { create(:dictionary_entry, text: "爱") }
+  let!(:entry_xiexie) { create(:dictionary_entry, text: "谢谢") }
   # 不 has no entry — tests skip behaviour
 
   describe ".call" do
@@ -49,6 +50,30 @@ RSpec.describe AnkiImportService do
     it "skips characters with no matching DictionaryEntry" do
       result
       expect(result[:skipped]).to include("不")
+    end
+
+    it "backfills first_mastered_at and graduation_count from replayed review history" do
+      # UserLearning.insert_all/ReviewLog.insert_all bypass every
+      # ActiveRecord callback, so these milestones only get set by the
+      # explicit post-import Mastery::MilestoneReplay backfill. 谢谢's two
+      # revlogs (ease 3, 3) graduate it when replayed. See #391.
+      result
+      xiexie_learning = UserLearning.find_by(user: user, dictionary_entry: entry_xiexie)
+      expect(xiexie_learning.first_mastered_at).to be_present
+      expect(xiexie_learning.graduation_count).to eq(1)
+    end
+
+    it "leaves first_mastered_at nil for a card whose single revlog never reaches mastered" do
+      # 好 has one revlog (ease 2): new -> learning only, never graduates --
+      # even though its imported `state` column says "mastered" from
+      # Anki's queue value. This mismatch is inherent and already accepted
+      # for first_mastered_at/graduation_count (#394/#395): they describe
+      # this app's own SM2 semantics applied to observed history, not
+      # whatever Anki's queue said.
+      result
+      hao_learning = UserLearning.find_by(user: user, dictionary_entry: entry_hao)
+      expect(hao_learning.first_mastered_at).to be_nil
+      expect(hao_learning.graduation_count).to eq(0)
     end
 
     it "is idempotent — running twice does not duplicate UserLearning records" do
