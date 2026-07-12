@@ -28,6 +28,9 @@ class UserLearning < ApplicationRecord
       # Durable "did this word ever graduate" fact — unlike mastered_at,
       # never cleared on lapse. See #391.
       self.first_mastered_at ||= mastered_at
+      # Counts every crossing, unlike first_mastered_at which only records
+      # the first. Feeds Mastery::Trajectory's Chronic classification.
+      self.graduation_count += 1
     elsif state_changed? && state_was == "mastered"
       self.mastered_at = nil
     end
