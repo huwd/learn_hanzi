@@ -2,6 +2,8 @@
 
 learn-hanzi exposes a read-only [Model Context Protocol](https://modelcontextprotocol.io/) server at `/mcp`, allowing AI assistants (Claude, etc.) to query your learning data.
 
+The server speaks both `resources/*` and `tools/*`. Clients with a full MCP client (Claude Desktop, Claude Code) can use either; tool-centric surfaces — claude.ai custom connectors, the API's `mcp_servers` parameter, and most other agents — only ever call `tools/list` and `tools/call`, so the five tools below are what makes the server usable there.
+
 ## Authentication
 
 The `/mcp` endpoint is an OAuth 2.1 resource server: `learn-hanzi` is its own authorization server for MCP clients (Doorkeeper), with self-service client identification via [OAuth Client ID Metadata Documents (CIMD)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document) rather than a manual registration step. A compliant MCP client discovers everything it needs from `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server` and drives a normal browser-based authorization-code + PKCE flow — there's nothing to create or paste in ahead of time.
@@ -161,9 +163,25 @@ In-progress words ranked by difficulty — most lapses first, then lowest ease f
 
 ---
 
+## Tools
+
+The same five read-only queries are also available as MCP tools — each wraps the resource above unchanged, so the data is identical. A `tools/call` result includes both a short text summary (for clients that only render text) and a `structuredContent` object with the same shape as the matching resource's JSON.
+
+| Tool | Arguments | Backed by |
+| --- | --- | --- |
+| `get_learning_profile` | none | `learn-hanzi://profile` |
+| `list_mastered_vocabulary` | `limit`, `offset` | `learn-hanzi://vocabulary/mastered` |
+| `list_struggling_vocabulary` | `limit`, `offset` | `learn-hanzi://vocabulary/struggling` |
+| `list_recent_vocabulary` | `limit`, `offset` | `learn-hanzi://vocabulary/recent` |
+| `list_active_vocabulary` | `limit`, `offset` | `learn-hanzi://vocabulary/active` |
+
+`limit` and `offset` are both optional integers, for paging through large result sets (e.g. thousands of mastered words). `limit` defaults to 50 if omitted.
+
+---
+
 ## Protocol notes
 
 - Transport: Streamable HTTP (JSON-RPC 2.0 over `POST /mcp`)
 - Protocol version: `2025-03-26`
 - Sessions: established via `initialize`, tracked by `Mcp-Session-Id` header (24-hour TTL)
-- Capabilities: `resources` (read-only; no subscriptions or list-changed notifications)
+- Capabilities: `resources` and `tools` (both read-only; no subscriptions or list-changed notifications)
