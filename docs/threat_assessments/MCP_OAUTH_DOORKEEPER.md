@@ -40,11 +40,11 @@ MCP clients:
 - `McpController` (via `McpAuthentication`) originally accepted a Doorkeeper
   bearer token **or** the pre-existing CF Access service-token branch, as a
   transitional fallback while existing clients migrated. The CF Access
-  **email-match** branch was deleted first (`cc0c7fa`, "accept Doorkeeper
-  bearer tokens on /mcp, drop email auth") — it relied on Cloudflare Access's
-  own policy having vetted who could get a JWT in the first place, an
-  assumption that would have broken the moment the Access policy was
-  loosened to "allow anyone." The
+  **email-match** branch was deleted first (`cc0c7fa`, "feat: accept
+  Doorkeeper bearer tokens on /mcp, drop email auth") — it relied on
+  Cloudflare Access's own policy having vetted who could get a JWT in the
+  first place, an assumption that would have broken the moment the Access
+  policy was loosened to "allow anyone." The
   **service-token** branch was removed in full afterwards (#401), once the
   Doorkeeper flow was confirmed working end-to-end in production — `/mcp` is
   now Doorkeeper-only.
