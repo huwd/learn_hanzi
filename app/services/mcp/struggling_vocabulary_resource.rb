@@ -1,7 +1,9 @@
 module Mcp
   class StrugglingVocabularyResource
-    def initialize(user)
+    def initialize(user, limit: nil, offset: 0)
       @user = user
+      @limit = limit
+      @offset = offset
     end
 
     def call
@@ -15,6 +17,8 @@ module Mcp
       learnings = in_progress
         .includes(dictionary_entry: :meanings)
         .sort_by { |ul| [ -lapse_counts.fetch(ul.id, 0), ul.factor ] }
+        .drop(@offset)
+      learnings = learnings.first(@limit) if @limit
 
       { "vocabulary" => learnings.map { |ul| format_entry(ul, lapse_counts.fetch(ul.id, 0)) } }
     end
