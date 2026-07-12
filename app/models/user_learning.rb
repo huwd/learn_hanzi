@@ -23,8 +23,11 @@ class UserLearning < ApplicationRecord
   private
 
   def set_mastered_at
-    if state_changed? && state == "mastered" && mastered_at.nil?
-      self.mastered_at = Time.current
+    if state_changed? && state == "mastered"
+      self.mastered_at ||= Time.current
+      # Durable "did this word ever graduate" fact — unlike mastered_at,
+      # never cleared on lapse. See #391.
+      self.first_mastered_at ||= mastered_at
     elsif state_changed? && state_was == "mastered"
       self.mastered_at = nil
     end

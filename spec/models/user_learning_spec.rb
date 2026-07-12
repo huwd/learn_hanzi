@@ -81,6 +81,43 @@ RSpec.describe UserLearning, type: :model do
     end
   end
 
+  describe 'first_mastered_at' do
+    it "sets first_mastered_at when state transitions to mastered" do
+      ul = create(:user_learning, user: user, state: "learning")
+      expect { ul.update!(state: "mastered") }
+        .to change { ul.first_mastered_at }.from(nil)
+    end
+
+    it "does not set first_mastered_at for non-mastered state transitions" do
+      ul = create(:user_learning, user: user, state: "new")
+      ul.update!(state: "learning")
+      expect(ul.first_mastered_at).to be_nil
+    end
+
+    it "does not overwrite first_mastered_at if already set" do
+      original = 5.days.ago
+      ul = create(:user_learning, user: user, state: "mastered", first_mastered_at: original)
+      ul.update!(factor: 2600)
+      expect(ul.first_mastered_at).to be_within(1.second).of(original)
+    end
+
+    it "does not clear first_mastered_at when state transitions away from mastered" do
+      ul = create(:user_learning, user: user, state: "mastered", mastered_at: 3.days.ago)
+      original = ul.first_mastered_at
+      ul.update!(state: "learning")
+      expect(ul.first_mastered_at).to be_within(1.second).of(original)
+    end
+
+    it "does not change first_mastered_at when re-mastered after a lapse" do
+      ul = create(:user_learning, user: user, state: "mastered", mastered_at: 3.days.ago)
+      original = ul.first_mastered_at
+      ul.update!(state: "learning")
+      expect { ul.update!(state: "mastered") }
+        .not_to change { ul.first_mastered_at }
+      expect(ul.first_mastered_at).to be_within(1.second).of(original)
+    end
+  end
+
   describe 'due-card scopes' do
     let!(:overdue_learning) do
       create(:user_learning, user: user, state: 'learning', next_due: 2.days.ago)
