@@ -44,5 +44,14 @@ RSpec.describe Mastery::Coverage do
 
       it { is_expected.to eq(Mastery::Coverage::DEVELOPING) }
     end
+
+    context "when first_mastered_at is present but review_count is inconsistently zero" do
+      # first_mastered_at is the durable signal; a scoped or stale
+      # review_count passed by the caller must not override it.
+      let(:ul) { user_learning(state: "mastered", first_mastered_at: 5.days.ago) }
+      let(:review_count) { 0 }
+
+      it { is_expected.to eq(Mastery::Coverage::ESTABLISHED) }
+    end
   end
 end
