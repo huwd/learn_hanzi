@@ -30,8 +30,14 @@ before its trajectory means anything.
 |---|---|
 | `Chronic` | `graduation_count >= CHRONIC_MIN_GRADUATIONS` — graduated and relapsed more than once |
 | `Recovering` | graduated exactly once, currently lapsed (`state != "mastered"`) — hasn't relapsed a second time (yet) |
-| `Stalled` | never graduated, review count ≥ `STALLED_MIN_REVIEW_COUNT`, and the average ease over the last `STALLED_LOOKBACK_REVIEWS` reviews is ≤ `STALLED_MAX_RECENT_AVERAGE_EASE` |
+| `Stalled` | `coverage == Developing` (never graduated, review count ≥ `STALLED_MIN_REVIEW_COUNT` — see note below), and the average ease over the last `STALLED_LOOKBACK_REVIEWS` reviews is ≤ `STALLED_MAX_RECENT_AVERAGE_EASE` |
 | `Stable` | everything else: graduated once and still mastered, or still Developing but not flat/declining |
+
+`Mastery::Trajectory` does not take `review_count` itself and does not
+re-derive Coverage — it trusts the `coverage` the caller passes in. The
+`STALLED_MIN_REVIEW_COUNT` threshold is therefore only actually enforced
+when that `coverage` was computed via `Mastery::Coverage` in the first
+place; `Trajectory` on its own only ever checks `coverage == Developing`.
 
 ## Where the thresholds came from
 
