@@ -60,11 +60,12 @@ Starting values for new cards: `last_interval = 1`, `factor = 2500`.
 | Good   | max(1, last\_interval × factor ÷ 1000)        | unchanged             | advance¹     |
 | Easy   | Good interval × 1.3 easy bonus               | factor + 150          | → mastered   |
 
-¹ **State advancement on Good:**
+¹ **State advancement on Good:** depends on the card's state going into the
+review (`SpacedRepetition::SM2#calculated_state`, sm2.rb:56-68):
 - `new` → `learning` on first Good or Easy
-- `learning` → `mastered` on second consecutive Good or Easy (approximated by
-  `last_interval >= 2` after calculation — i.e. the card has graduated beyond the
-  minimum 1-day re-learning interval)
+- `learning` → `mastered` on a single Good or Easy — there is no
+  two-consecutive-rating requirement; one good rating is enough to graduate
+- `mastered` → `learning` on Again; stays `mastered` on Hard, Good, or Easy
 
 The `SpacedRepetition::SM2` service is a pure function: it takes a `UserLearning` and
 an ease integer, and returns new scheduling attributes. It has no side effects. The
