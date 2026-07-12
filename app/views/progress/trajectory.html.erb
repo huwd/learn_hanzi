@@ -1,0 +1,60 @@
+<% config = trajectory_tile_config(@bucket) %>
+<% content_for :title, "#{config[:label]} words" %>
+
+<div class="flex-grow max-w-4xl mx-auto w-full">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200"><%= config[:label] %> words</h1>
+    <%= link_to "Progress", learn_progress_path,
+          class: "text-sm text-indigo-600 dark:text-indigo-400 hover:underline" %>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+    <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+      <%= number_with_delimiter(@result.total) %> word<%= "s" unless @result.total == 1 %> · <%= config[:description] %>
+    </p>
+
+    <% if @result.entries.empty? %>
+      <p class="text-sm text-gray-400 dark:text-gray-500">Nothing here yet.</p>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+              <% ProgressHelper::TRAJECTORY_SORT_COLUMNS.each do |column, label| %>
+                <th class="py-2 pr-4 font-medium"><%= trajectory_sort_link(column, label) %></th>
+              <% end %>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+            <% @result.entries.each do |entry| %>
+              <tr>
+                <td class="py-2 pr-4 font-medium text-gray-800 dark:text-gray-200" data-word="<%= entry.text %>"><%= entry.text %></td>
+                <td class="py-2 pr-4 text-gray-600 dark:text-gray-400">
+                  <% if entry.pinyin.present? %>
+                    <div class="text-xs text-gray-400 dark:text-gray-500"><%= entry.pinyin %></div>
+                  <% end %>
+                  <%= entry.meaning %>
+                </td>
+                <td class="py-2 pr-4 tabular-nums text-gray-600 dark:text-gray-400"><%= entry.factor %></td>
+                <td class="py-2 pr-4 tabular-nums text-gray-600 dark:text-gray-400"><%= entry.graduation_count %></td>
+                <td class="py-2 pr-4 text-gray-600 dark:text-gray-400"><%= entry.since&.strftime("%-d %b %Y") || "—" %></td>
+                <td class="py-2 pr-4 text-gray-600 dark:text-gray-400"><%= entry.next_due&.strftime("%-d %b %Y") || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-between items-center mt-4 text-sm">
+        <% if @result.page > 1 %>
+          <%= link_to "← Previous", trajectory_page_path(page: @result.page - 1), class: "text-indigo-600 dark:text-indigo-400 hover:underline" %>
+        <% else %>
+          <span></span>
+        <% end %>
+        <% if @result.page * @result.per_page < @result.total %>
+          <%= link_to "Next →", trajectory_page_path(page: @result.page + 1), class: "text-indigo-600 dark:text-indigo-400 hover:underline" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

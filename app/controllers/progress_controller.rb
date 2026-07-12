@@ -1,9 +1,33 @@
 class ProgressController < ApplicationController
+  DRILLDOWN_BUCKETS = (Mastery::Trajectory::ALL - [ Mastery::Trajectory::NOT_APPLICABLE ]).freeze
+  MAX_PER_PAGE = 200
+
   def show
     # Rendered directly (no JSON endpoint/chart library needed) -- a live
     # snapshot over a small population, cheap enough to compute inline.
     # See #391.
     @trajectory = Mastery::TrajectorySnapshot.call(user: Current.user)
+  end
+
+  # Drill-down behind a single trajectory tile: which words make it up,
+  # ranked by how firmly they exemplify the bucket by default, with an
+  # explicit sort/direction override once a column header is clicked.
+  # See #391, #400.
+  def trajectory
+    @bucket = params[:bucket]
+    raise ActionController::RoutingError, "Not Found" unless DRILLDOWN_BUCKETS.include?(@bucket)
+
+    @sort = params[:sort]
+    @direction = params[:direction]
+
+    @result = Mastery::TrajectoryEntries.call(
+      user: Current.user,
+      bucket: @bucket,
+      sort: @sort,
+      direction: @direction,
+      page: params[:page].presence&.to_i || 1,
+      per_page: params[:per_page].presence&.to_i&.clamp(1, MAX_PER_PAGE) || Mastery::TrajectoryEntries::PER_PAGE
+    )
   end
 
   # Weekly stacked-area trend: each word is bucketed by the furthest
