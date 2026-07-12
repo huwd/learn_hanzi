@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_07_105039) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_12_102207) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -260,6 +260,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_105039) do
     t.datetime "created_at", null: false
     t.integer "dictionary_entry_id", null: false
     t.integer "factor", default: 2500, null: false
+    t.datetime "first_mastered_at"
     t.integer "last_interval"
     t.datetime "mastered_at"
     t.datetime "next_due"
@@ -267,6 +268,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_105039) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["dictionary_entry_id"], name: "index_user_learnings_on_dictionary_entry_id"
+    t.index ["first_mastered_at"], name: "index_user_learnings_on_first_mastered_at"
     t.index ["user_id", "dictionary_entry_id"], name: "index_user_learnings_on_user_and_entry", unique: true
     t.index ["user_id", "state"], name: "index_user_learnings_on_user_and_state"
     t.index ["user_id"], name: "index_user_learnings_on_user_id"
