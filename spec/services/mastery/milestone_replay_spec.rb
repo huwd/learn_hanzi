@@ -75,4 +75,51 @@ RSpec.describe Mastery::MilestoneReplay do
       expect(result.graduation_count).to eq(2)
     end
   end
+
+  describe ".backfill!" do
+    it "does nothing for an empty id list" do
+      expect { described_class.backfill!([]) }.not_to raise_error
+    end
+
+    it "sets first_mastered_at/graduation_count/developing_at for each given UserLearning" do
+      create(:review_log, user_learning: user_learning, ease: 3, created_at: 2.days.ago)
+      graduating_log = create(:review_log, user_learning: user_learning, ease: 3, created_at: 1.day.ago)
+
+      described_class.backfill!([ user_learning.id ])
+
+      expect(user_learning.reload.first_mastered_at).to be_within(1.second).of(graduating_log.created_at)
+      expect(user_learning.graduation_count).to eq(1)
+    end
+
+    it "keeps the review_logs SELECT count bounded regardless of how many ids are given" do
+      # Each id still needs its own UPDATE (distinct computed values per
+      # word -- that's inherent, not what the review flagged), but the
+      # review_logs fetch that used to run once per word must not scale
+      # with word count anymore.
+      seed = lambda do
+        ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry))
+        create(:review_log, user_learning: ul, ease: 3, created_at: 2.days.ago)
+        create(:review_log, user_learning: ul, ease: 3, created_at: 1.day.ago)
+        ul.id
+      end
+
+      def select_count
+        count = 0
+        sub = lambda do |_name, _start, _finish, _id, payload|
+          next if payload[:name].in?(%w[SCHEMA EXPLAIN])
+          count += 1 if payload[:sql].to_s.lstrip.upcase.start_with?("SELECT")
+        end
+        ActiveSupport::Notifications.subscribed(sub, "sql.active_record") { yield }
+        count
+      end
+
+      few_ids = [ seed.call ]
+      count_with_few = select_count { described_class.backfill!(few_ids) }
+
+      many_ids = few_ids + Array.new(15) { seed.call }
+      count_with_many = select_count { described_class.backfill!(many_ids) }
+
+      expect(count_with_many).to eq(count_with_few)
+    end
+  end
 end

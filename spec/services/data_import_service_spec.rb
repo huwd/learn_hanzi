@@ -394,5 +394,53 @@ RSpec.describe DataImportService do
         expect(ul.reload.graduation_count).to eq(0)
       end
     end
+
+    context "the milestone backfill's review_logs fetch" do
+      # Used to run once per imported word (O(words) SELECTs, dominating
+      # import time on large exports); Mastery::MilestoneReplay.backfill!
+      # batches it instead. See #391.
+      # Scoped to review_logs SELECTs specifically, not overall query
+      # count -- upsert_user_learning already does its own per-word
+      # lookups (a separate, pre-existing pattern unrelated to this fix),
+      # which would otherwise mask whether the review_logs fetch itself
+      # is bounded.
+      def review_log_select_count
+        count = 0
+        sub = lambda do |_name, _start, _finish, _id, payload|
+          sql = payload[:sql].to_s
+          count += 1 if sql.lstrip.upcase.start_with?("SELECT") && sql.include?("review_logs")
+        end
+        ActiveSupport::Notifications.subscribed(sub, "sql.active_record") { yield }
+        count
+      end
+
+      def word_payload(character, id)
+        {
+          "character" => character, "state" => "learning", "next_due" => nil,
+          "last_interval" => 1, "factor" => 2300,
+          "created_at" => "2026-01-01T00:00:00Z", "updated_at" => "2026-04-01T00:00:00Z",
+          "review_logs" => [
+            { "id" => id, "ease" => 1, "interval" => 1, "time_spent" => 1000,
+              "factor" => 2300, "log_type" => 0, "time" => nil,
+              "created_at" => "2026-01-10T09:00:00Z" }
+          ]
+        }
+      end
+
+      it "stays bounded regardless of how many words are imported" do
+        entry_ni
+        one_word = base_export.merge("user_learnings" => [ word_payload("你", 501) ])
+        count_with_one = review_log_select_count { described_class.call(user:, data: one_word) }
+
+        other_user = create(:user)
+        many_entries = 15.times.map { |i| create(:dictionary_entry, text: "字#{i}") }
+        many_words = base_export.merge(
+          "user_learnings" => many_entries.each_with_index.map { |e, i| word_payload(e.text, 600 + i) }
+        )
+        count_with_many = review_log_select_count { described_class.call(user: other_user, data: many_words) }
+
+        expect(count_with_many).to eq(count_with_one)
+      end
+    end
   end
 end
