@@ -40,11 +40,35 @@ module ProgressHelper
     zigzag: '<path d="M2 12l3-4 3 2.5L13 4" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
   }.freeze
 
+  TRAJECTORY_SORT_COLUMNS = {
+    "word"        => "Word",
+    "meaning"     => "Meaning",
+    "ease"        => "Ease",
+    "graduations" => "Graduations",
+    "since"       => "Since",
+    "next_due"    => "Next due"
+  }.freeze
+
   def trajectory_tile_config(key)
     TRAJECTORY_TILES.fetch(key)
   end
 
   def trajectory_icon(type)
     tag.svg(raw(ICONS.fetch(type)), viewBox: "0 0 16 16", class: "w-3 h-3", "aria-hidden": "true") # rubocop:disable Rails/OutputSafety
+  end
+
+  # Toggles asc/desc on a repeat click of the same column; any other column
+  # always starts from asc.
+  def trajectory_sort_link(column, label)
+    active = @sort == column
+    next_direction = active && @direction != "desc" ? "desc" : "asc"
+    arrow = active ? (@direction == "desc" ? " ▼" : " ▲") : ""
+
+    link_to "#{label}#{arrow}", trajectory_page_path(sort: column, direction: next_direction, page: 1),
+      class: [ "hover:underline", ("font-semibold text-indigo-600 dark:text-indigo-400" if active) ].compact.join(" ")
+  end
+
+  def trajectory_page_path(page:, sort: @sort, direction: @direction)
+    learn_progress_trajectory_path(bucket: @bucket, sort: sort, direction: direction, per_page: @result.per_page, page: page)
   end
 end

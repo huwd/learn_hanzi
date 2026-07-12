@@ -28,9 +28,10 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "dashboard#index"
 
-  get  "learn/progress",                      to: "progress#show",                 as: :learn_progress
-  get  "learn/progress/coverage_chart_data",  to: "progress#coverage_chart_data",  as: :learn_progress_coverage_chart_data
-  get  "learn/progress/character_chart_data", to: "progress#character_chart_data", as: :learn_progress_character_chart_data
+  get  "learn/progress",                        to: "progress#show",                 as: :learn_progress
+  get  "learn/progress/coverage_chart_data",    to: "progress#coverage_chart_data",  as: :learn_progress_coverage_chart_data
+  get  "learn/progress/character_chart_data",   to: "progress#character_chart_data", as: :learn_progress_character_chart_data
+  get  "learn/progress/trajectory/:bucket",     to: "progress#trajectory",           as: :learn_progress_trajectory
 
   get  "review",          to: "review#start",   as: :review
   get  "review/card",     to: "review#show",    as: :review_card
