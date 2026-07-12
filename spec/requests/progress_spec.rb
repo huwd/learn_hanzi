@@ -316,6 +316,15 @@ RSpec.describe "Progress", type: :request do
         expect(response).to have_http_status(:not_found)
       end
 
+      it "falls back to the bucket's default ranking on an invalid sort param, rather than 500ing" do
+        graduate!(text: "established_word")
+
+        get learn_progress_trajectory_path(bucket: "stable", sort: "'; DROP TABLE users; --", direction: "asc")
+
+        expect(response).to have_http_status(:success)
+        expect(word_cells).to include("established_word")
+      end
+
       it "lists the words classified into the requested bucket" do
         graduate!(text: "established_word")
 
