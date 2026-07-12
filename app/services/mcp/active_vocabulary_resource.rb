@@ -1,17 +1,20 @@
 module Mcp
   class ActiveVocabularyResource
-    def initialize(user)
+    def initialize(user, limit: nil, offset: 0)
       @user = user
+      @limit = limit
+      @offset = offset
     end
 
     def call
-      vocabulary = user.user_learnings
+      scope = user.user_learnings
         .in_progress
         .includes(dictionary_entry: :meanings)
         .order(next_due: :asc)
-        .map { |ul| format_entry(ul) }
+        .offset(@offset)
+      scope = scope.limit(@limit) if @limit
 
-      { "vocabulary" => vocabulary }
+      { "vocabulary" => scope.map { |ul| format_entry(ul) } }
     end
 
     private

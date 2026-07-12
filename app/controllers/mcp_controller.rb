@@ -23,6 +23,10 @@ class McpController < ActionController::API
         handle_resources_list(body)
       when "resources/read"
         handle_resources_read(body)
+      when "tools/list"
+        handle_tools_list(body)
+      when "tools/call"
+        handle_tools_call(body)
       else
         render json: jsonrpc_error(body["id"], -32601, "Method not found: #{method}")
       end
@@ -52,7 +56,10 @@ class McpController < ActionController::API
       id: body["id"],
       result: {
         protocolVersion: PROTOCOL_VERSION,
-        capabilities: { resources: { subscribe: false, listChanged: false } },
+        capabilities: {
+          resources: { subscribe: false, listChanged: false },
+          tools: { listChanged: false }
+        },
         serverInfo: { name: "learn-hanzi", version: "1.0" }
       }
     }
@@ -133,6 +140,101 @@ class McpController < ActionController::API
         contents: [ { uri: uri, mimeType: "application/json", text: content.to_json } ]
       }
     }
+  end
+
+  DEFAULT_LIST_LIMIT = 50
+
+  PAGINATION_SCHEMA = {
+    type: "object",
+    properties: {
+      limit: {
+        type: "integer",
+        description: "Maximum number of entries to return. Defaults to #{DEFAULT_LIST_LIMIT}.",
+        minimum: 1
+      },
+      offset: {
+        type: "integer",
+        description: "Number of entries to skip, for paging through large result sets.",
+        minimum: 0
+      }
+    },
+    additionalProperties: false
+  }.freeze
+
+  TOOLS = [
+    {
+      name: "get_learning_profile",
+      description: "Summary of your overall learning state: counts by status and HSK level breakdown.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false }
+    },
+    {
+      name: "list_mastered_vocabulary",
+      description: "Words you have consolidated, most recently mastered first.",
+      inputSchema: PAGINATION_SCHEMA
+    },
+    {
+      name: "list_struggling_vocabulary",
+      description: "In-progress words ranked by lapse count and low ease factor — the words giving you the most trouble.",
+      inputSchema: PAGINATION_SCHEMA
+    },
+    {
+      name: "list_recent_vocabulary",
+      description: "Words graduated to mastered in the last 30 days.",
+      inputSchema: PAGINATION_SCHEMA
+    },
+    {
+      name: "list_active_vocabulary",
+      description: "Words currently in the learning queue, ordered by next due date.",
+      inputSchema: PAGINATION_SCHEMA
+    }
+  ].freeze
+
+  def handle_tools_list(body)
+    render json: {
+      jsonrpc: "2.0",
+      id: body["id"],
+      result: { tools: TOOLS }
+    }
+  end
+
+  def handle_tools_call(body)
+    name = body.dig("params", "name")
+    arguments = body.dig("params", "arguments") || {}
+
+    structured_content = case name
+    when "get_learning_profile"
+      Mcp::ProfileResource.new(current_mcp_user).call
+    when "list_mastered_vocabulary"
+      Mcp::MasteredVocabularyResource.new(current_mcp_user, **pagination_args(arguments)).call
+    when "list_struggling_vocabulary"
+      Mcp::StrugglingVocabularyResource.new(current_mcp_user, **pagination_args(arguments)).call
+    when "list_recent_vocabulary"
+      Mcp::RecentVocabularyResource.new(current_mcp_user, **pagination_args(arguments)).call
+    when "list_active_vocabulary"
+      Mcp::ActiveVocabularyResource.new(current_mcp_user, **pagination_args(arguments)).call
+    else
+      return render json: jsonrpc_error(body["id"], -32602, "Unknown tool: #{name}")
+    end
+
+    render json: {
+      jsonrpc: "2.0",
+      id: body["id"],
+      result: {
+        content: [ { type: "text", text: tool_summary_text(name, structured_content) } ],
+        structuredContent: structured_content,
+        isError: false
+      }
+    }
+  end
+
+  def pagination_args(arguments)
+    { limit: arguments["limit"] || DEFAULT_LIST_LIMIT, offset: arguments["offset"] || 0 }
+  end
+
+  def tool_summary_text(name, content)
+    return "Learning profile: #{content[:summary]['total']} words tracked." if name == "get_learning_profile"
+
+    "Found #{content['vocabulary'].size} vocabulary entries."
   end
 
   def jsonrpc_error(id, code, message)
