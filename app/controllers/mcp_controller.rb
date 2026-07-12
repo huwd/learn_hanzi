@@ -199,8 +199,11 @@ class McpController < ActionController::API
   end
 
   def handle_tools_call(body)
-    name = body.dig("params", "name")
-    arguments = body.dig("params", "arguments") || {}
+    params = body["params"]
+    params = {} unless params.is_a?(Hash)
+    name = params["name"]
+    arguments = params["arguments"]
+    arguments = {} unless arguments.is_a?(Hash)
 
     structured_content = case name
     when "get_learning_profile"
