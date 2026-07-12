@@ -17,6 +17,7 @@ class DataImportService
 
     learnings_upserted    = 0
     review_logs_inserted  = 0
+    touched_ul_ids        = []
 
     ul_list    = Array(@data["user_learnings"])
     characters = ul_list.map { |ul_data| ul_data["character"] }.uniq
@@ -41,8 +42,16 @@ class DataImportService
         review_logs_inserted += result.length
       end
 
-      backfill_mastery_milestones(ul)
+      touched_ul_ids << ul.id
     end
+
+    # ReviewLog.insert_all above bypasses every ActiveRecord callback, and
+    # upsert_user_learning's ul.save! (when it runs) sets first_mastered_at/
+    # graduation_count from Time.current rather than the imported history's
+    # actual dates -- replay is authoritative here regardless of which path
+    # ran. Batched rather than per-word, since this used to dominate import
+    # time on large exports. See #391.
+    Mastery::MilestoneReplay.backfill!(touched_ul_ids)
 
     { learnings_upserted:, review_logs_inserted: }
   end
@@ -104,19 +113,5 @@ class DataImportService
         updated_at:       now
       }
     end
-  end
-
-  # ReviewLog.insert_all above bypasses every ActiveRecord callback, and
-  # upsert_user_learning's ul.save! (when it runs) sets first_mastered_at/
-  # graduation_count from Time.current rather than the imported history's
-  # actual dates -- replay is authoritative here regardless of which path
-  # ran. See #391.
-  def backfill_mastery_milestones(ul)
-    result = Mastery::MilestoneReplay.call(ReviewLog.where(user_learning_id: ul.id))
-    ul.update_columns(
-      first_mastered_at: result.first_mastered_at,
-      graduation_count:  result.graduation_count,
-      developing_at:     result.developing_at
-    )
   end
 end

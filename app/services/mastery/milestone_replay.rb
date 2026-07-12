@@ -21,6 +21,24 @@ module Mastery
       new(review_logs).call
     end
 
+    # Batched backfill for a set of UserLearning ids -- shared by
+    # AnkiImportService and DataImportService so neither reimplements the
+    # same includes(:review_logs).find_each loop, and so a per-word DB
+    # round trip (which dominated import time on large exports) can't
+    # creep back in independently in either place.
+    def self.backfill!(user_learning_ids)
+      return if user_learning_ids.empty?
+
+      UserLearning.where(id: user_learning_ids).includes(:review_logs).find_each do |ul|
+        result = call(ul.review_logs)
+        ul.update_columns(
+          first_mastered_at: result.first_mastered_at,
+          graduation_count:  result.graduation_count,
+          developing_at:     result.developing_at
+        )
+      end
+    end
+
     def initialize(review_logs)
       @review_logs = review_logs.sort_by { |log| [ log.created_at, log.time || -1, log.id ] }
     end
