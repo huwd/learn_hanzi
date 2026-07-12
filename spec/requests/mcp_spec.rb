@@ -274,6 +274,24 @@ RSpec.shared_examples "an authenticated MCP session" do
         vocabulary = body.dig("result", "structuredContent", "vocabulary")
         expect(vocabulary.first["hanzi"]).to eq(older.dictionary_entry.text)
       end
+
+      it "falls back to the default limit when limit is not an integer" do
+        create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+        body = call_tool("list_mastered_vocabulary", limit: "not-a-number")
+        expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
+      end
+
+      it "clamps an oversized limit rather than returning everything unbounded" do
+        body = call_tool("list_mastered_vocabulary", limit: 999_999)
+        expect(body.dig("result", "error")).to be_nil
+        expect(body["result"]["isError"]).to be false
+      end
+
+      it "clamps a negative offset to zero instead of erroring" do
+        create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
+        body = call_tool("list_mastered_vocabulary", offset: -5)
+        expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
+      end
     end
 
     describe "list_recent_vocabulary" do
@@ -308,6 +326,18 @@ RSpec.shared_examples "an authenticated MCP session" do
         body = call_tool("list_struggling_vocabulary", limit: 1)
         vocabulary = body.dig("result", "structuredContent", "vocabulary")
         expect(vocabulary.length).to eq(1)
+      end
+
+      it "does not error on a negative offset (Ruby-side Array#drop would raise)" do
+        create(:user_learning, user: user, state: "learning")
+        body = call_tool("list_struggling_vocabulary", offset: -5)
+        expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
+      end
+
+      it "does not error on a non-integer limit (Ruby-side Array#first would raise)" do
+        create(:user_learning, user: user, state: "learning")
+        body = call_tool("list_struggling_vocabulary", limit: "not-a-number")
+        expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
       end
     end
   end
