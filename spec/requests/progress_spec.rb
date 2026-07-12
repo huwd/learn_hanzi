@@ -23,6 +23,22 @@ RSpec.describe "Progress", type: :request do
         get learn_progress_path
         expect(response.body).to include("Learning Progress")
       end
+
+      it "renders all four Trajectory tile labels" do
+        get learn_progress_path
+        expect(response.body).to include("Stable", "Recovering", "Chronic", "Stalled")
+      end
+
+      it "renders the Trajectory count for a classified word" do
+        ul = create(:user_learning, user: user, state: "learning")
+        create(:review_log, user_learning: ul, ease: 3)
+        ul.update!(state: "mastered")
+
+        get learn_progress_path
+        doc = Nokogiri::HTML(response.body)
+        stable_tile = doc.at_css('[data-trajectory-key="stable"]')
+        expect(stable_tile.text).to include("1")
+      end
     end
   end
 
@@ -37,73 +53,110 @@ RSpec.describe "Progress", type: :request do
     context "when authenticated" do
       before { sign_in user }
 
-      it "returns JSON" do
-        get learn_progress_character_chart_data_path
-        expect(response.content_type).to include("application/json")
+      def parsed
+        JSON.parse(response.body)
       end
 
-      context "with mastered words" do
-        let(:entry_a) { create(:dictionary_entry, text: "你好") }
-        let(:entry_b) { create(:dictionary_entry, text: "你") }
+      def series(label)
+        parsed["series"].find { |s| s["label"] == label }
+      end
 
-        before do
-          create(:user_learning, user: user, state: "mastered",
-                 dictionary_entry: entry_a, mastered_at: 2.days.ago)
-          create(:user_learning, user: user, state: "mastered",
-                 dictionary_entry: entry_b, mastered_at: 1.day.ago)
+      it "returns JSON with labels and series keys" do
+        get learn_progress_character_chart_data_path
+        expect(response.content_type).to include("application/json")
+        expect(parsed.keys).to contain_exactly("labels", "series")
+      end
+
+      it "returns two series: Established, Touched" do
+        get learn_progress_character_chart_data_path
+        expect(parsed["series"].map { |s| s["label"] }).to eq([ "Established", "Touched" ])
+      end
+
+      it "returns empty labels and series when nothing has been reviewed" do
+        get learn_progress_character_chart_data_path
+        expect(parsed["labels"]).to eq([])
+        expect(parsed["series"]).to all(include("values" => []))
+      end
+
+      context "with mastered and touched words" do
+        # A word graduating always accompanies at least one ReviewLog in the
+        # real app -- matching that here rather than a bare state update.
+        def graduate!(text:)
+          ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry, text: text))
+          create(:review_log, user_learning: ul, ease: 3)
+          ul.update!(state: "mastered")
+          ul
         end
 
-        def parsed
-          JSON.parse(response.body)
-        end
-
-        it "returns labels and series" do
-          get learn_progress_character_chart_data_path
-          expect(parsed.keys).to contain_exactly("labels", "series")
+        def touch!(text:)
+          ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry, text: text))
+          create(:review_log, user_learning: ul, ease: 1)
+          ul
         end
 
         it "deduplicates characters across words" do
+          graduate!(text: "你好") # 你, 好
+          graduate!(text: "你")   # 你 already established
+
           get learn_progress_character_chart_data_path
-          values = parsed["series"].first["values"]
-          # 你好 = 你, 好 (2 chars on day 1); 你 already counted → only 好 is new
-          # Total should be 2 unique characters, not 3
-          expect(values.last).to eq(2)
+          expect(series("Established")["values"].last).to eq(2)
         end
 
-        it "attributes a character to the earliest mastered word" do
+        it "counts a touched-but-not-established character in Touched" do
+          touch!(text: "学")
+
           get learn_progress_character_chart_data_path
-          # 你 appears in 你好 (mastered 2 days ago), so it's counted on that date
-          values = parsed["series"].first["values"]
-          expect(values.first).to eq(2)
+          expect(series("Touched")["values"].last).to eq(1)
+          expect(series("Established")["values"].last).to eq(0)
+        end
+
+        it "prioritises Established over Touched for a character in both an established and a touched word" do
+          graduate!(text: "你")
+          touch!(text: "你好") # 你 already established; 好 merely touched
+
+          get learn_progress_character_chart_data_path
+          expect(series("Established")["values"].last).to eq(1)
+          expect(series("Touched")["values"].last).to eq(1)
         end
 
         it "only returns data for the current user" do
           other_user = create(:user)
           other_entry = create(:dictionary_entry, text: "学")
-          create(:user_learning, user: other_user, state: "mastered",
-                 dictionary_entry: other_entry, mastered_at: 1.day.ago)
+          other_ul = create(:user_learning, user: other_user, state: "learning", dictionary_entry: other_entry)
+          create(:review_log, user_learning: other_ul, ease: 3)
+          other_ul.update!(state: "mastered")
+
+          graduate!(text: "你")
 
           get learn_progress_character_chart_data_path
-          expect(parsed["series"].first["values"].last).to eq(2)
+          expect(series("Established")["values"].last).to eq(1)
         end
 
-        it "keeps a lapsed word's characters counted (does not retroactively rewrite history)" do
-          lapsed_entry = create(:dictionary_entry, text: "学")
-          lapsed = create(:user_learning, user: user, state: "learning", dictionary_entry: lapsed_entry)
-          lapsed.update!(state: "mastered")
+        it "keeps a lapsed word's characters Established (does not retroactively rewrite history)" do
+          lapsed = graduate!(text: "学")
           lapsed.update!(state: "learning")
 
           get learn_progress_character_chart_data_path
-          expect(parsed["series"].first["values"].last).to eq(3)
+          expect(series("Established")["values"].last).to eq(1)
+        end
+
+        it "keeps the query count bounded regardless of word count" do
+          graduate!(text: "你")
+          count_with_few = count_queries { get learn_progress_character_chart_data_path }
+
+          15.times { |i| touch!(text: "字#{i}") }
+
+          count_with_many = count_queries { get learn_progress_character_chart_data_path }
+          expect(count_with_many).to eq(count_with_few)
         end
       end
     end
   end
 
-  describe "GET /learn/progress/chart_data" do
+  describe "GET /learn/progress/coverage_chart_data" do
     context "when unauthenticated" do
       it "redirects to the login page" do
-        get learn_progress_chart_data_path
+        get learn_progress_coverage_chart_data_path
         expect(response).to redirect_to("/sign_in")
       end
     end
@@ -111,100 +164,86 @@ RSpec.describe "Progress", type: :request do
     context "when authenticated" do
       before { sign_in user }
 
-      it "returns JSON" do
-        get learn_progress_chart_data_path
+      def parsed
+        JSON.parse(response.body)
+      end
+
+      it "returns JSON with labels and series keys" do
+        get learn_progress_coverage_chart_data_path
         expect(response.content_type).to include("application/json")
+        expect(parsed.keys).to contain_exactly("labels", "series")
       end
 
-      it "returns labels and series keys" do
-        get learn_progress_chart_data_path
-        data = JSON.parse(response.body)
-        expect(data.keys).to contain_exactly("labels", "series")
+      it "returns empty labels and series when nothing has been reviewed" do
+        get learn_progress_coverage_chart_data_path
+        expect(parsed["labels"]).to eq([])
+        expect(parsed["series"]).to all(include("values" => []))
       end
 
-      context "with user learnings and review logs" do
-        let!(:mastered_card) do
-          ul = create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago)
-          create(:review_log, user_learning: ul, created_at: 3.days.ago)
-          ul
-        end
-        let!(:learning_card) do
+      context "with words at each coverage tier" do
+        let(:threshold) { Mastery::Thresholds::EMERGING_TO_DEVELOPING_REVIEW_COUNT }
+
+        let!(:established_word) do
+          # Graduation always accompanies at least one ReviewLog in the real
+          # app (ReviewController#submit creates both together) -- matching
+          # that here, rather than a bare state update with zero reviews.
           ul = create(:user_learning, user: user, state: "learning")
-          create(:review_log, user_learning: ul, created_at: 2.days.ago)
+          create(:review_log, user_learning: ul, ease: 3)
+          ul.update!(state: "mastered")
+          ul
+        end
+        let!(:developing_word) do
+          ul = create(:user_learning, user: user, state: "learning")
+          threshold.times { create(:review_log, user_learning: ul, ease: 1) }
+          ul
+        end
+        let!(:emerging_word) do
+          ul = create(:user_learning, user: user, state: "learning")
+          create(:review_log, user_learning: ul, ease: 1)
           ul
         end
 
-        def parsed
-          JSON.parse(response.body)
+        it "returns three series in Established, Developing, Emerging order" do
+          get learn_progress_coverage_chart_data_path
+          expect(parsed["series"].map { |s| s["label"] }).to eq([ "Established", "Developing", "Emerging" ])
         end
 
-        it "returns labels and series keys" do
-          get learn_progress_chart_data_path
-          expect(parsed.keys).to contain_exactly("labels", "series")
+        it "counts each word in its own tier at the final bucket" do
+          get learn_progress_coverage_chart_data_path
+          series = parsed["series"].index_by { |s| s["label"] }
+          expect(series["Established"]["values"].last).to eq(1)
+          expect(series["Developing"]["values"].last).to eq(1)
+          expect(series["Emerging"]["values"].last).to eq(1)
         end
 
-        it "returns labels in ascending chronological order" do
-          get learn_progress_chart_data_path
-          expect(parsed["labels"]).to eq(parsed["labels"].sort)
-        end
+        it "keeps a lapsed word in Established (durable, not retroactively rewritten)" do
+          established_word.update!(state: "learning")
 
-        it "returns two series (Mastered and In progress)" do
-          get learn_progress_chart_data_path
-          labels = parsed["series"].map { |s| s["label"] }
-          expect(labels).to contain_exactly("Mastered", "In progress")
-        end
-
-        it "accumulates mastered count cumulatively" do
-          get learn_progress_chart_data_path
-          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
-          expect(mastered["values"].last).to eq(1)
-        end
-
-        it "keeps a lapsed card in the mastered count (does not retroactively rewrite history)" do
-          # A card that graduated then lapsed still has first_mastered_at set,
-          # even though mastered_at (the live field) is cleared and state is
-          # no longer "mastered". The chart must not drop it. See #391.
-          lapsed = create(:user_learning, user: user, state: "learning")
-          lapsed.update!(state: "mastered")
-          lapsed.update!(state: "learning")
-
-          get learn_progress_chart_data_path
-          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
-          expect(mastered["values"].last).to eq(2)
-        end
-
-        it "excludes stale records with a leftover mastered_at but no first_mastered_at" do
-          # Data written before first_mastered_at existed, bypassing the
-          # model callback entirely — not a case the fix is expected to cover.
-          create(:user_learning, user: user, state: "learning", mastered_at: 1.day.ago,
-                 dictionary_entry: create(:dictionary_entry))
-          get learn_progress_chart_data_path
-          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
-          expect(mastered["values"].last).to eq(1)
-        end
-
-        it "counts in_progress from first review minus mastered" do
-          get learn_progress_chart_data_path
-          in_progress = parsed["series"].find { |s| s["label"] == "In progress" }
-          # 2 cards reviewed, 1 mastered → 1 still in progress
-          expect(in_progress["values"].last).to eq(1)
-        end
-
-        it "in_progress values are never negative" do
-          get learn_progress_chart_data_path
-          in_progress = parsed["series"].find { |s| s["label"] == "In progress" }
-          expect(in_progress["values"]).to all(be >= 0)
+          get learn_progress_coverage_chart_data_path
+          series = parsed["series"].index_by { |s| s["label"] }
+          expect(series["Established"]["values"].last).to eq(1)
         end
 
         it "only returns data for the current user" do
           other_user = create(:user)
-          other_ul = create(:user_learning, user: other_user, state: "mastered",
-                            mastered_at: 1.day.ago)
-          create(:review_log, user_learning: other_ul, created_at: 1.day.ago)
+          other_ul = create(:user_learning, user: other_user, state: "learning")
+          create(:review_log, user_learning: other_ul, ease: 1)
 
-          get learn_progress_chart_data_path
-          mastered = parsed["series"].find { |s| s["label"] == "Mastered" }
-          expect(mastered["values"].last).to eq(1)
+          get learn_progress_coverage_chart_data_path
+          series = parsed["series"].index_by { |s| s["label"] }
+          expect(series["Emerging"]["values"].last).to eq(1)
+        end
+
+        it "keeps the query count bounded regardless of word count" do
+          count_with_few = count_queries { get learn_progress_coverage_chart_data_path }
+
+          15.times do
+            ul = create(:user_learning, user: user, state: "learning", dictionary_entry: create(:dictionary_entry))
+            create(:review_log, user_learning: ul, ease: 1)
+          end
+
+          count_with_many = count_queries { get learn_progress_coverage_chart_data_path }
+          expect(count_with_many).to eq(count_with_few)
         end
       end
     end

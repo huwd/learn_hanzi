@@ -1,78 +1,90 @@
 class ProgressController < ApplicationController
   def show
+    # Rendered directly (no JSON endpoint/chart library needed) -- a live
+    # snapshot over a small population, cheap enough to compute inline.
+    # See #391.
+    @trajectory = Mastery::TrajectorySnapshot.call(user: Current.user)
   end
 
-  def chart_data
-    first_review_by_card = ReviewLog
+  # Weekly stacked-area trend: each word is bucketed by the furthest
+  # Coverage tier it had reached as of that week (Established durable via
+  # first_mastered_at, Developing via developing_at, Emerging via first
+  # review date) -- genuinely monotonic in total, replacing the old
+  # single volatile "mastered" line. See #391.
+  def coverage_chart_data
+    emerging_at = ReviewLog
       .joins(:user_learning)
       .where(user_learnings: { user: Current.user })
       .group(:user_learning_id)
-      .minimum("review_logs.created_at")
+      .minimum(:created_at)
 
-    learning_per_day = first_review_by_card.values
-      .group_by { |dt| dt.to_date.to_s }
-      .transform_values(&:count)
+    developing_at = Current.user.user_learnings.where.not(developing_at: nil).pluck(:id, :developing_at).to_h
+    established_at = Current.user.user_learnings.where.not(first_mastered_at: nil).pluck(:id, :first_mastered_at).to_h
 
-    # Keyed on first_mastered_at (durable, never cleared on lapse) rather
-    # than state/mastered_at, so a later lapse doesn't retroactively lower
-    # this count at every date since the original mastery. See #391.
-    mastered_per_day = Current.user.user_learnings
-      .where.not(first_mastered_at: nil)
-      .group("date(first_mastered_at)")
-      .order("date(first_mastered_at)")
-      .count
-
-    all_dates = (learning_per_day.keys + mastered_per_day.keys).uniq.sort
-
-    cumulative_learning = 0
-    cumulative_mastered = 0
-    mastered_values = []
-    in_progress_values = []
-
-    all_dates.each do |date|
-      cumulative_learning += learning_per_day[date] || 0
-      cumulative_mastered += mastered_per_day[date] || 0
-      mastered_values << cumulative_mastered
-      in_progress_values << [ cumulative_learning - cumulative_mastered, 0 ].max
+    milestones = emerging_at.each_with_object({}) do |(id, t), memo|
+      memo[id] = { established: established_at[id], developing: developing_at[id], emerging: t }
     end
 
+    timeline = Mastery::CoverageTimeline.call(
+      milestones: milestones,
+      tiers: [ :established, :developing, :emerging ]
+    )
+
     render json: {
-      labels: all_dates,
+      labels: timeline[:labels],
       series: [
-        { label: "Mastered",     color: "rgb(34, 197, 94)",  values: mastered_values },
-        { label: "In progress",  color: "rgb(245, 158, 11)", values: in_progress_values }
+        { label: "Established", color: "rgb(67, 56, 202)",   values: timeline[:series][:established] },
+        { label: "Developing",  color: "rgb(99, 102, 241)",  values: timeline[:series][:developing] },
+        { label: "Emerging",    color: "rgb(165, 180, 252)", values: timeline[:series][:emerging] }
       ]
     }
   end
 
+  # Two tiers, not four: a character isn't reviewed directly, and the real
+  # data behind #391 showed no natural Emerging/Developing split at the
+  # character level (median distinct-word-touch-count at establishment is
+  # 1). A character is Established the moment any containing word
+  # graduates; Touched from its earliest containing word's first review.
+  # See #391, app/services/mastery/README.md.
   def character_chart_data
-    # Keyed on first_mastered_at (durable, never cleared on lapse) rather
-    # than state/mastered_at, so a later lapse doesn't drop the word's
-    # characters out of this count. See #391.
-    mastered = Current.user.user_learnings
-      .where.not(first_mastered_at: nil)
+    words = Current.user.user_learnings
       .joins(:dictionary_entry)
-      .select("dictionary_entries.text, user_learnings.first_mastered_at")
+      .pluck(:id, "dictionary_entries.text", :first_mastered_at)
 
-    # For each character find the earliest date it appeared in a mastered word
-    char_first_mastered = {}
-    mastered.each do |ul|
-      date = ul.first_mastered_at.to_date.to_s
-      ul.text.chars.each do |char|
-        char_first_mastered[char] = date if char_first_mastered[char].nil? || date < char_first_mastered[char]
+    emerging_at = ReviewLog
+      .joins(:user_learning)
+      .where(user_learnings: { user: Current.user })
+      .group(:user_learning_id)
+      .minimum(:created_at)
+
+    char_touched = {}
+    char_established = {}
+    words.each do |id, text, established_at|
+      touched_at = emerging_at[id]
+      next unless touched_at
+
+      text.chars.each do |char|
+        char_touched[char] = touched_at if char_touched[char].nil? || touched_at < char_touched[char]
+        next unless established_at
+
+        char_established[char] = established_at if char_established[char].nil? || established_at < char_established[char]
       end
     end
 
-    per_day = char_first_mastered.values.tally
-    all_dates = per_day.keys.sort
+    milestones = char_touched.each_with_object({}) do |(char, touched_at), memo|
+      memo[char] = { established: char_established[char], touched: touched_at }
+    end
 
-    cumulative = 0
-    values = all_dates.map { |date| cumulative += per_day[date]; cumulative }
+    timeline = Mastery::CoverageTimeline.call(
+      milestones: milestones,
+      tiers: [ :established, :touched ]
+    )
 
     render json: {
-      labels: all_dates,
+      labels: timeline[:labels],
       series: [
-        { label: "Characters mastered", color: "rgb(99, 102, 241)", values: values }
+        { label: "Established", color: "rgb(15, 118, 110)",  values: timeline[:series][:established] },
+        { label: "Touched",     color: "rgb(94, 234, 212)",  values: timeline[:series][:touched] }
       ]
     }
   end
