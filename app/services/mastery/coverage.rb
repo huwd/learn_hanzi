@@ -22,8 +22,11 @@ module Mastery
 
     def call
       return SUSPENDED if @user_learning.state == "suspended"
-      return UNSEEN if @review_count.zero?
+      # first_mastered_at is the durable signal for Established and takes
+      # precedence over review_count, which the caller could pass scoped
+      # or stale.
       return ESTABLISHED if @user_learning.first_mastered_at.present?
+      return UNSEEN if @review_count.zero?
 
       @review_count < Thresholds::EMERGING_TO_DEVELOPING_REVIEW_COUNT ? EMERGING : DEVELOPING
     end
