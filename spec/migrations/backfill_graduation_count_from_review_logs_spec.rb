@@ -50,5 +50,24 @@ RSpec.describe "BackfillGraduationCountFromReviewLogs migration" do
 
       expect(ul.reload.graduation_count).to eq(0)
     end
+
+    it "orders by time (not insertion order) when created_at ties, as with a batch Anki import" do
+      # All four logs share created_at, as a batch-imported Anki import
+      # would. Inserted in reverse chronological order (by `time`) so that
+      # falling back to created_at/id order alone would replay them
+      # backwards and silently under-count graduations.
+      ul = create(:user_learning, user: user, state: "learning")
+      same_created_at = 1.day.ago
+      create(:review_log, user_learning: ul, ease: 3, time: 4000, created_at: same_created_at) # true order: 4th
+      create(:review_log, user_learning: ul, ease: 1, time: 3000, created_at: same_created_at) # true order: 3rd
+      create(:review_log, user_learning: ul, ease: 3, time: 2000, created_at: same_created_at) # true order: 2nd
+      create(:review_log, user_learning: ul, ease: 1, time: 1000, created_at: same_created_at) # true order: 1st
+
+      migration.up
+
+      # Correct time order [1, 3, 1, 3]: new->learning->mastered->learning->mastered = 2 graduations.
+      # Naive created_at/insertion order [3, 1, 3, 1]: new->learning->learning->mastered->learning = 1.
+      expect(ul.reload.graduation_count).to eq(2)
+    end
   end
 end
