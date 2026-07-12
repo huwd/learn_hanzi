@@ -46,12 +46,15 @@ module Mastery
         .to_a
     end
 
+    # developing_at is set durably (live callback + both import paths) the
+    # moment review_count first reaches the threshold without having
+    # graduated by then, and review counts never decrease -- so its
+    # presence is equivalent to the live "review_count >= threshold"
+    # check, without a join/group/count aggregate to get there.
     def developing_ids
       @developing_ids ||= @user.user_learnings
         .where(first_mastered_at: nil)
-        .joins(:review_logs)
-        .group(:id)
-        .having("COUNT(review_logs.id) >= ?", Thresholds::EMERGING_TO_DEVELOPING_REVIEW_COUNT)
+        .where.not(developing_at: nil)
         .pluck(:id)
     end
 
