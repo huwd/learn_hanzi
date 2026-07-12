@@ -16,6 +16,7 @@ module Mastery
     Result = Data.define(:entries, :total, :page, :per_page)
 
     PER_PAGE = 50
+    MAX_PER_PAGE = 200
 
     SORT_KEYS = {
       "word"        => ->(entry) { entry.text },
@@ -38,7 +39,7 @@ module Mastery
       @sort = sort
       @direction = direction.to_s == "desc" ? "desc" : "asc"
       @page = [ page.to_i, 1 ].max
-      @per_page = [ per_page.to_i, 1 ].max
+      @per_page = per_page.to_i.clamp(1, MAX_PER_PAGE)
     end
 
     def call

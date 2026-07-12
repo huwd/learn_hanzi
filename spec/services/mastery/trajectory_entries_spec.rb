@@ -165,6 +165,17 @@ RSpec.describe Mastery::TrajectoryEntries do
       expect(page_two.entries.map(&:text)).to eq([ "word_2", "word_3" ])
     end
 
+    it "clamps per_page to a sane maximum regardless of what's requested" do
+      # Defense in depth: a caller other than ProgressController (console,
+      # background job, a future endpoint) must not be able to force an
+      # unbounded fetch just by skipping the controller's own clamp.
+      stable_established
+
+      result = described_class.call(user: user, bucket: Mastery::Trajectory::STABLE, per_page: 999_999)
+
+      expect(result.per_page).to eq(described_class::MAX_PER_PAGE)
+    end
+
     it "returns zeroed results when there is nothing to classify" do
       result = described_class.call(user: user, bucket: Mastery::Trajectory::STABLE)
 
