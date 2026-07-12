@@ -29,6 +29,17 @@ RSpec.describe ReviewLog, type: :model do
         .to change { user_learning.reload.developing_at }.from(nil)
     end
 
+    it "uses the review log's own created_at, not the time the callback runs" do
+      # Backdated created_at (imports, backfills, tests) must be reflected
+      # in developing_at -- using Time.current here would silently skew
+      # the Coverage timeline bucketing for any non-live-flow write.
+      (threshold - 1).times { create(:review_log, user_learning: user_learning, ease: 1) }
+      backdated = 10.days.ago
+      create(:review_log, user_learning: user_learning, ease: 1, created_at: backdated)
+
+      expect(user_learning.reload.developing_at).to be_within(1.second).of(backdated)
+    end
+
     it "does not set developing_at before the threshold is reached" do
       (threshold - 2).times { create(:review_log, user_learning: user_learning, ease: 1) }
 
