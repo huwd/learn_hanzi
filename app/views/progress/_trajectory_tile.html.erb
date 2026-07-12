@@ -1,5 +1,7 @@
 <% config = trajectory_tile_config(bucket.key) %>
-<div class="rounded-lg p-4 <%= config[:card] %>" data-trajectory-key="<%= bucket.key %>">
+<%= link_to learn_progress_trajectory_path(bucket: bucket.key),
+      class: "block rounded-lg p-4 transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 #{config[:card]}",
+      data: { trajectory_key: bucket.key } do %>
   <div class="flex items-center gap-2">
     <span class="w-5 h-5 rounded-full flex items-center justify-center <%= config[:icon_bg] %>">
       <%= trajectory_icon(config[:icon]) %>
@@ -10,4 +12,4 @@
   <div class="text-xs text-gray-500 dark:text-gray-400">
     <%= number_with_precision(bucket.percent, precision: 1) %>% · <%= config[:description] %>
   </div>
-</div>
+<% end %>
