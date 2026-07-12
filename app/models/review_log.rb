@@ -16,6 +16,6 @@ class ReviewLog < ApplicationRecord
     return if user_learning.developing_at.present? || user_learning.first_mastered_at.present?
     return unless user_learning.review_logs.count == Mastery::Thresholds::EMERGING_TO_DEVELOPING_REVIEW_COUNT
 
-    user_learning.update_column(:developing_at, Time.current)
+    user_learning.update_column(:developing_at, created_at)
   end
 end
