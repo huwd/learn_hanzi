@@ -62,6 +62,28 @@ RSpec.describe Mastery::CoverageTimeline do
       expect(result[:series][:emerging]).to eq([ 1 ])
     end
 
+    it "counts every item from the same calendar day as an intermediate bucket, not just the earliest time" do
+      # Bucket boundaries are generated from the exact `start` timestamp,
+      # but labels only show day granularity ("Jan 1"). Without flooring
+      # intermediate bucket comparisons to end_of_day, an item touched
+      # later the same day as `start` would be missing from the "Jan 1"
+      # bucket even though nothing else happened between Jan 1 and Jan 8
+      # to explain the gap.
+      milestones = {
+        1 => { emerging: Time.zone.parse("2026-01-01 08:00") },
+        2 => { emerging: Time.zone.parse("2026-01-01 20:00") }
+      }
+
+      result = described_class.call(
+        milestones: milestones,
+        tiers: [ :emerging ],
+        end_date: Time.zone.parse("2026-01-15")
+      )
+
+      expect(result[:labels].first).to eq("Jan 1")
+      expect(result[:series][:emerging].first).to eq(2)
+    end
+
     it "caps the final bucket exactly at end_date rather than overshooting" do
       milestones = { 1 => { emerging: Time.zone.parse("2026-01-01") } }
 

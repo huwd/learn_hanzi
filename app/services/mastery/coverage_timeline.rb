@@ -46,7 +46,12 @@ module Mastery
       buckets = []
       d = start
       while d < @end_date
-        buckets << d
+        # Snap to end of day so the comparison matches the day-granularity
+        # label ("Jan 1") -- otherwise an item touched later the same day
+        # as `start` would be missing from this bucket for no visible
+        # reason. Capped at end_date so this can't push a bucket past the
+        # final (also end_date) one.
+        buckets << [ d.end_of_day, @end_date ].min
         d += 7.days
       end
       buckets << @end_date
