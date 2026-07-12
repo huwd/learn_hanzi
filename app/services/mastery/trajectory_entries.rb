@@ -211,7 +211,14 @@ module Mastery
       ordered_ids.map do |id|
         ul      = records_by_id.fetch(id)
         entry   = ul.dictionary_entry
-        meaning = entry.meanings.first
+        # entry.meanings is already an in-memory Array here (preloaded via
+        # .includes above), so plain #first would return whichever row the
+        # preload query happened to return first -- has_many :meanings has
+        # no explicit order, so that's unspecified, unlike a fresh
+        # Relation#first (which Rails gives an implicit ORDER BY id).
+        # #min_by(&:id) makes the choice deterministic and matches
+        # meaning_lookup's explicit MIN(id) above.
+        meaning = entry.meanings.min_by(&:id)
         coverage = coverage_by_id.fetch(id)
 
         Entry.new(

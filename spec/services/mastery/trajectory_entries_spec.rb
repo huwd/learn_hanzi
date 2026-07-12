@@ -68,6 +68,18 @@ RSpec.describe Mastery::TrajectoryEntries do
       expect(entry.coverage).to eq(Mastery::Coverage::ESTABLISHED)
     end
 
+    it "displays the lowest-id meaning when a word has more than one" do
+      ul = stable_established(text: "multi_meaning_word")
+      entry = ul.dictionary_entry
+      first_meaning = entry.meanings.first
+      later_meaning = create(:meaning, dictionary_entry: entry, text: "later meaning", pinyin: "later")
+      expect(later_meaning.id).to be > first_meaning.id
+
+      result = described_class.call(user: user, bucket: Mastery::Trajectory::STABLE)
+
+      expect(result.entries.first.meaning).to eq(first_meaning.text)
+    end
+
     it "scopes Chronic to Established words only" do
       chronic_ul = chronic
       stalled # a Developing word -- must never show up under Chronic
