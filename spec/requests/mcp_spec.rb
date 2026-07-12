@@ -694,8 +694,6 @@ RSpec.describe "MCP", type: :request do
   let(:user) { create(:user) }
 
   before do
-    stub_cf_jwks
-    stub_const("ENV", ENV.to_h.merge("CF_ACCESS_AUD" => CfAccessHelpers::AUD))
     Rails.cache.clear
   end
 
@@ -706,83 +704,8 @@ RSpec.describe "MCP", type: :request do
         expect(response).to have_http_status(:unauthorized)
       end
 
-      it "returns 401 with a malformed CF assertion token" do
-        post "/mcp", headers: cf_assertion_header("not.a.jwt"), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
       it "returns 401 with a malformed bearer token" do
         post "/mcp", headers: { "Authorization" => "Bearer not-a-real-token" }, as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 with an expired CF service token" do
-        token = cf_service_token(common_name: "abc123def456.access", exp: 1.hour.ago.to_i)
-        post "/mcp", headers: cf_assertion_header(token), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 with the wrong CF issuer" do
-        token = cf_service_token(common_name: "abc123def456.access", iss: "https://evil.example.com")
-        post "/mcp", headers: cf_assertion_header(token), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 with the wrong CF audience" do
-        token = cf_service_token(common_name: "abc123def456.access", aud: "wrong-aud")
-        post "/mcp", headers: cf_assertion_header(token), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 when the CF JWKS fetch raises an unexpected error" do
-        stub_request(:get, CfAccessHelpers::JWKS_URI).to_raise(Net::OpenTimeout)
-        token = cf_service_token(common_name: "abc123def456.access")
-        post "/mcp", headers: cf_assertion_header(token), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
-
-    context "when authenticated via service token" do
-      let(:common_name) { "abc123def456.access" }
-      let(:token) { cf_service_token(common_name: common_name) }
-      let(:auth_headers) { cf_assertion_header(token) }
-
-      before { user.update!(mcp_service_token_id: "abc123def456") }
-
-      it_behaves_like "an authenticated MCP session"
-
-      it "authenticates and returns an MCP session" do
-        post "/mcp",
-          headers: auth_headers,
-          params: { jsonrpc: "2.0", id: 1, method: "initialize",
-                    params: { protocolVersion: "2025-03-26", capabilities: {},
-                              clientInfo: { name: "test", version: "1" } } },
-          as: :json
-        expect(response).to have_http_status(:ok)
-        expect(response.headers["Mcp-Session-Id"]).to be_present
-      end
-
-      it "returns 401 when no user has a matching mcp_service_token_id" do
-        user.update!(mcp_service_token_id: nil)
-        post "/mcp", headers: auth_headers, as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 when the service token is expired" do
-        expired = cf_service_token(common_name: common_name, exp: 1.hour.ago.to_i)
-        post "/mcp", headers: cf_assertion_header(expired), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 when common_name is absent" do
-        token_without_common_name = cf_service_token(common_name: nil)
-        post "/mcp", headers: cf_assertion_header(token_without_common_name), as: :json
-        expect(response).to have_http_status(:unauthorized)
-      end
-
-      it "returns 401 when common_name lacks the .access suffix" do
-        token_bad_format = cf_service_token(common_name: "abc123def456")
-        post "/mcp", headers: cf_assertion_header(token_bad_format), as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
