@@ -17,6 +17,7 @@ module Mastery
           FROM review_logs
           WHERE user_learning_id IN (?)
         ) ranked WHERE rn <= #{Thresholds::STALLED_LOOKBACK_REVIEWS}
+        ORDER BY user_learning_id, rn
       SQL
 
       ReviewLog.connection.select_all(sql).each_with_object(Hash.new { |h, k| h[k] = [] }) do |row, memo|
