@@ -219,6 +219,27 @@ RSpec.shared_examples "an authenticated MCP session" do
       expect(body["error"]["code"]).to eq(-32602)
     end
 
+    it "does not error when arguments is not a JSON object" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 3, method: "tools/call",
+                  params: { name: "list_mastered_vocabulary", arguments: [ 1, 2, 3 ] } },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body.dig("result", "structuredContent", "vocabulary")).to eq([])
+    end
+
+    it "returns -32602 when params is not a JSON object" do
+      post "/mcp",
+        params: { jsonrpc: "2.0", id: 3, method: "tools/call", params: [ 1, 2, 3 ] },
+        headers: auth_headers.merge("Mcp-Session-Id" => session_id),
+        as: :json
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body["error"]["code"]).to eq(-32602)
+    end
+
     describe "get_learning_profile" do
       it "returns a JSON-RPC 2.0 envelope with text content and structuredContent" do
         body = call_tool("get_learning_profile")
@@ -281,10 +302,12 @@ RSpec.shared_examples "an authenticated MCP session" do
         expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
       end
 
-      it "clamps an oversized limit rather than returning everything unbounded" do
+      it "clamps an oversized limit to MAX_LIST_LIMIT rather than returning everything unbounded" do
+        stub_const("McpController::MAX_LIST_LIMIT", 3)
+        5.times { create(:user_learning, user: user, state: "mastered", mastered_at: 1.day.ago) }
         body = call_tool("list_mastered_vocabulary", limit: 999_999)
-        expect(body.dig("result", "error")).to be_nil
-        expect(body["result"]["isError"]).to be false
+        vocabulary = body.dig("result", "structuredContent", "vocabulary")
+        expect(vocabulary.length).to eq(3)
       end
 
       it "clamps a negative offset to zero instead of erroring" do
