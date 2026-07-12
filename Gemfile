@@ -21,9 +21,6 @@ gem "tailwindcss-rails"
 gem "omniauth_openid_connect"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
 
-# JWT validation for MCP server (CF Access bearer tokens)
-gem "jwt", "~> 3.2"
-
 # OAuth 2.1 authorization server for MCP clients (auth code + PKCE + refresh)
 gem "doorkeeper", "~> 5.9"
 
