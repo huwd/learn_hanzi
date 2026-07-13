@@ -8,7 +8,7 @@
 # itself and could run a different engine than the plugin was built against.
 set -e
 
-IMPOSTER_ENGINE_VERSION="5.19.0"
+IMPOSTER_ENGINE_VERSION="5.19.3"
 
 cd "$(dirname "$0")/.."
 exec imposter up spec/support/imposter/config -t native -v "$IMPOSTER_ENGINE_VERSION" -p 8080 --log-level info

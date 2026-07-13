@@ -14,7 +14,7 @@
 set -e
 
 IMPOSTER_CLI_VERSION="1.10.0"
-IMPOSTER_ENGINE_VERSION="5.19.0"
+IMPOSTER_ENGINE_VERSION="5.19.3"
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"
