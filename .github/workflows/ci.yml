@@ -148,6 +148,19 @@ jobs:
           OIDC_REDIRECT_URI: "http://localhost:31337/auth/oidc/callback"
         run: bin/rails db:test:prepare && bundle exec rspec --tag real_oidc
 
+      # This job has a history of intermittent Capybara ElementNotFound
+      # failures that don't reproduce locally (see spec/system/real_oidc_login_spec.rb
+      # git blame) — the failure screenshot RSpec/Capybara already saves to
+      # tmp/capybara/ was previously lost with the ephemeral runner, leaving
+      # nothing to diagnose the next occurrence from.
+      - name: Upload Capybara failure screenshots
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: real-oidc-capybara-failures
+          path: tmp/capybara/
+          if-no-files-found: ignore
+
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
