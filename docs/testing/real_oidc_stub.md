@@ -90,4 +90,4 @@ REAL_OIDC=1 \
 
 `bundle exec rspec` with no arguments (the normal way to run this suite)
 never touches this tier at all — `spec/rails_helper.rb` excludes anything
-tagged `real_oidc: true` unless `REAL_OIDC` is set.
+tagged `real_oidc: true` unless `REAL_OIDC=1` is set.
