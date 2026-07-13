@@ -33,6 +33,28 @@ Restart Claude Desktop after saving — it will open a browser window to complet
 
 ---
 
+## Connecting hosted custom connectors (claude.ai, ChatGPT)
+
+Unlike Claude Desktop/Code, a hosted connector's OAuth handshake is brokered
+server-side by the provider's own cloud infrastructure, not run locally in
+your browser — so it's a separate compatibility question from the CIMD flow
+above. Both work without any extra setup:
+
+- **claude.ai** (Pro/Max → Customize → Connectors) — confirmed working:
+  add `https://xue.huwdiprose.co.uk/mcp` as a custom connector and it
+  completes the CIMD flow end-to-end against this server.
+- **ChatGPT** (Apps SDK connectors) — not yet tested against this server, but
+  OpenAI's own docs describe the same CIMD-first behaviour: when an
+  authorization server advertises `client_id_metadata_document_supported:
+  true` (as `/.well-known/oauth-authorization-server` does here), ChatGPT
+  prioritizes CIMD over Dynamic Client Registration automatically.
+
+Neither provider's hosted broker required Dynamic Client Registration (RFC
+7591) to be added on our side — see
+`docs/threat_assessments/MCP_OAUTH_DOORKEEPER.md` for the full rationale.
+
+---
+
 ## Smoke test
 
 Verify the discovery endpoints are reachable:

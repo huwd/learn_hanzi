@@ -4,9 +4,10 @@
 
 Accepted — implementation may proceed. The CF service-token fallback
 described below has since been fully removed (#401); `/mcp` is Doorkeeper-only
-as of that change. A live pentest against this flow is still planned before
-Cloudflare Access is opened to "allow anyone" (see "Outstanding
-configuration").
+as of that change. Hosted custom connector compatibility (claude.ai, ChatGPT)
+has since been confirmed — see "Outstanding configuration" — closing out
+#389. A live pentest against this flow is still planned before Cloudflare
+Access is opened to "allow anyone" (see "Outstanding configuration").
 
 ## Context
 
@@ -236,7 +237,7 @@ Doorkeeper-only, so this exposure no longer exists in any form.
 
 | Measure | Reason not adopted |
 |---|---|
-| Classic RFC 7591 Dynamic Client Registration | Spec marks it optional (MAY) now that CIMD covers self-registration for MCP clients with no prior relationship to the server; adding both means auditing two onboarding paths for one problem |
+| Classic RFC 7591 Dynamic Client Registration | Spec marks it optional (MAY) now that CIMD covers self-registration for MCP clients with no prior relationship to the server; adding both means auditing two onboarding paths for one problem. Confirmed unnecessary in practice (#389): claude.ai's hosted connector completes the CIMD flow directly, and OpenAI's Apps SDK docs describe ChatGPT prioritizing CIMD over DCR whenever `client_id_metadata_document_supported: true` is advertised, which it is here |
 | `client_credentials`, `password`, or `implicit` grants | `grant_flows %w[authorization_code]` only — no MCP client needs them, and each additional grant type is additional surface to secure and test |
 | Public token introspection endpoint | `allow_token_introspection false` — no third-party resource server consumes these tokens, only this app's own `/mcp`, which validates via `doorkeeper_token` directly |
 | Confidential (secret-bearing) clients | Every application this server creates is public (`confidential: false`); `force_pkce` covers the resulting need for proof-of-possession |
@@ -265,6 +266,19 @@ Doorkeeper-only, so this exposure no longer exists in any form.
 
 ## Outstanding configuration
 
+- **Hosted custom connector compatibility — confirmed (#389).** The open
+  question was whether a hosted connector (claude.ai, ChatGPT, Cowork), whose
+  OAuth handshake is brokered from the provider's cloud infrastructure rather
+  than run locally in the user's browser, could complete the CIMD flow as-is,
+  or whether it would need classic RFC 7591 Dynamic Client Registration. In
+  practice: claude.ai's custom connector authenticates end-to-end via CIMD
+  against production with no changes required. ChatGPT was not tested
+  directly, but OpenAI's Apps SDK docs confirm the same CIMD-first
+  preference — ChatGPT prioritizes CIMD over DCR whenever an authorization
+  server advertises `client_id_metadata_document_supported: true`, which ours
+  does. No DCR support was added; see the "What we are not doing, and why"
+  table above. Also confirms Cloudflare Access is not intercepting `/mcp` or
+  `/.well-known/*` — those requests reach the Rails app directly.
 - **Live pentest before broad release.** This document and the accompanying
   code review are the static/design-level review; a dynamic pentest against a
   running instance is planned before Cloudflare Access is opened to "allow
