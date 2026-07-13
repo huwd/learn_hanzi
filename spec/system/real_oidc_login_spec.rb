@@ -1,8 +1,20 @@
 require "rails_helper"
 
 RSpec.describe "Signing in via the real OIDC stub", type: :system, real_oidc: true do
+  # Stimulus controllers connect asynchronously (importmap dynamic import),
+  # so a click that lands before the `dropdown` controller has attached its
+  # action produces no JS effect at all — the menu never opens, and nothing
+  # retries that lost click (Capybara's wait/retry only covers the *lookup*
+  # in the next line, not the click itself). Retry the toggle click until
+  # the menu is actually visible, rather than assuming one click suffices.
   def sign_out
-    find("[data-action='dropdown#toggle']").click
+    toggle = find("[data-action='dropdown#toggle']")
+    deadline = Time.current + Capybara.default_max_wait_time
+    until page.has_css?("[data-dropdown-target='menu']", visible: true, wait: 0.5)
+      raise Capybara::ElementNotFound, "dropdown menu never opened" if Time.current > deadline
+
+      toggle.click
+    end
     click_button "Sign out"
   end
 
