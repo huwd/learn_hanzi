@@ -45,9 +45,10 @@ above. Both work without any extra setup:
   completes the CIMD flow end-to-end against this server.
 - **ChatGPT** (Apps SDK connectors) — not yet tested against this server, but
   OpenAI's own docs describe the same CIMD-first behaviour: when an
-  authorization server advertises `client_id_metadata_document_supported:
-  true` (as `/.well-known/oauth-authorization-server` does here), ChatGPT
-  prioritizes CIMD over Dynamic Client Registration automatically.
+  authorization server advertises
+  `client_id_metadata_document_supported: true` (as
+  `/.well-known/oauth-authorization-server` does here), ChatGPT prioritizes
+  CIMD over Dynamic Client Registration automatically.
 
 Neither provider's hosted broker required Dynamic Client Registration (RFC
 7591) to be added on our side — see
