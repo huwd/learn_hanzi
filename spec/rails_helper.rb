@@ -61,9 +61,13 @@ RSpec.configure do |config|
   # stub's discovery-issuer mismatch (see docs/testing/real_oidc_stub.md) is
   # gone now that the upstream fix has shipped (imposter-project/imposter-go
   # v5.19.2), so validate_discovery_issuer stays at its real default.
-  config.before(:each, real_oidc: true) do
+  # An around hook (rather than paired before/after) so restoration is tied
+  # to the example's own run via `ensure` — guaranteed even if `example.run`
+  # raises — instead of a separate after hook depending on instance
+  # variables an earlier hook happened to set.
+  config.around(:each, real_oidc: true) do |example|
     require "swd"
-    @original_swd_url_builder = SWD.url_builder
+    original_swd_url_builder = SWD.url_builder
     SWD.url_builder = URI::HTTP
 
     # Every other system spec authenticates in-process via OmniAuth test_mode,
@@ -72,13 +76,13 @@ RSpec.configure do |config|
     # own login page — an extra process hop with no shared warmth, more prone
     # to occasionally outrunning that default under CI's less predictable
     # scheduling than a same-process mock ever would be.
-    @original_capybara_wait_time = Capybara.default_max_wait_time
+    original_capybara_wait_time = Capybara.default_max_wait_time
     Capybara.default_max_wait_time = 5
-  end
 
-  config.after(:each, real_oidc: true) do
-    SWD.url_builder = @original_swd_url_builder
-    Capybara.default_max_wait_time = @original_capybara_wait_time
+    example.run
+  ensure
+    SWD.url_builder = original_swd_url_builder
+    Capybara.default_max_wait_time = original_capybara_wait_time
   end
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
