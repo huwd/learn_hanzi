@@ -224,7 +224,7 @@ class McpController < ActionController::API
       jsonrpc: "2.0",
       id: body["id"],
       result: {
-        content: [ { type: "text", text: tool_summary_text(name, structured_content) } ],
+        content: [ { type: "text", text: tool_text_content(name, structured_content) } ],
         structuredContent: structured_content,
         isError: false
       }
@@ -250,6 +250,15 @@ class McpController < ActionController::API
     integer = Integer(value, exception: false)
     return 0 unless integer
     [ integer, 0 ].max
+  end
+
+  # `content[].text` is the only field some hosted MCP connectors surface to
+  # the model — `structuredContent` is silently dropped by clients that don't
+  # support it (or that negotiated a protocol version predating it). The
+  # summary line alone is not enough: the full row data must be present here
+  # too, or those clients see counts with no underlying vocabulary.
+  def tool_text_content(name, content)
+    "#{tool_summary_text(name, content)}\n\n#{content.to_json}"
   end
 
   def tool_summary_text(name, content)

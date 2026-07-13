@@ -258,6 +258,14 @@ RSpec.shared_examples "an authenticated MCP session" do
         expect(summary["mastered"]).to eq(1)
       end
 
+      it "includes the full HSK breakdown in the text content, not just the summary count" do
+        create(:user_learning, user: user, state: "mastered")
+        body = call_tool("get_learning_profile")
+        text = body.dig("result", "content", 0, "text")
+        payload = JSON.parse(text.split("\n\n", 2).last)
+        expect(payload["hsk_breakdown"]).to eq(body.dig("result", "structuredContent", "hsk_breakdown"))
+      end
+
       it "scopes results to the authenticated user" do
         create(:user_learning, user: create(:user), state: "mastered")
         body = call_tool("get_learning_profile")
@@ -361,6 +369,16 @@ RSpec.shared_examples "an authenticated MCP session" do
         create(:user_learning, user: user, state: "learning")
         body = call_tool("list_struggling_vocabulary", limit: "not-a-number")
         expect(body["result"]["structuredContent"]["vocabulary"].length).to eq(1)
+      end
+
+      it "includes the actual vocabulary rows in the text content, not just a count" do
+        ul = create(:user_learning, user: user, state: "learning")
+        create(:review_log, user_learning: ul, ease: 1)
+        body = call_tool("list_struggling_vocabulary")
+        text = body.dig("result", "content", 0, "text")
+        expect(text).to include(ul.dictionary_entry.text)
+        payload = JSON.parse(text.split("\n\n", 2).last)
+        expect(payload["vocabulary"]).to eq(body.dig("result", "structuredContent", "vocabulary"))
       end
     end
   end

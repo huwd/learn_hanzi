@@ -145,7 +145,7 @@ In-progress words ranked by difficulty — most lapses first, then lowest ease f
 
 ## Tools
 
-The same five read-only queries are also available as MCP tools — each wraps the resource above unchanged, so the data is identical. A `tools/call` result includes both a short text summary (for clients that only render text) and a `structuredContent` object with the same shape as the matching resource's JSON.
+The same five read-only queries are also available as MCP tools — each wraps the resource above unchanged, so the data is identical. A `tools/call` result includes a `structuredContent` object with the same shape as the matching resource's JSON, **and** a `content[].text` string containing a short summary line followed by that same JSON payload. The duplication matters: some hosted connectors only forward `content[].text` to the model and drop `structuredContent` entirely, so the full rows must be present there too, not just the count.
 
 | Tool | Arguments | Backed by |
 | --- | --- | --- |
