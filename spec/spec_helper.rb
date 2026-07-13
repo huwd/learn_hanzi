@@ -18,8 +18,13 @@ SimpleCov.start 'rails' do
   # The real_oidc tier (see docs/testing/real_oidc_stub.md) is a deliberately
   # narrow, opt-in smoke test — a couple of examples exercising OIDC wiring,
   # not the app as a whole — so the usual suite-wide threshold doesn't apply
-  # to it.
-  minimum_coverage 95 unless ENV['REAL_OIDC'] == '1'
+  # to it. REAL_OIDC=1 alone isn't enough to detect that: it only lifts the
+  # default exclusion filter in spec/rails_helper.rb, so `REAL_OIDC=1 bundle
+  # exec rspec` with no --tag would run the full suite and silently drop
+  # coverage enforcement for it too. Require the tag itself in ARGV, matching
+  # the documented invocation (REAL_OIDC=1 bundle exec rspec --tag real_oidc).
+  running_real_oidc_tier = ENV['REAL_OIDC'] == '1' && ARGV.any? { |arg| arg.include?('real_oidc') }
+  minimum_coverage 95 unless running_real_oidc_tier
 end
 
 RSpec.configure do |config|
