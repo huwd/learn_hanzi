@@ -36,31 +36,25 @@ fly, this tier only ever authenticates as the one user baked into
 `sign_in_via_browser` for ordinary feature specs; reach for this tier only
 when you specifically need to prove something about the OIDC wiring itself.
 
-## Known upstream issue (as of writing)
+## Upstream issuer bug (fixed in v5.19.2)
 
-The `oidc-server` plugin (part of [Imposter](https://www.imposter.sh)) has a
-bug: its discovery document and issued ID tokens declare an `issuer` that
-omits the configured `path_prefix`, while every other endpoint URL in the
-same document correctly includes it. Since `path_prefix` defaults to
+The `oidc-server` plugin (part of [Imposter](https://www.imposter.sh)) had a
+bug: its discovery document and issued ID tokens declared an `issuer` that
+omitted the configured `path_prefix`, while every other endpoint URL in the
+same document correctly included it. Since `path_prefix` defaults to
 `/oidc` (there's no way to configure a genuinely empty one), the declared
-issuer never matches where the document is actually served — a violation of
+issuer never matched where the document was actually served — a violation of
 RFC 8414 §3.3 / OIDC Discovery §4.3 that strict relying parties (including
 the `openid_connect` gem this app uses) reject outright with
 `InvalidIssuer: Invalid ID token: Issuer does not match`.
 
-A fix has been prepared and verified against this app's real login flow, but
-is not yet submitted/merged upstream. Until it ships in a published
-`oidc-server` plugin release:
-
-- **CI** (`real_oidc_test` job in `.github/workflows/ci.yml`) uses the
-  standard, publicly published plugin, and is **expected to fail**. It's
-  deliberately not a required check (not in `publish`'s `needs:`), so this
-  known, external failure doesn't block deploys. Once the fix is released
-  upstream, this job should start passing with no changes needed here.
-- **Local verification** against the fix uses a self-built plugin binary
-  from a fork, not the CLI-installed release — see whoever is tracking the
-  upstream PR for details; this isn't wired into any repo tooling since it's
-  a temporary state.
+The fix ([`imposter-project/imposter-go@3ffc939`](https://github.com/imposter-project/imposter-go/commit/3ffc939e8ddcd5eaa7640c46c379576a5baa7b3a))
+shipped upstream in
+[`imposter-go` v5.19.2](https://github.com/imposter-project/imposter-go/releases/tag/v5.19.2).
+`bin/oidc_stub_setup` and `bin/oidc_stub` pin `IMPOSTER_ENGINE_VERSION` to
+`5.19.3` (the latest release at time of writing, which includes the fix), so
+both CI and local runs now use the corrected engine and no longer need to
+relax `OpenIDConnect.validate_discovery_issuer` (see `spec/rails_helper.rb`).
 
 ## Running locally
 
@@ -93,9 +87,6 @@ REAL_OIDC=1 \
   OIDC_REDIRECT_URI="http://localhost:31337/auth/oidc/callback" \
   bundle exec rspec --tag real_oidc
 ```
-
-Until the upstream fix ships, this will fail against the standard published
-plugin — see "Known upstream issue" above.
 
 `bundle exec rspec` with no arguments (the normal way to run this suite)
 never touches this tier at all — `spec/rails_helper.rb` excludes anything
