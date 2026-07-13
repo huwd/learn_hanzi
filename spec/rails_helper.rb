@@ -55,24 +55,20 @@ RSpec.configure do |config|
 
   # The openid_connect gem's discovery step always builds an https:// URL
   # (OpenIDConnect::Discovery::Provider::Config::Resource#endpoint discards
-  # the issuer's actual scheme entirely), and validates the discovery
-  # document's issuer against what we configured. Both are real production
-  # safeguards we want everywhere else — scoped here to real_oidc specs only,
-  # since the stub is plain HTTP and (see the upstream PR referenced in
-  # docs/testing/real_oidc_stub.md) currently reports its issuer without its
-  # own path prefix.
+  # the issuer's actual scheme entirely) — a real production safeguard we
+  # want everywhere else, scoped here to real_oidc specs only since the stub
+  # is plain HTTP. The companion relaxation this tier used to need for the
+  # stub's discovery-issuer mismatch (see docs/testing/real_oidc_stub.md) is
+  # gone now that the upstream fix has shipped (imposter-project/imposter-go
+  # v5.19.2), so validate_discovery_issuer stays at its real default.
   config.before(:each, real_oidc: true) do
     require "swd"
-    require "openid_connect"
     @original_swd_url_builder = SWD.url_builder
-    @original_validate_discovery_issuer = OpenIDConnect.validate_discovery_issuer
     SWD.url_builder = URI::HTTP
-    OpenIDConnect.validate_discovery_issuer = false
   end
 
   config.after(:each, real_oidc: true) do
     SWD.url_builder = @original_swd_url_builder
-    OpenIDConnect.validate_discovery_issuer = @original_validate_discovery_issuer
   end
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
