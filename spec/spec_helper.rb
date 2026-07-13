@@ -23,7 +23,12 @@ SimpleCov.start 'rails' do
   # exec rspec` with no --tag would run the full suite and silently drop
   # coverage enforcement for it too. Require the tag itself in ARGV, matching
   # the documented invocation (REAL_OIDC=1 bundle exec rspec --tag real_oidc).
-  running_real_oidc_tier = ENV['REAL_OIDC'] == '1' && ARGV.any? { |arg| arg.include?('real_oidc') }
+  # A plain substring check on ARGV would also match a bare file path
+  # (spec/system/real_oidc_login_spec.rb) or a negated tag (--tag
+  # ~real_oidc, which means the opposite — exclude that tag), so parse for
+  # an actual --tag/-t real_oidc flag pair instead.
+  real_oidc_tag_invocation = ARGV.each_cons(2).any? { |flag, value| %w[--tag -t].include?(flag) && value == 'real_oidc' }
+  running_real_oidc_tier = ENV['REAL_OIDC'] == '1' && real_oidc_tag_invocation
   minimum_coverage 95 unless running_real_oidc_tier
 end
 
