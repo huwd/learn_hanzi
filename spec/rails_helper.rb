@@ -65,10 +65,20 @@ RSpec.configure do |config|
     require "swd"
     @original_swd_url_builder = SWD.url_builder
     SWD.url_builder = URI::HTTP
+
+    # Every other system spec authenticates in-process via OmniAuth test_mode,
+    # so Capybara's 2-second default is plenty. This tier's sign-in redirects
+    # through a second, real HTTP server (the Imposter stub) rendering its
+    # own login page — an extra process hop with no shared warmth, more prone
+    # to occasionally outrunning that default under CI's less predictable
+    # scheduling than a same-process mock ever would be.
+    @original_capybara_wait_time = Capybara.default_max_wait_time
+    Capybara.default_max_wait_time = 5
   end
 
   config.after(:each, real_oidc: true) do
     SWD.url_builder = @original_swd_url_builder
+    Capybara.default_max_wait_time = @original_capybara_wait_time
   end
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
