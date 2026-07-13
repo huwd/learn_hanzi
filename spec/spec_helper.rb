@@ -15,7 +15,11 @@
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require 'simplecov'
 SimpleCov.start 'rails' do
-  minimum_coverage 95
+  # The real_oidc tier (see docs/testing/real_oidc_stub.md) is a deliberately
+  # narrow, opt-in smoke test — a couple of examples exercising OIDC wiring,
+  # not the app as a whole — so the usual suite-wide threshold doesn't apply
+  # to it.
+  minimum_coverage 95 unless ENV['REAL_OIDC'] == '1'
 end
 
 RSpec.configure do |config|
