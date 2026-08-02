@@ -317,8 +317,15 @@ Doorkeeper.configure do
   # force_ssl_in_redirect_uri { |uri| uri.host != 'localhost' }
   #
   # Mirrors the same dev/test-vs-everything-else split used for the OIDC
-  # redirect_uri (see config/initializers/omniauth.rb).
-  force_ssl_in_redirect_uri { !Rails.env.local? }
+  # redirect_uri (see config/initializers/omniauth.rb), with an RFC 8252
+  # §7.3 carve-out for loopback addresses: native OAuth clients (e.g. Claude
+  # Code, resolved via CIMD — see Oauth::CimdClientResolver) run a local HTTP
+  # callback listener on localhost/127.0.0.1, which can never hold a TLS
+  # cert, so forcing HTTPS there would make every such client unusable.
+  loopback_redirect_hosts = %w[localhost 127.0.0.1 ::1].freeze
+  force_ssl_in_redirect_uri do |uri|
+    !Rails.env.local? && loopback_redirect_hosts.exclude?(uri.host)
+  end
 
   # Specify what redirect URI's you want to block during Application creation.
   # Any redirect URI is allowed by default.
