@@ -196,5 +196,31 @@ RSpec.describe Oauth::CimdClientResolver do
         expect { resolver.resolve! }.to raise_error(described_class::FetchError)
       end
     end
+
+    context "when the document declares loopback http redirect_uris (RFC 8252 native client)" do
+      let(:valid_metadata) do
+        {
+          client_id: client_id_url,
+          client_name: "Test MCP Client",
+          redirect_uris: [ "http://localhost/callback", "http://127.0.0.1/callback" ]
+        }
+      end
+
+      before do
+        # force_ssl_in_redirect_uri is a no-op in the test/development
+        # environments (Rails.env.local?), so it has to be stubbed to
+        # reproduce the production behaviour that rejects these URIs.
+        allow(Rails.env).to receive(:local?).and_return(false)
+        stub_request(:get, client_id_url)
+          .to_return(status: 200, body: valid_metadata.to_json, headers: { "Content-Type" => "application/json" })
+      end
+
+      it "persists the application despite force_ssl_in_redirect_uri being active" do
+        resolver = described_class.new(client_id_url)
+        application = resolver.resolve!
+
+        expect(application.redirect_uri).to eq("http://localhost/callback\nhttp://127.0.0.1/callback")
+      end
+    end
   end
 end

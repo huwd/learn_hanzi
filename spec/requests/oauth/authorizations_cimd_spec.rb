@@ -83,5 +83,41 @@ RSpec.describe "OAuth authorize — CIMD client resolution", type: :request do
         expect(Doorkeeper::Application.count).to eq(0)
       end
     end
+
+    context "when the registered redirect_uri uses the localhost hostname (RFC 8252 native client)" do
+      let(:localhost_application) do
+        Doorkeeper::Application.create!(
+          name: "Native Test Client",
+          redirect_uri: "http://localhost/callback",
+          confidential: false
+        )
+      end
+
+      it "matches an authorize request using an ephemeral loopback port" do
+        get "/oauth/authorize", params: authorize_params.merge(
+          client_id: localhost_application.uid,
+          redirect_uri: "http://localhost:54873/callback"
+        )
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "when the registered redirect_uri uses the 127.0.0.1 loopback address" do
+      let(:loopback_ip_application) do
+        Doorkeeper::Application.create!(
+          name: "Native Test Client (IP)",
+          redirect_uri: "http://127.0.0.1/callback",
+          confidential: false
+        )
+      end
+
+      it "still matches an authorize request using an ephemeral loopback port" do
+        get "/oauth/authorize", params: authorize_params.merge(
+          client_id: loopback_ip_application.uid,
+          redirect_uri: "http://127.0.0.1:54873/callback"
+        )
+        expect(response).to have_http_status(:ok)
+      end
+    end
   end
 end
