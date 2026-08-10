@@ -36,14 +36,14 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Enroll runner in Cloudflare One via WARP
-        uses: Boostport/setup-cloudflare-warp@2557ba84f68223c4642f8d65d1c7371666c5af34 # v1.18.0
+        uses: Boostport/setup-cloudflare-warp@1a6a55dc16c68abe496dd85bd413d86cc5d794d8 # v1.19.0
         with:
           organization: ${{ vars.CLOUDFLARE_TEAM }}
           auth_client_id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           auth_client_secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
       - name: Log in to private registry
-        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ${{ vars.REGISTRY }}
           username: ${{ secrets.REGISTRY_USERNAME }}
