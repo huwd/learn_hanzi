@@ -28,7 +28,7 @@ gem "doorkeeper", "~> 5.9"
 # client-supplied URLs) — pins connections to the resolved IP it validated,
 # closing the DNS-rebinding TOCTOU gap a hand-rolled resolve-then-connect
 # check would have.
-gem "ssrf_filter", "~> 1.5"
+gem "ssrf_filter", "~> 1.6"
 
 # Rate limiting for OAuth authorize/token endpoints
 gem "rack-attack"
@@ -40,7 +40,7 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "solid_cache"
 gem "solid_queue"
 gem "mission_control-jobs"
-gem "rubyzip", "~> 3.5"
+gem "rubyzip", "~> 3.6"
 
 # Observability — stackprof must load before sentry-ruby for profiling support
 gem "stackprof"
