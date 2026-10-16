@@ -2,6 +2,26 @@ require "capybara/rspec"
 require "json"
 require "open3"
 
+# selenium-webdriver ships one selenium-manager per platform, and since 4.50
+# two for Linux (linux-arm64 and linux-x86_64), so a bare glob can pick the
+# wrong architecture. Match the binary to the current platform.
+def selenium_manager_path
+  bin_dir = File.join(Gem.loaded_specs["selenium-webdriver"].full_gem_path, "bin")
+  arm = RbConfig::CONFIG["host_cpu"].match?(/arm|aarch64/)
+
+  candidates =
+    case RbConfig::CONFIG["host_os"]
+    when /linux/ then [ arm ? "linux-arm64" : "linux-x86_64", "linux" ]
+    when /darwin/ then [ "macos" ]
+    else [ "windows" ]
+    end
+
+  candidates
+    .map { |dir| Dir.glob(File.join(bin_dir, dir, "selenium-manager*")).first }
+    .compact
+    .first || raise("No selenium-manager binary found for #{RbConfig::CONFIG['host_os']}/#{RbConfig::CONFIG['host_cpu']}")
+end
+
 # Selenium Manager's default resolution prefers a chromedriver already on
 # PATH over downloading one that matches the installed Chrome version. Dev
 # machines can have a stale one there (e.g. from an old nvm-installed npm
@@ -9,9 +29,7 @@ require "open3"
 # that actually matches the local Chrome build.
 def system_matched_chromedriver_path
   @system_matched_chromedriver_path ||= begin
-    selenium_manager = Dir.glob(
-      File.join(Gem.loaded_specs["selenium-webdriver"].full_gem_path, "bin/*/selenium-manager")
-    ).first
+    selenium_manager = selenium_manager_path
     Selenium::WebDriver::Platform.assert_executable(selenium_manager)
 
     stdout, stderr, status = Open3.capture3(
