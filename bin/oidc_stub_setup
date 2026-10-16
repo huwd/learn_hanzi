@@ -13,8 +13,8 @@
 # "latest" happens to resolve to on a given day.
 set -e
 
-IMPOSTER_CLI_VERSION="1.10.0"
-IMPOSTER_ENGINE_VERSION="5.19.3"
+IMPOSTER_CLI_VERSION="1.13.0"
+IMPOSTER_ENGINE_VERSION="5.21.3"
 
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 arch="$(uname -m)"

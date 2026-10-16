@@ -52,7 +52,7 @@ The fix ([`imposter-project/imposter-go@3ffc939`](https://github.com/imposter-pr
 shipped upstream in
 [`imposter-go` v5.19.2](https://github.com/imposter-project/imposter-go/releases/tag/v5.19.2).
 `bin/oidc_stub_setup` and `bin/oidc_stub` pin `IMPOSTER_ENGINE_VERSION` to
-`5.19.3` (the latest release at time of writing, which includes the fix), so
+`5.21.3` (which includes the fix), so
 both CI and local runs now use the corrected engine and no longer need to
 relax `OpenIDConnect.validate_discovery_issuer` (see `spec/rails_helper.rb`).
 
