@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
+inputs:
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+  # Every Ruby release, so .ruby-version can name an exact patch version
+  nixpkgs-ruby:
+    url: github:bobvanderlinden/nixpkgs-ruby
+    inputs:
+      nixpkgs:
+        follows: nixpkgs

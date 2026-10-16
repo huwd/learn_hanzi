@@ -10,6 +10,7 @@
 
 # Ignore environment files, but track the example template.
 /.env*
+!/.envrc
 !/.env.example
 
 # Ignore all logfiles and tempfiles.
@@ -42,3 +43,9 @@
 
 /.claude.env
 .claude/settings.local.json
+
+# Devenv / direnv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+.direnv
