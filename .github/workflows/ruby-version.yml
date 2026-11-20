@@ -1,0 +1,54 @@
+name: Ruby version
+
+# Dependabot does not update .ruby-version, and the Dockerfile takes the
+# version as a build arg it cannot resolve, so nothing else flags new Ruby
+# patch releases (which are often security fixes). This job fails when a
+# newer patch release exists in the same minor series; a failing scheduled
+# run notifies the repository owner.
+
+on:
+  schedule:
+    - cron: "30 6 * * 1" # Weekly on Monday, alongside Dependabot
+  pull_request:
+    paths:
+      - .ruby-version
+      - .github/workflows/ruby-version.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare .ruby-version with the latest patch release
+        run: |
+          current="$(tr -d '[:space:]' < .ruby-version)"
+          if ! [[ "$current" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::error file=.ruby-version::Expected MAJOR.MINOR.PATCH, got '$current'"
+            exit 1
+          fi
+          series="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+
+          latest="$(
+            curl -fsS --retry 3 https://cache.ruby-lang.org/pub/ruby/index.txt \
+              | awk '{ print $1 }' \
+              | sed -n "s/^ruby-\(${series//./\\.}\.[0-9][0-9]*\)$/\1/p" \
+              | sort -uV | tail -n 1
+          )"
+          if [ -z "$latest" ]; then
+            echo "::error::No releases found for Ruby $series in the ruby-lang.org index"
+            exit 1
+          fi
+
+          echo "Current: $current  Latest $series.x: $latest"
+          if [ "$current" != "$latest" ] && \
+             [ "$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -n 1)" = "$latest" ]; then
+            echo "::error file=.ruby-version::Ruby $latest is available (running $current). Check https://www.ruby-lang.org/en/security/ and update .ruby-version."
+            exit 1
+          fi
