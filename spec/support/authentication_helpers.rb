@@ -16,6 +16,13 @@ module AuthenticationHelpers
   # For system specs: drives the real sign-in form in a JS-capable browser
   # rather than posting directly, since there is no shared Rack session to
   # forge a request against.
+  #
+  # click_button returns once the click is dispatched, not once the app
+  # server (a separate thread) has handled the OAuth request, so wait for
+  # a signed-in-only element before the ensure turns test_mode off. Without
+  # the wait, the request can reach the real OIDC strategy and fail on
+  # discovery (#468). "Sign out" sits in a closed dropdown, hence
+  # visible: :all.
   def sign_in_via_browser(user)
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:oidc] = OmniAuth::AuthHash.new(
@@ -25,6 +32,7 @@ module AuthenticationHelpers
     )
     visit sign_in_path
     click_button "Sign in with PocketID"
+    expect(page).to have_button("Sign out", visible: :all)
   ensure
     OmniAuth.config.mock_auth.delete(:oidc)
     OmniAuth.config.test_mode = false
