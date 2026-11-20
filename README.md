@@ -11,7 +11,7 @@ The core idea: take a user's Anki flashcard collection and a Chinese dictionary 
 
 ## Requirements
 
-- Ruby 4.0.5 (see `.ruby-version`)
+- Ruby 4.0.10 (see `.ruby-version`)
 - SQLite3
 - An Anki collection export (`.colpkg` file) — optional, but needed for learning history
 
